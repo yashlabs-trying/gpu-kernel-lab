@@ -1,0 +1,31 @@
+# Build output
+build/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Native compilation
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.exe
+
+# CUDA profiling and generated files
+*.nsys-rep
+*.ncu-rep
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
