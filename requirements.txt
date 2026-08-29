@@ -1,0 +1,7 @@
+# PyTorch is installed separately by scripts/setup_runpod.sh from the CUDA wheel index.
+transformers>=4.51.0,<6
+accelerate>=1.2,<2
+huggingface-hub>=0.30,<2
+safetensors>=0.4,<1
+psutil>=5.9,<8
+pytest>=8,<10
