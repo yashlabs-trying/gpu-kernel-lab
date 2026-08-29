@@ -29,3 +29,10 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Local Python environment and model caches
+.cache/
+huggingface/
+
+# Large profiler artifacts
+*.pt.trace.json
