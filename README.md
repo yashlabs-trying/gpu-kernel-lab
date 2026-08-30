@@ -10,3 +10,4 @@ A workspace for experimenting with and developing GPU kernels.
 ## Learning experiments
 
 - [Lesson 1: Vector addition](learning/01_vector_add/README.md)
+- [Lesson 2: Fused SwiGLU](learning/02_swiglu/README.md)
