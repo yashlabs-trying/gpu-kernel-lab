@@ -143,7 +143,9 @@ def benchmark_decode(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="Qwen/Qwen3-0.6B")
-    parser.add_argument("--sequence-lengths", type=int, nargs="+", default=[128, 512, 2048])
+    parser.add_argument(
+        "--sequence-lengths", type=int, nargs="+", default=[128, 512, 2048, 4096]
+    )
     parser.add_argument("--decode-context", type=int, default=512)
     parser.add_argument("--decode-steps", type=int, default=32)
     parser.add_argument("--warmup", type=int, default=2)
