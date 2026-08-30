@@ -15,3 +15,4 @@ A workspace for experimenting with and developing GPU kernels.
 - [Lesson 4: RoPE for Q and K](learning/04_rope/README.md)
 - [Lesson 5: Fused row-wise softmax](learning/05_softmax/README.md)
 - [Lesson 6: Tiled GEMM](learning/06_gemm/README.md)
+- [Lesson 7: Tiled online attention](learning/07_flash_attention/README.md)
