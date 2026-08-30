@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-30T04:02:37.196167+00:00",
+  "git_revision": "eb28db2ec2de55f55f6f85609fa4d1b7702a0c0c",
+  "model": "Qwen/Qwen3-0.6B",
+  "dtype": "bfloat16",
+  "batch_size": 1,
+  "warmup": 2,
+  "repeats": 5,
+  "duration_seconds": 7.832,
+  "environment": {
+    "platform": "Linux-6.8.0-110-generic-x86_64-with-glibc2.39",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.16.1",
+    "cuda": "12.8",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "compute_capability": "8.6",
+    "total_vram_gib": 23.559
+  },
+  "prefill": [
+    {
+      "median_ms": 26.9599,
+      "p20_ms": 26.8841,
+      "p80_ms": 27.2507,
+      "min_ms": 26.8646,
+      "max_ms": 27.3961,
+      "sequence_length": 128,
+      "tokens_per_second": 4747.79,
+      "peak_allocated_gib": 1.1555
+    },
+    {
+      "median_ms": 28.9065,
+      "p20_ms": 28.6935,
+      "p80_ms": 28.93,
+      "min_ms": 28.5379,
+      "max_ms": 29.2557,
+      "sequence_length": 512,
+      "tokens_per_second": 17712.28,
+      "peak_allocated_gib": 1.2641
+    },
+    {
+      "median_ms": 72.4808,
+      "p20_ms": 72.3896,
+      "p80_ms": 72.5668,
+      "min_ms": 72.318,
+      "max_ms": 72.6303,
+      "sequence_length": 2048,
+      "tokens_per_second": 28255.76,
+      "peak_allocated_gib": 1.7022
+    }
+  ],
+  "decode": {
+    "median_ms": 27.7211,
+    "p20_ms": 27.6186,
+    "p80_ms": 27.7348,
+    "min_ms": 27.0958,
+    "max_ms": 27.8489,
+    "initial_context_length": 512,
+    "decode_steps": 32,
+    "tokens_per_second": 36.07,
+    "peak_allocated_gib": 1.4423
+  }
+}
