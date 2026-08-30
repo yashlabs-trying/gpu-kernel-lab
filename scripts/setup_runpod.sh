@@ -23,6 +23,7 @@ python -m pip install -r requirements.txt
 mkdir -p results
 
 python scripts/check_environment.py
+python scripts/triton_smoke_test.py
 
 echo
 echo "Setup complete. Activate it later with: source .venv/bin/activate"
