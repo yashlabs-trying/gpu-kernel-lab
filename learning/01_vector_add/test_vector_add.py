@@ -10,7 +10,7 @@ requires_cuda = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA r
 
 
 @requires_cuda
-@pytest.mark.parametrize("size", [1, 127, 128, 129, 256, 1_000, 100_003, 1_000_000])
+@pytest.mark.parametrize("size", [1, 7, 127, 128, 129, 256, 1_000, 100_003, 1_000_000])
 @pytest.mark.parametrize("block_size", [128, 256, 512, 1024])
 def test_matches_pytorch(size: int, block_size: int) -> None:
     torch.manual_seed(0)
@@ -26,4 +26,3 @@ def test_rejects_a_matrix() -> None:
     x = torch.randn((4, 4), device="cuda")
     with pytest.raises(ValueError, match="1D"):
         triton_add(x, x)
-

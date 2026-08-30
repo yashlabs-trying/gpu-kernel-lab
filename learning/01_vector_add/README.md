@@ -103,6 +103,11 @@ Small blocks create more programs and scheduling work. Large blocks may waste
 masked lanes or increase resource pressure. There is no universal winner, so we
 measure 128, 256, 512, and 1024 instead of guessing.
 
+`num_warps` controls how many CUDA warps cooperate on each Triton program. More
+warps can expose more parallelism, but also consume more scheduling/register
+resources. The benchmark crosses every block size with `2`, `4`, and `8` warps.
+We tune the pair rather than assuming that more warps must be faster.
+
 ## Piece 7 — Correct CUDA timing
 
 CUDA launches are asynchronous: Python may continue before the GPU finishes.
@@ -132,7 +137,15 @@ effective GB/s = (12 * N) / elapsed_seconds / 1e9
 
 This measures useful bytes, not exact physical DRAM traffic (caches and write
 behavior affect that). Small vectors are normally launch/under-utilization bound.
-As `N` grows, GB/s should rise and then flatten toward a bandwidth ceiling.
+As `N` grows, GB/s should rise and then flatten toward a bandwidth ceiling. The
+benchmark also expresses every result as a percentage of PyTorch's measured
+bandwidth at the largest tested size. That is a practical same-run reference;
+the GPU's advertised peak is theoretical and is not normally reached completely.
+
+This kernel already performs only two loads and one store—there is no temporary
+tensor inside it. Fusion is the next level: `SiLU(a + b)` can load `a` and `b`
+once and write only the activated result. Separate add and SiLU kernels would
+also write and reread the intermediate `a + b` tensor.
 
 ## Piece 9 — Run it on the Pod
 
