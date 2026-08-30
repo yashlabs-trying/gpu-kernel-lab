@@ -1,0 +1,17 @@
+{
+  "platform": "Linux-6.8.0-110-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "torch": "2.11.0+cu128",
+  "torch_cuda": "12.8",
+  "transformers": "5.16.1",
+  "triton": "3.6.0",
+  "cuda_available": true,
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 3090",
+    "total_vram_gib": 23.559,
+    "compute_capability": "8.6",
+    "multiprocessors": 82
+  },
+  "git_revision": "eb28db2ec2de55f55f6f85609fa4d1b7702a0c0c",
+  "nvidia_smi": "NVIDIA GeForce RTX 3090, 580.126.20, 24576 MiB, 8.6"
+}
