@@ -14,3 +14,4 @@ A workspace for experimenting with and developing GPU kernels.
 - [Lesson 3: RMSNorm and fused residual RMSNorm](learning/03_rmsnorm/README.md)
 - [Lesson 4: RoPE for Q and K](learning/04_rope/README.md)
 - [Lesson 5: Fused row-wise softmax](learning/05_softmax/README.md)
+- [Lesson 6: Tiled GEMM](learning/06_gemm/README.md)
