@@ -21,7 +21,7 @@ def main() -> None:
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     model = AutoModelForCausalLM.from_pretrained(
         args.model,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
     ).eval().to("cuda")
 
     messages = [{"role": "user", "content": "Reply with one short sentence about GPUs."}]
@@ -29,19 +29,20 @@ def main() -> None:
         messages,
         add_generation_prompt=True,
         enable_thinking=False,
+        return_dict=True,
         return_tensors="pt",
     ).to("cuda")
 
     torch.manual_seed(0)
     with torch.inference_mode():
         output = model.generate(
-            inputs,
+            **inputs,
             max_new_tokens=args.max_new_tokens,
             do_sample=False,
             use_cache=True,
         )
 
-    generated = output[0, inputs.shape[-1] :]
+    generated = output[0, inputs["input_ids"].shape[-1] :]
     print(tokenizer.decode(generated, skip_special_tokens=True))
     print(f"Peak allocated VRAM: {torch.cuda.max_memory_allocated() / 2**30:.3f} GiB")
 

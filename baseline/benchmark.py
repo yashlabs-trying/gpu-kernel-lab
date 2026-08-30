@@ -157,7 +157,7 @@ def main() -> None:
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     model = AutoModelForCausalLM.from_pretrained(
         args.model,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
     ).eval().to("cuda")
 
     props = torch.cuda.get_device_properties(0)
