@@ -37,8 +37,9 @@ def main():
     def annotate():
         for name, module in model.named_modules():
             if name and (not list(module.children()) or name.startswith('model.layers.') and name.count('.') == 2):
-                hooks.append(module.register_forward_pre_hook(
-                    lambda m, a, name=name: torch.cuda.nvtx.range_push(name)))
+                def before(m, a, name=name):
+                    torch.cuda.nvtx.range_push(name)
+                hooks.append(module.register_forward_pre_hook(before))
                 def after(m, a, output):
                     torch.cuda.nvtx.range_pop()
                 hooks.append(module.register_forward_hook(after))
