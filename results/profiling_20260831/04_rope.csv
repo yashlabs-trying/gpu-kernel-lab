@@ -1,0 +1,9 @@
+implementation,BHQSD,k_heads,pair_block,warps,median_ms
+pytorch_separate,1x8x128x128,2,framework,framework,0.2549224019050598
+triton_qk_one_launch,1x8x128x128,2,64,2,0.026726400852203368
+triton_qk_one_launch,1x8x128x128,2,64,4,0.026624000072479247
+triton_qk_one_launch,1x8x128x128,2,64,8,0.026188799738883974
+pytorch_separate,1x8x2048x128,2,framework,framework,0.24652799367904663
+triton_qk_one_launch,1x8x2048x128,2,64,2,0.017203199863433837
+triton_qk_one_launch,1x8x2048x128,2,64,4,0.020172800123691558
+triton_qk_one_launch,1x8x2048x128,2,64,8,0.035097599029541016
