@@ -21,6 +21,7 @@ def main():
     p.add_argument('--backend', choices=['sdpa', 'eager'], default='sdpa')
     p.add_argument('--output', type=Path)
     p.add_argument('--annotate', action='store_true')
+    p.add_argument('--variant', choices=['baseline','triton_rms','triton_swiglu','triton_both'], default='baseline')
     args = p.parse_args()
     model = AutoModelForCausalLM.from_pretrained(
         'Qwen/Qwen3-0.6B', dtype=torch.bfloat16,
@@ -33,6 +34,11 @@ def main():
               'gpu': torch.cuda.get_device_name(), 'config': model.config.to_dict(),
               'workload': 'batch=1; cache enabled; last-token logits; decode includes argmax and mask growth',
               'warmup': args.warmup, 'repeats': args.repeats, 'measurements': []}
+    report['variant'] = args.variant
+    if args.variant != 'baseline':
+        from model_ablation import validate_and_install
+        report['ablation_validation'] = validate_and_install(model,args.variant,args.lengths)
+        print(json.dumps(report['ablation_validation']), flush=True)
 
     def annotate():
         for name, module in model.named_modules():
