@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-31T09:38:11.874970+00:00",
+  "git_revision": "699c4d976150991e3ae01e6e1f43495808684936",
+  "model": "Qwen/Qwen3-0.6B",
+  "dtype": "bfloat16",
+  "batch_size": 1,
+  "warmup": 2,
+  "repeats": 5,
+  "duration_seconds": 8.703,
+  "environment": {
+    "platform": "Linux-6.8.0-110-generic-x86_64-with-glibc2.39",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.16.1",
+    "cuda": "12.8",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "compute_capability": "8.6",
+    "total_vram_gib": 23.559
+  },
+  "prefill": [
+    {
+      "median_ms": 26.9128,
+      "p20_ms": 26.2902,
+      "p80_ms": 27.5702,
+      "min_ms": 24.9641,
+      "max_ms": 27.7627,
+      "sequence_length": 128,
+      "tokens_per_second": 4756.1,
+      "peak_allocated_gib": 1.1555
+    },
+    {
+      "median_ms": 26.5062,
+      "p20_ms": 26.3956,
+      "p80_ms": 28.7621,
+      "min_ms": 26.1958,
+      "max_ms": 29.0191,
+      "sequence_length": 512,
+      "tokens_per_second": 19316.24,
+      "peak_allocated_gib": 1.2641
+    },
+    {
+      "median_ms": 71.6646,
+      "p20_ms": 71.5694,
+      "p80_ms": 71.7291,
+      "min_ms": 71.3247,
+      "max_ms": 71.7752,
+      "sequence_length": 2048,
+      "tokens_per_second": 28577.57,
+      "peak_allocated_gib": 1.7022
+    },
+    {
+      "median_ms": 151.3257,
+      "p20_ms": 150.7625,
+      "p80_ms": 151.3626,
+      "min_ms": 150.5946,
+      "max_ms": 151.7384,
+      "sequence_length": 4096,
+      "tokens_per_second": 27067.44,
+      "peak_allocated_gib": 2.2862
+    }
+  ],
+  "decode": {
+    "median_ms": 26.632,
+    "p20_ms": 26.5139,
+    "p80_ms": 27.1059,
+    "min_ms": 26.3968,
+    "max_ms": 28.503,
+    "initial_context_length": 512,
+    "decode_steps": 32,
+    "tokens_per_second": 37.55,
+    "peak_allocated_gib": 1.449
+  }
+}
