@@ -4,6 +4,7 @@ Graphs reduce Python launch starvation; these are hot, repeated microbenchmarks,
 not end-to-end model timings or cold-DRAM bandwidth measurements.
 """
 import json
+import os
 import statistics
 import sys
 from pathlib import Path
@@ -41,9 +42,15 @@ def timed(fn):
 
 
 def main():
-    output = ROOT / 'results/profiling_20260831/native_comparison.json'
+    strict = os.environ.get('KERNELLAB_STRICT_GEMM') == '1'
+    if strict:
+        torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction = False
+    filename = 'native_comparison_strict.json' if strict else 'native_comparison.json'
+    output = ROOT / 'results/profiling_20260831' / filename
     report = {'method': '16 calls per CUDA graph replay, 10 samples; allocation patterns captured; hot data',
-              'dtype': 'bfloat16', 'gpu': torch.cuda.get_device_name(), 'results': []}
+              'dtype': 'bfloat16', 'gpu': torch.cuda.get_device_name(),
+              'allow_bf16_reduced_precision_reduction': torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction,
+              'results': []}
     torch.manual_seed(0)
     dtype = torch.bfloat16
 
