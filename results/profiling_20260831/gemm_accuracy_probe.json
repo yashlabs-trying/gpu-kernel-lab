@@ -1,0 +1,29 @@
+{
+  "shape": [
+    512,
+    2048,
+    1024
+  ],
+  "original_allow_bf16_reduced_precision_reduction": true,
+  "reference": "FP32 matmul with TF32 disabled, rounded to BF16",
+  "results": {
+    "triton": {
+      "max_abs_error_vs_fp32_rounded": 0.5,
+      "mean_abs_error_vs_fp32_rounded": 2.8435410058591515e-05,
+      "different_elements": 632,
+      "allclose_003": true
+    },
+    "pytorch_default": {
+      "max_abs_error_vs_fp32_rounded": 1.0,
+      "mean_abs_error_vs_fp32_rounded": 0.02543044090270996,
+      "different_elements": 280947,
+      "allclose_003": false
+    },
+    "pytorch_no_reduced_precision": {
+      "max_abs_error_vs_fp32_rounded": 0.5,
+      "mean_abs_error_vs_fp32_rounded": 2.8435410058591515e-05,
+      "different_elements": 632,
+      "allclose_003": true
+    }
+  }
+}

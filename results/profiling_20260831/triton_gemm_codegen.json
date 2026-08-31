@@ -1,0 +1,8 @@
+{
+  "registers": 79,
+  "spill_count": 0,
+  "shared_bytes": 16384,
+  "cp_async_mentions": 20,
+  "mma_sync_mentions": 16,
+  "meaning": "Compiler metadata and instruction presence, not runtime achieved occupancy/stall counters."
+}

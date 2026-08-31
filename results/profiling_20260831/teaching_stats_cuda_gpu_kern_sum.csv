@@ -1,0 +1,11 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+39.5,44832,1,44832.0,44832.0,44832,44832,0.0,gemm_kernel
+26.6,30112,1,30112.0,30112.0,30112,30112,0.0,attention_forward_kernel
+8.6,9728,1,9728.0,9728.0,9728,9728,0.0,vector_add_kernel
+7.9,8960,1,8960.0,8960.0,8960,8960,0.0,swiglu_kernel
+4.9,5568,1,5568.0,5568.0,5568,5568,0.0,rope_qk_kernel
+3.8,4256,1,4256.0,4256.0,4256,4256,0.0,rmsnorm_kernel
+3.4,3808,1,3808.0,3808.0,3808,3808,0.0,residual_rmsnorm_kernel
+2.7,3104,1,3104.0,3104.0,3104,3104,0.0,softmax_kernel
+1.4,1632,1,1632.0,1632.0,1632,1632,0.0,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<c10::BFloat16>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+1.2,1376,1,1376.0,1376.0,1376,1376,0.0,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<float>, std::array<char *, (unsigned long)1>>(int, T2, T3)"

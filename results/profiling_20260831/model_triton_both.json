@@ -1,0 +1,342 @@
+{
+  "torch": "2.11.0+cu128",
+  "transformers": "5.16.1",
+  "backend": "sdpa",
+  "dtype": "bfloat16",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "config": {
+    "transformers_version": "5.16.1",
+    "architectures": [
+      "Qwen3ForCausalLM"
+    ],
+    "output_hidden_states": false,
+    "return_dict": true,
+    "dtype": "bfloat16",
+    "chunk_size_feed_forward": 0,
+    "is_encoder_decoder": false,
+    "id2label": {
+      "0": "LABEL_0",
+      "1": "LABEL_1"
+    },
+    "label2id": {
+      "LABEL_0": 0,
+      "LABEL_1": 1
+    },
+    "problem_type": null,
+    "vocab_size": 151936,
+    "hidden_size": 1024,
+    "intermediate_size": 3072,
+    "num_hidden_layers": 28,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 8,
+    "head_dim": 128,
+    "hidden_act": "silu",
+    "max_position_embeddings": 40960,
+    "initializer_range": 0.02,
+    "rms_norm_eps": 1e-06,
+    "use_cache": true,
+    "tie_word_embeddings": true,
+    "rope_parameters": {
+      "rope_theta": 1000000,
+      "rope_type": "default"
+    },
+    "attention_bias": false,
+    "use_sliding_window": false,
+    "sliding_window": null,
+    "max_window_layers": 28,
+    "layer_types": [
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention"
+    ],
+    "attention_dropout": 0.0,
+    "pad_token_id": null,
+    "bos_token_id": 151643,
+    "eos_token_id": 151645,
+    "_name_or_path": "Qwen/Qwen3-0.6B",
+    "model_type": "qwen3",
+    "output_attentions": false
+  },
+  "workload": "batch=1; cache enabled; last-token logits; decode includes argmax and mask growth",
+  "warmup": 2,
+  "repeats": 5,
+  "measurements": [
+    {
+      "phase": "prefill",
+      "initial_context": 128,
+      "decode_steps": null,
+      "gpu_median_ms": 21.736448287963867,
+      "wall_median_ms": 21.75513282418251,
+      "gpu_samples_ms": [
+        21.45689582824707,
+        22.0948486328125,
+        21.539840698242188,
+        21.736448287963867,
+        24.156160354614258
+      ],
+      "wall_samples_ms": [
+        21.52339555323124,
+        22.114910185337067,
+        21.558625623583794,
+        21.75513282418251,
+        24.17595125734806
+      ],
+      "peak_allocated_gib": 1.1350879669189453
+    },
+    {
+      "phase": "decode",
+      "initial_context": 128,
+      "decode_steps": 16,
+      "gpu_median_ms": 20.35468864440918,
+      "wall_median_ms": 20.356057677417994,
+      "gpu_samples_ms": [
+        19.963071823120117,
+        20.35468864440918,
+        19.93440055847168,
+        22.06515121459961,
+        20.4005126953125
+      ],
+      "wall_samples_ms": [
+        19.964549690485,
+        20.356057677417994,
+        19.935851800255477,
+        22.066541714593768,
+        20.402041962370276
+      ],
+      "peak_allocated_gib": 1.134134292602539
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 512,
+      "decode_steps": null,
+      "gpu_median_ms": 21.625856399536133,
+      "wall_median_ms": 21.644871681928635,
+      "gpu_samples_ms": [
+        21.803007125854492,
+        21.65760040283203,
+        21.625856399536133,
+        21.584896087646484,
+        21.555200576782227
+      ],
+      "wall_samples_ms": [
+        21.826032549142838,
+        21.67656272649765,
+        21.644871681928635,
+        21.605532616376877,
+        21.579865366220474
+      ],
+      "peak_allocated_gib": 1.186793327331543
+    },
+    {
+      "phase": "decode",
+      "initial_context": 512,
+      "decode_steps": 16,
+      "gpu_median_ms": 20.89798355102539,
+      "wall_median_ms": 20.900978008285165,
+      "gpu_samples_ms": [
+        20.89798355102539,
+        22.2805118560791,
+        21.668224334716797,
+        20.085439682006836,
+        19.705984115600586
+      ],
+      "wall_samples_ms": [
+        20.900978008285165,
+        22.282067919149995,
+        21.669721929356456,
+        20.08703164756298,
+        19.707401166670024
+      ],
+      "peak_allocated_gib": 1.1996564865112305
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 2048,
+      "decode_steps": null,
+      "gpu_median_ms": 52.03558349609375,
+      "wall_median_ms": 52.05843225121498,
+      "gpu_samples_ms": [
+        52.185089111328125,
+        51.985408782958984,
+        52.13286590576172,
+        52.03558349609375,
+        52.01408004760742
+      ],
+      "wall_samples_ms": [
+        52.20868065953255,
+        52.00568214058876,
+        52.153320983052254,
+        52.05843225121498,
+        52.037062123417854
+      ],
+      "peak_allocated_gib": 1.3887319564819336
+    },
+    {
+      "phase": "decode",
+      "initial_context": 2048,
+      "decode_steps": 16,
+      "gpu_median_ms": 20.348352432250977,
+      "wall_median_ms": 20.349893951788545,
+      "gpu_samples_ms": [
+        20.75814437866211,
+        19.79257583618164,
+        21.50912094116211,
+        20.348352432250977,
+        20.251392364501953
+      ],
+      "wall_samples_ms": [
+        20.759693114086986,
+        19.794092630036175,
+        21.51058171875775,
+        20.349893951788545,
+        20.2533770352602
+      ],
+      "peak_allocated_gib": 1.3429174423217773
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 4096,
+      "decode_steps": null,
+      "gpu_median_ms": 111.172607421875,
+      "wall_median_ms": 111.19872331619263,
+      "gpu_samples_ms": [
+        111.172607421875,
+        111.2432632446289,
+        111.13369750976562,
+        111.01388549804688,
+        111.18080139160156
+      ],
+      "wall_samples_ms": [
+        111.19872331619263,
+        111.26610450446606,
+        111.15727387368679,
+        111.0345758497715,
+        111.20054498314857
+      ],
+      "peak_allocated_gib": 1.659285545349121
+    },
+    {
+      "phase": "decode",
+      "initial_context": 4096,
+      "decode_steps": 16,
+      "gpu_median_ms": 19.822463989257812,
+      "wall_median_ms": 19.82392941135913,
+      "gpu_samples_ms": [
+        19.78963279724121,
+        19.82784080505371,
+        19.822463989257812,
+        19.76006317138672,
+        19.97657585144043
+      ],
+      "wall_samples_ms": [
+        19.791653961874545,
+        19.82934621628374,
+        19.82392941135913,
+        19.761535339057446,
+        19.978049211204052
+      ],
+      "peak_allocated_gib": 1.5656194686889648
+    }
+  ],
+  "variant": "triton_both",
+  "ablation_validation": {
+    "substituted_modules": 141,
+    "last_token_logits": [
+      {
+        "length": 128,
+        "max_abs_logit_error": 0.6875,
+        "mean_abs_logit_error": 0.10142602026462555,
+        "logit_cosine": 0.9994788765907288,
+        "same_argmax": true
+      },
+      {
+        "length": 512,
+        "max_abs_logit_error": 0.140625,
+        "mean_abs_logit_error": 0.021483905613422394,
+        "logit_cosine": 0.9999256730079651,
+        "same_argmax": true
+      },
+      {
+        "length": 2048,
+        "max_abs_logit_error": 0.15625,
+        "mean_abs_logit_error": 0.02335464395582676,
+        "logit_cosine": 0.9999210238456726,
+        "same_argmax": true
+      },
+      {
+        "length": 4096,
+        "max_abs_logit_error": 0.125,
+        "mean_abs_logit_error": 0.018323777243494987,
+        "logit_cosine": 0.9999438524246216,
+        "same_argmax": true
+      }
+    ],
+    "reference_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "candidate_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "greedy_16_match": true,
+    "caution": "Small synthetic checks only. RMS/SwiGLU rounding differs from model reference. Not production-quality equivalence validation."
+  }
+}

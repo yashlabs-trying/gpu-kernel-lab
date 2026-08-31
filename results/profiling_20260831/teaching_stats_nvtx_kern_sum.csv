@@ -1,0 +1,11 @@
+NVTX Range,Style,PID,TID,NVTX Inst,Kern Inst,Total Time (ns),Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Kernel Name
+:attention_1x4x512x128,PushPop,7481,7481,1,1,30112,30112.0,30112.0,30112,30112,0.0,attention_forward_kernel
+:attention_1x4x512x128,PushPop,7481,7481,1,1,1632,1632.0,1632.0,1632,1632,0.0,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<c10::BFloat16>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+:attention_1x4x512x128,PushPop,7481,7481,1,1,1376,1376.0,1376.0,1376,1376,0.0,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<float>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+:gemm_512x2048x1024,PushPop,7481,7481,1,1,44832,44832.0,44832.0,44832,44832,0.0,gemm_kernel
+:residual_rmsnorm_512x1024,PushPop,7481,7481,1,1,3808,3808.0,3808.0,3808,3808,0.0,residual_rmsnorm_kernel
+:rmsnorm_512x1024,PushPop,7481,7481,1,1,4256,4256.0,4256.0,4256,4256,0.0,rmsnorm_kernel
+:rope_1x4x512x128,PushPop,7481,7481,1,1,5568,5568.0,5568.0,5568,5568,0.0,rope_qk_kernel
+:softmax_512x1024,PushPop,7481,7481,1,1,3104,3104.0,3104.0,3104,3104,0.0,softmax_kernel
+:swiglu_512x3072,PushPop,7481,7481,1,1,8960,8960.0,8960.0,8960,8960,0.0,swiglu_kernel
+:vector_add_1M,PushPop,7481,7481,1,1,9728,9728.0,9728.0,9728,9728,0.0,vector_add_kernel
