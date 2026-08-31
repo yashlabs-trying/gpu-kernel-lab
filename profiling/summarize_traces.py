@@ -15,7 +15,7 @@ def category(name):
         return 'concatenation'
     if 'reduce' in lower or 'reduction' in lower:
         return 'reduction'
-    if 'copy' in lower or 'cast' in lower:
+    if 'copy' in lower:
         return 'copy_or_cast'
     return 'other_elementwise_or_misc'
 
