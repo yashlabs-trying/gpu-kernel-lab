@@ -13,5 +13,5 @@ def test_qwen_shapes(m, n, k):
     b = torch.randn((k, n), device='cuda', dtype=torch.bfloat16)
     # Use an explicit FP32 oracle. Default cuBLAS may enable BF16 reduced-
     # precision reduction, which is a different numerical policy.
-    expected = (a.float() @ b.float()).to(dtype)
+    expected = (a.float() @ b.float()).to(a.dtype)
     torch.testing.assert_close(qwen_prefill_gemm(a, b), expected, rtol=3e-2, atol=3e-2)
