@@ -9,7 +9,7 @@ from model_ablation import install
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--variant', choices=['triton_both', 'qwen_rms', 'fused_mlp'], default='triton_both')
+    parser.add_argument('--variant', choices=['triton_both', 'qwen_rms', 'fused_mlp', 'qwen_rms_fused_mlp'], default='triton_both')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     tokenizer=AutoTokenizer.from_pretrained('Qwen/Qwen3-0.6B',local_files_only=True)

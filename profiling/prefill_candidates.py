@@ -60,7 +60,7 @@ def main():
                 a=torch.randn(m,k,device='cuda',dtype=torch.bfloat16)
                 b=torch.randn(k,n,device='cuda',dtype=torch.bfloat16)
                 actual=qwen_prefill_gemm(a,b)
-                expected=a@b
+                expected=(a.float()@b.float()).to(a.dtype)
                 report['gemm'].append({'name':label,'shape':[m,n,k],**error(actual,expected),
                     'torch_ms':timing(lambda:a@b),'triton_ms':timing(lambda:qwen_prefill_gemm(a,b))})
     args.output.parent.mkdir(parents=True,exist_ok=True)

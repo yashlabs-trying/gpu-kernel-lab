@@ -64,4 +64,5 @@ def test_cache_bounds():
     with pytest.raises(ValueError,match='bounds'):
         fused_qk_norm_rope_cache(q,k,k,torch.ones(128,device='cuda',dtype=q.dtype),
             torch.ones(128,device='cuda',dtype=q.dtype),table,table,
-            torch.tensor([4],device='cuda',dtype=torch.int32),cache,cache.clone())
+            torch.tensor([4],device='cuda',dtype=torch.int32),cache,cache.clone(),
+            check_bounds=True)
