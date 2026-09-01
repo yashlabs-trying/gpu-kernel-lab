@@ -11,4 +11,7 @@ def test_qwen_shapes(m, n, k):
     torch.manual_seed(1)
     a = torch.randn((m, k), device='cuda', dtype=torch.bfloat16)
     b = torch.randn((k, n), device='cuda', dtype=torch.bfloat16)
-    torch.testing.assert_close(qwen_prefill_gemm(a, b), a @ b, rtol=3e-2, atol=3e-2)
+    # Use an explicit FP32 oracle. Default cuBLAS may enable BF16 reduced-
+    # precision reduction, which is a different numerical policy.
+    expected = (a.float() @ b.float()).to(dtype)
+    torch.testing.assert_close(qwen_prefill_gemm(a, b), expected, rtol=3e-2, atol=3e-2)

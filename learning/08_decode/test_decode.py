@@ -13,7 +13,8 @@ def test_gemv(k,n,split):
     torch.manual_seed(4)
     x=torch.randn(k,device='cuda',dtype=torch.bfloat16)
     w=torch.randn(k,n,device='cuda',dtype=torch.bfloat16)
-    torch.testing.assert_close(decode_gemv(x,w,split_k=split),x@w,rtol=.03,atol=.03)
+    expected=(x.float()@w.float()).to(x.dtype)
+    torch.testing.assert_close(decode_gemv(x,w,split_k=split),expected,rtol=.03,atol=.03)
 
 
 def _norm(x,w):
