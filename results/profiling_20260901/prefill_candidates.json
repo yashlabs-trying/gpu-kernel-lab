@@ -1,0 +1,319 @@
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "dtype": "bfloat16",
+  "method": "hot do_bench; 100 ms warmup and 300 ms measurement per callable",
+  "rmsnorm": [
+    {
+      "shape": [
+        1,
+        128
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.01874461555853486,
+      "triton_ms": 0.004295180297407062
+    },
+    {
+      "shape": [
+        2048,
+        128
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.024648515107424985,
+      "triton_ms": 0.006461297776204765
+    },
+    {
+      "shape": [
+        1,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.018512497681002396,
+      "triton_ms": 0.004037546663282391
+    },
+    {
+      "shape": [
+        2048,
+        1024
+      ],
+      "max_abs": 0.015625,
+      "mean_abs": 2.608067006804049e-08,
+      "allclose": true,
+      "torch_ms": 0.104755703897827,
+      "triton_ms": 0.013393066632290366
+    }
+  ],
+  "residual_rmsnorm": [
+    {
+      "shape": [
+        1,
+        128
+      ],
+      "normalized": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "allclose": true
+      },
+      "residual_exact": true,
+      "torch_ms": 0.019067866296634737,
+      "triton_ms": 0.00393983607250075
+    },
+    {
+      "shape": [
+        2048,
+        128
+      ],
+      "normalized": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "allclose": true
+      },
+      "residual_exact": true,
+      "torch_ms": 0.028167709765589015,
+      "triton_ms": 0.007206479421324166
+    },
+    {
+      "shape": [
+        1,
+        1024
+      ],
+      "normalized": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "allclose": true
+      },
+      "residual_exact": true,
+      "torch_ms": 0.01987506176635463,
+      "triton_ms": 0.004155868833997195
+    },
+    {
+      "shape": [
+        2048,
+        1024
+      ],
+      "normalized": {
+        "max_abs": 0.0078125,
+        "mean_abs": 8.214556146413088e-09,
+        "allclose": true
+      },
+      "residual_exact": true,
+      "torch_ms": 0.12092529698996476,
+      "triton_ms": 0.023325075479518214
+    }
+  ],
+  "gemm": [
+    {
+      "name": "q",
+      "shape": [
+        128,
+        2048,
+        1024
+      ],
+      "max_abs": 0.25,
+      "mean_abs": 1.1776617611758411e-05,
+      "allclose": true,
+      "torch_ms": 0.01585990638569029,
+      "triton_ms": 0.016171961231507305
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        128,
+        1024,
+        1024
+      ],
+      "max_abs": 0.5,
+      "mean_abs": 0.025239193812012672,
+      "allclose": false,
+      "torch_ms": 0.013893011680474042,
+      "triton_ms": 0.01379535952039766
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        128,
+        3072,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.023785569348886107,
+      "triton_ms": 0.020812627577012584
+    },
+    {
+      "name": "down",
+      "shape": [
+        128,
+        1024,
+        3072
+      ],
+      "max_abs": 1.0,
+      "mean_abs": 0.07238174974918365,
+      "allclose": false,
+      "torch_ms": 0.0255476839047971,
+      "triton_ms": 0.03437207642131011
+    },
+    {
+      "name": "q",
+      "shape": [
+        512,
+        2048,
+        1024
+      ],
+      "max_abs": 1.0,
+      "mean_abs": 0.025491705164313316,
+      "allclose": false,
+      "torch_ms": 0.044428120223121335,
+      "triton_ms": 0.04297662853247169
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        512,
+        1024,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.023813287510901043,
+      "triton_ms": 0.024170330003505186
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        512,
+        3072,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.07942599464373984,
+      "triton_ms": 0.052522514565863224
+    },
+    {
+      "name": "down",
+      "shape": [
+        512,
+        1024,
+        3072
+      ],
+      "max_abs": 1.0,
+      "mean_abs": 0.04405906796455383,
+      "allclose": false,
+      "torch_ms": 0.06228735726123012,
+      "triton_ms": 0.061680910460876696
+    },
+    {
+      "name": "q",
+      "shape": [
+        2048,
+        2048,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.14412823947904363,
+      "triton_ms": 0.12424160019929385
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        2048,
+        1024,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.07574982133063704,
+      "triton_ms": 0.06915504103526474
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        2048,
+        3072,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.18111747608690784,
+      "triton_ms": 0.18186353469410768
+    },
+    {
+      "name": "down",
+      "shape": [
+        2048,
+        1024,
+        3072
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.21018136240478255,
+      "triton_ms": 0.19818955774867084
+    },
+    {
+      "name": "q",
+      "shape": [
+        4096,
+        2048,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.25185629147488403,
+      "triton_ms": 0.23851670898127217
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        4096,
+        1024,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.14425318747003815,
+      "triton_ms": 0.12364876630195117
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        4096,
+        3072,
+        1024
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.36063222818614615,
+      "triton_ms": 0.3598266125764203
+    },
+    {
+      "name": "down",
+      "shape": [
+        4096,
+        1024,
+        3072
+      ],
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "allclose": true,
+      "torch_ms": 0.4192654505443345,
+      "triton_ms": 0.37288794847494666
+    }
+  ]
+}
