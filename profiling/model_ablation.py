@@ -10,12 +10,14 @@ def install(model, variant):
     sys.path.insert(0,str(root/'learning/03_rmsnorm'))
     sys.path.insert(0,str(root/'learning/02_swiglu'))
     from rmsnorm import triton_rmsnorm
+    from qwen_rmsnorm import triton_qwen_rmsnorm
     from swiglu import triton_swiglu
     count=0
     for module in model.modules():
-        if variant in ('triton_rms','triton_both') and type(module).__name__=='Qwen3RMSNorm':
+        if variant in ('triton_rms','triton_both','qwen_rms') and type(module).__name__=='Qwen3RMSNorm':
             def forward(self, hidden_states):
-                return triton_rmsnorm(hidden_states,self.weight,self.variance_epsilon)
+                kernel = triton_qwen_rmsnorm if variant == 'qwen_rms' else triton_rmsnorm
+                return kernel(hidden_states,self.weight,self.variance_epsilon)
             module.forward=types.MethodType(forward,module)
             count+=1
         if variant in ('triton_swiglu','triton_both') and type(module).__name__=='Qwen3MLP':
@@ -49,4 +51,4 @@ def validate_and_install(model,variant,lengths):
     return {'substituted_modules':count,'last_token_logits':rows,
             'reference_greedy_16':reference_tokens,'candidate_greedy_16':tokens,
             'greedy_16_match':tokens==reference_tokens,
-            'caution':'Small synthetic checks only. RMS/SwiGLU rounding differs from model reference. Not production-quality equivalence validation.'}
+            'caution':'Small synthetic checks only. Legacy RMS/SwiGLU variants change rounding points; qwen_rms preserves those points but reduction order may differ. Not production-quality equivalence validation.'}
