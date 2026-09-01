@@ -15,15 +15,15 @@ def install(model, variant):
     from fused_projection_swiglu import fused_projection_swiglu
     count=0
     for module in model.modules():
-        if variant in ('triton_rms','triton_both','qwen_rms') and type(module).__name__=='Qwen3RMSNorm':
+        if variant in ('triton_rms','triton_both','qwen_rms','qwen_rms_fused_mlp') and type(module).__name__=='Qwen3RMSNorm':
             def forward(self, hidden_states):
-                kernel = triton_qwen_rmsnorm if variant == 'qwen_rms' else triton_rmsnorm
+                kernel = triton_qwen_rmsnorm if variant in ('qwen_rms','qwen_rms_fused_mlp') else triton_rmsnorm
                 return kernel(hidden_states,self.weight,self.variance_epsilon)
             module.forward=types.MethodType(forward,module)
             count+=1
-        if variant in ('triton_swiglu','triton_both','fused_mlp') and type(module).__name__=='Qwen3MLP':
+        if variant in ('triton_swiglu','triton_both','fused_mlp','qwen_rms_fused_mlp') and type(module).__name__=='Qwen3MLP':
             def forward(self, x):
-                if variant == 'fused_mlp':
+                if variant in ('fused_mlp','qwen_rms_fused_mlp'):
                     hidden=fused_projection_swiglu(x,self.gate_proj.weight,self.up_proj.weight)
                 else:
                     hidden=triton_swiglu(self.gate_proj(x),self.up_proj(x))

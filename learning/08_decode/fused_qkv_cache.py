@@ -51,7 +51,8 @@ def qk_norm_rope_cache_kernel(Q, K, V, QW, KW, COS, SIN, POSITIONS,
 
 
 def fused_qk_norm_rope_cache(q, k, v, q_weight, k_weight, cos, sin,
-                             positions, k_cache, v_cache, epsilon=1e-6):
+                             positions, k_cache, v_cache, epsilon=1e-6,
+                             check_bounds=False):
     """Exact logical sizes: Q[B,16,128], K/V[B,8,128], cache[B,8,C,128]."""
     if q.ndim != 3 or k.ndim != 3 or k.shape != v.shape:
         raise ValueError('expected Q[B,Hq,D] and matching K/V[B,Hkv,D]')
@@ -70,7 +71,9 @@ def fused_qk_norm_rope_cache(q, k, v, q_weight, k_weight, cos, sin,
         raise ValueError('invalid weight or compact RoPE table shape')
     if positions.shape != (batch,) or positions.dtype not in (torch.int32,torch.int64):
         raise ValueError('positions must be int32/int64 [B]')
-    if torch.any((positions < 0) | (positions >= capacity)).item():
+    # A device-to-host `.item()` would synchronize every decode token. Enable
+    # this only at API/test boundaries; the hot model path owns valid positions.
+    if check_bounds and torch.any((positions < 0) | (positions >= capacity)).item():
         raise ValueError('cache position out of bounds')
     q_out=torch.empty_like(q)
     block=triton.next_power_of_2(d)

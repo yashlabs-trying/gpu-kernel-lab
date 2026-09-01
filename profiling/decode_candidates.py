@@ -19,7 +19,7 @@ def main():
     with torch.inference_mode():
         for k,n,name in ((1024,2048,'q'),(1024,1024,'k_or_v'),(1024,3072,'gate_or_up'),(3072,1024,'down')):
             x=torch.randn(k,device='cuda',dtype=torch.bfloat16); w=torch.randn(k,n,device='cuda',dtype=torch.bfloat16)
-            ref=x@w
+            ref=(x.float()@w.float()).to(x.dtype)
             for split in (1,2,4):
                 got=decode_gemv(x,w,split_k=split); delta=(got.float()-ref.float()).abs()
                 out['gemv'].append({'name':name,'shape':[k,n],'split_k':split,'correct':torch.allclose(got,ref,rtol=.03,atol=.03),'max_abs':delta.max().item(),'torch_ms':bench(lambda:x@w),'triton_ms':bench(lambda:decode_gemv(x,w,split_k=split))})
@@ -28,7 +28,20 @@ def main():
         qw=torch.randn(d,device='cuda',dtype=q.dtype); kw=torch.randn_like(qw); cos=torch.randn(capacity,d//2,device='cuda',dtype=q.dtype); sin=torch.randn_like(cos)
         pos=torch.tensor([2048],device='cuda',dtype=torch.int32); kc=torch.empty(b,8,capacity,d,device='cuda',dtype=q.dtype); vc=torch.empty_like(kc)
         candidate=lambda:fused_qk_norm_rope_cache(q,k,v,qw,kw,cos,sin,pos,kc,vc)
-        candidate(); out['qk_cache']={'fused_ms':bench(candidate),'position':2048,'capacity':capacity,'note':'compare against exact framework sequence during model integration'}
+        def norm(x,w):
+            f=x.float(); return w*(f*torch.rsqrt(f.square().mean(-1,keepdim=True)+1e-6)).to(x.dtype)
+        def rope(x):
+            half=d//2; first,second=x[...,:half].float(),x[...,half:].float()
+            c,s=cos[2048].float(),sin[2048].float()
+            return torch.cat((first*c-second*s,second*c+first*s),-1).to(x.dtype)
+        def eager():
+            qout=rope(norm(q,qw)); kout=rope(norm(k,kw))
+            kc[:,:,2048]=kout; vc[:,:,2048]=v
+            return qout
+        candidate(); eager()
+        out['qk_cache']={'fused_ms':bench(candidate),'eager_ms':bench(eager),
+            'position':2048,'capacity':capacity,
+            'note':'hot allocation-inclusive eager sequence versus fused candidate'}
     a.output.parent.mkdir(parents=True,exist_ok=True); a.output.write_text(json.dumps(out,indent=2)+'\n'); print(json.dumps(out,indent=2))
 
 
