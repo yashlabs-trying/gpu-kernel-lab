@@ -12,6 +12,7 @@ def install(model, variant):
     from rmsnorm import triton_rmsnorm
     from qwen_rmsnorm import triton_qwen_rmsnorm
     from swiglu import triton_swiglu
+    from fused_projection_swiglu import fused_projection_swiglu
     count=0
     for module in model.modules():
         if variant in ('triton_rms','triton_both','qwen_rms') and type(module).__name__=='Qwen3RMSNorm':
@@ -20,9 +21,13 @@ def install(model, variant):
                 return kernel(hidden_states,self.weight,self.variance_epsilon)
             module.forward=types.MethodType(forward,module)
             count+=1
-        if variant in ('triton_swiglu','triton_both') and type(module).__name__=='Qwen3MLP':
+        if variant in ('triton_swiglu','triton_both','fused_mlp') and type(module).__name__=='Qwen3MLP':
             def forward(self, x):
-                return self.down_proj(triton_swiglu(self.gate_proj(x),self.up_proj(x)))
+                if variant == 'fused_mlp':
+                    hidden=fused_projection_swiglu(x,self.gate_proj.weight,self.up_proj.weight)
+                else:
+                    hidden=triton_swiglu(self.gate_proj(x),self.up_proj(x))
+                return self.down_proj(hidden)
             module.forward=types.MethodType(forward,module)
             count+=1
     return count
@@ -51,4 +56,4 @@ def validate_and_install(model,variant,lengths):
     return {'substituted_modules':count,'last_token_logits':rows,
             'reference_greedy_16':reference_tokens,'candidate_greedy_16':tokens,
             'greedy_16_match':tokens==reference_tokens,
-            'caution':'Small synthetic checks only. Legacy RMS/SwiGLU variants change rounding points; qwen_rms preserves those points but reduction order may differ. Not production-quality equivalence validation.'}
+            'caution':'Small synthetic checks only. Legacy variants change rounding points; model-ordered candidates preserve explicit storage boundaries but GEMM/reduction order may differ. Not production-quality equivalence validation.'}
