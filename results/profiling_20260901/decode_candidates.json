@@ -1,0 +1,155 @@
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "gemv": [
+    {
+      "name": "q",
+      "shape": [
+        1024,
+        2048
+      ],
+      "split_k": 1,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.010415781616718984,
+      "triton_ms": 0.023302483605473167
+    },
+    {
+      "name": "q",
+      "shape": [
+        1024,
+        2048
+      ],
+      "split_k": 2,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.010159883028570255,
+      "triton_ms": 0.01985799079329223
+    },
+    {
+      "name": "q",
+      "shape": [
+        1024,
+        2048
+      ],
+      "split_k": 4,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.010440399867366067,
+      "triton_ms": 0.015888915102242225
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        1024,
+        1024
+      ],
+      "split_k": 1,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.008118174302090284,
+      "triton_ms": 0.023062827690513592
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        1024,
+        1024
+      ],
+      "split_k": 2,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.008126509352249728,
+      "triton_ms": 0.01932947431059129
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        1024,
+        1024
+      ],
+      "split_k": 4,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.008135147914752719,
+      "triton_ms": 0.013153848716668283
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        1024,
+        3072
+      ],
+      "split_k": 1,
+      "correct": true,
+      "max_abs": 0.015625,
+      "torch_ms": 0.015787331701451263,
+      "triton_ms": 0.02377851309626482
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        1024,
+        3072
+      ],
+      "split_k": 2,
+      "correct": true,
+      "max_abs": 0.03125,
+      "torch_ms": 0.01607652896098674,
+      "triton_ms": 0.024013164734439332
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        1024,
+        3072
+      ],
+      "split_k": 4,
+      "correct": true,
+      "max_abs": 0.015625,
+      "torch_ms": 0.016069180813061183,
+      "triton_ms": 0.018176408948257883
+    },
+    {
+      "name": "down",
+      "shape": [
+        3072,
+        1024
+      ],
+      "split_k": 1,
+      "correct": false,
+      "max_abs": 1.0,
+      "torch_ms": 0.017849974887088893,
+      "triton_ms": 0.0604309807481103
+    },
+    {
+      "name": "down",
+      "shape": [
+        3072,
+        1024
+      ],
+      "split_k": 2,
+      "correct": false,
+      "max_abs": 1.0,
+      "torch_ms": 0.01782379635311782,
+      "triton_ms": 0.04583413698252915
+    },
+    {
+      "name": "down",
+      "shape": [
+        3072,
+        1024
+      ],
+      "split_k": 4,
+      "correct": false,
+      "max_abs": 1.0,
+      "torch_ms": 0.01782008550189277,
+      "triton_ms": 0.027016288365741246
+    }
+  ],
+  "qk_cache": {
+    "fused_ms": 0.08398500762812726,
+    "position": 2048,
+    "capacity": 4096,
+    "note": "compare against exact framework sequence during model integration"
+  }
+}

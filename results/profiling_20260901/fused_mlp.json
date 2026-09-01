@@ -1,0 +1,85 @@
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "dtype": "bfloat16",
+  "rows": [
+    {
+      "m": 1,
+      "shape": [
+        1,
+        1024,
+        3072
+      ],
+      "correct": true,
+      "max_abs": 6.103515625e-05,
+      "mean_abs": 1.9868215517249155e-08,
+      "eager_ms": 0.03450534376174473,
+      "fused_ms": 0.031589105903626756
+    },
+    {
+      "m": 16,
+      "shape": [
+        16,
+        1024,
+        3072
+      ],
+      "correct": true,
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "eager_ms": 0.03339316667272495,
+      "fused_ms": 0.023888447048175186
+    },
+    {
+      "m": 128,
+      "shape": [
+        128,
+        1024,
+        3072
+      ],
+      "correct": true,
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "eager_ms": 0.05280530617739358,
+      "fused_ms": 0.03548610692932492
+    },
+    {
+      "m": 512,
+      "shape": [
+        512,
+        1024,
+        3072
+      ],
+      "correct": true,
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "eager_ms": 0.17287383230679343,
+      "fused_ms": 0.10608085435686854
+    },
+    {
+      "m": 2048,
+      "shape": [
+        2048,
+        1024,
+        3072
+      ],
+      "correct": true,
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "eager_ms": 0.5205989659649052,
+      "fused_ms": 0.4077989213869972
+    },
+    {
+      "m": 4096,
+      "shape": [
+        4096,
+        1024,
+        3072
+      ],
+      "correct": true,
+      "max_abs": 0.0,
+      "mean_abs": 0.0,
+      "eager_ms": 0.8992932938280843,
+      "fused_ms": 0.8365712966808982
+    }
+  ],
+  "warning": "hot microbenchmark; inspect registers/spills and run full-model validation"
+}

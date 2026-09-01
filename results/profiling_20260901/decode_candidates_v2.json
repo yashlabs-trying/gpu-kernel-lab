@@ -1,0 +1,156 @@
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "gemv": [
+    {
+      "name": "q",
+      "shape": [
+        1024,
+        2048
+      ],
+      "split_k": 1,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.01037805892904348,
+      "triton_ms": 0.022888797658688398
+    },
+    {
+      "name": "q",
+      "shape": [
+        1024,
+        2048
+      ],
+      "split_k": 2,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.01040263868195621,
+      "triton_ms": 0.01973710545126073
+    },
+    {
+      "name": "q",
+      "shape": [
+        1024,
+        2048
+      ],
+      "split_k": 4,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.010121142686897261,
+      "triton_ms": 0.015894576124807474
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        1024,
+        1024
+      ],
+      "split_k": 1,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.007835598780957534,
+      "triton_ms": 0.02292908088776865
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        1024,
+        1024
+      ],
+      "split_k": 2,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.008103081722471251,
+      "triton_ms": 0.01929301556323566
+    },
+    {
+      "name": "k_or_v",
+      "shape": [
+        1024,
+        1024
+      ],
+      "split_k": 4,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.007825774112668061,
+      "triton_ms": 0.013101075611570302
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        1024,
+        3072
+      ],
+      "split_k": 1,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.015779013529656424,
+      "triton_ms": 0.02393357634737894
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        1024,
+        3072
+      ],
+      "split_k": 2,
+      "correct": true,
+      "max_abs": 0.03125,
+      "torch_ms": 0.01581216486732638,
+      "triton_ms": 0.02391348208030909
+    },
+    {
+      "name": "gate_or_up",
+      "shape": [
+        1024,
+        3072
+      ],
+      "split_k": 4,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.01606556084915632,
+      "triton_ms": 0.01838546419476575
+    },
+    {
+      "name": "down",
+      "shape": [
+        3072,
+        1024
+      ],
+      "split_k": 1,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.017763819743789013,
+      "triton_ms": 0.06048642460171228
+    },
+    {
+      "name": "down",
+      "shape": [
+        3072,
+        1024
+      ],
+      "split_k": 2,
+      "correct": true,
+      "max_abs": 0.0,
+      "torch_ms": 0.01776906535132561,
+      "triton_ms": 0.04625388960078083
+    },
+    {
+      "name": "down",
+      "shape": [
+        3072,
+        1024
+      ],
+      "split_k": 4,
+      "correct": true,
+      "max_abs": 0.00390625,
+      "torch_ms": 0.017771757573793873,
+      "triton_ms": 0.02710371792505163
+    }
+  ],
+  "qk_cache": {
+    "fused_ms": 0.0047270122655847496,
+    "eager_ms": 0.1206104589319936,
+    "position": 2048,
+    "capacity": 4096,
+    "note": "hot allocation-inclusive eager sequence versus fused candidate"
+  }
+}

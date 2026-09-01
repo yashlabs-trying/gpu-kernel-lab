@@ -1,0 +1,342 @@
+{
+  "torch": "2.8.0+cu128",
+  "transformers": "5.16.1",
+  "backend": "sdpa",
+  "dtype": "bfloat16",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "config": {
+    "transformers_version": "5.16.1",
+    "architectures": [
+      "Qwen3ForCausalLM"
+    ],
+    "output_hidden_states": false,
+    "return_dict": true,
+    "dtype": "bfloat16",
+    "chunk_size_feed_forward": 0,
+    "is_encoder_decoder": false,
+    "id2label": {
+      "0": "LABEL_0",
+      "1": "LABEL_1"
+    },
+    "label2id": {
+      "LABEL_0": 0,
+      "LABEL_1": 1
+    },
+    "problem_type": null,
+    "vocab_size": 151936,
+    "hidden_size": 1024,
+    "intermediate_size": 3072,
+    "num_hidden_layers": 28,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 8,
+    "head_dim": 128,
+    "hidden_act": "silu",
+    "max_position_embeddings": 40960,
+    "initializer_range": 0.02,
+    "rms_norm_eps": 1e-06,
+    "use_cache": true,
+    "tie_word_embeddings": true,
+    "rope_parameters": {
+      "rope_theta": 1000000,
+      "rope_type": "default"
+    },
+    "attention_bias": false,
+    "use_sliding_window": false,
+    "sliding_window": null,
+    "max_window_layers": 28,
+    "layer_types": [
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention"
+    ],
+    "attention_dropout": 0.0,
+    "pad_token_id": null,
+    "bos_token_id": 151643,
+    "eos_token_id": 151645,
+    "_name_or_path": "Qwen/Qwen3-0.6B",
+    "model_type": "qwen3",
+    "output_attentions": false
+  },
+  "workload": "batch=1; cache enabled; last-token logits; decode includes argmax and mask growth",
+  "warmup": 2,
+  "repeats": 5,
+  "measurements": [
+    {
+      "phase": "prefill",
+      "initial_context": 128,
+      "decode_steps": null,
+      "gpu_median_ms": 19.933183670043945,
+      "wall_median_ms": 19.94937565177679,
+      "gpu_samples_ms": [
+        19.742591857910156,
+        19.924991607666016,
+        20.09600067138672,
+        20.099071502685547,
+        19.933183670043945
+      ],
+      "wall_samples_ms": [
+        19.768675789237022,
+        19.943024031817913,
+        20.11259365826845,
+        20.115811377763748,
+        19.94937565177679
+      ],
+      "peak_allocated_gib": 1.1350879669189453
+    },
+    {
+      "phase": "decode",
+      "initial_context": 128,
+      "decode_steps": 16,
+      "gpu_median_ms": 18.832895278930664,
+      "wall_median_ms": 18.834077171050012,
+      "gpu_samples_ms": [
+        18.83603286743164,
+        18.812664031982422,
+        18.91814422607422,
+        18.832895278930664,
+        18.804672241210938
+      ],
+      "wall_samples_ms": [
+        18.837531795725226,
+        18.813723814673722,
+        18.919269903562963,
+        18.834077171050012,
+        18.8059190986678
+      ],
+      "peak_allocated_gib": 1.134134292602539
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 512,
+      "decode_steps": null,
+      "gpu_median_ms": 20.158464431762695,
+      "wall_median_ms": 20.1740600168705,
+      "gpu_samples_ms": [
+        20.032512664794922,
+        20.04275131225586,
+        20.363391876220703,
+        20.39084815979004,
+        20.158464431762695
+      ],
+      "wall_samples_ms": [
+        20.05254104733467,
+        20.058823749423027,
+        20.37910744547844,
+        20.4074215143919,
+        20.1740600168705
+      ],
+      "peak_allocated_gib": 1.186793327331543
+    },
+    {
+      "phase": "decode",
+      "initial_context": 512,
+      "decode_steps": 16,
+      "gpu_median_ms": 18.79859161376953,
+      "wall_median_ms": 18.80005921702832,
+      "gpu_samples_ms": [
+        18.79859161376953,
+        18.716535568237305,
+        18.766271591186523,
+        18.952831268310547,
+        19.013439178466797
+      ],
+      "wall_samples_ms": [
+        18.80005921702832,
+        18.71769188437611,
+        18.76736496342346,
+        18.954007362481207,
+        19.015053170733154
+      ],
+      "peak_allocated_gib": 1.1996564865112305
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 2048,
+      "decode_steps": null,
+      "gpu_median_ms": 51.27987289428711,
+      "wall_median_ms": 51.29892099648714,
+      "gpu_samples_ms": [
+        54.94793701171875,
+        51.11705780029297,
+        51.05049514770508,
+        51.35859298706055,
+        51.27987289428711
+      ],
+      "wall_samples_ms": [
+        54.96986024081707,
+        51.13398935645819,
+        51.06799677014351,
+        51.377750001847744,
+        51.29892099648714
+      ],
+      "peak_allocated_gib": 1.3887319564819336
+    },
+    {
+      "phase": "decode",
+      "initial_context": 2048,
+      "decode_steps": 16,
+      "gpu_median_ms": 19.169727325439453,
+      "wall_median_ms": 19.171160412952304,
+      "gpu_samples_ms": [
+        19.181503295898438,
+        19.187904357910156,
+        19.169727325439453,
+        19.107391357421875,
+        18.91481590270996
+      ],
+      "wall_samples_ms": [
+        19.183095369953662,
+        19.18921881588176,
+        19.171160412952304,
+        19.108816981315613,
+        18.916651199106127
+      ],
+      "peak_allocated_gib": 1.3429174423217773
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 4096,
+      "decode_steps": null,
+      "gpu_median_ms": 110.80191802978516,
+      "wall_median_ms": 110.85430718958378,
+      "gpu_samples_ms": [
+        110.53874969482422,
+        110.80191802978516,
+        111.246337890625,
+        111.11116790771484,
+        110.72188568115234
+      ],
+      "wall_samples_ms": [
+        110.57601124048233,
+        110.85430718958378,
+        111.2930541858077,
+        111.15125752985477,
+        110.75830552726984
+      ],
+      "peak_allocated_gib": 1.659285545349121
+    },
+    {
+      "phase": "decode",
+      "initial_context": 4096,
+      "decode_steps": 16,
+      "gpu_median_ms": 19.19340705871582,
+      "wall_median_ms": 19.195449363905936,
+      "gpu_samples_ms": [
+        19.085695266723633,
+        19.234943389892578,
+        19.235776901245117,
+        19.19340705871582,
+        18.83558464050293
+      ],
+      "wall_samples_ms": [
+        19.088205008301884,
+        19.23659013118595,
+        19.237838685512543,
+        19.195449363905936,
+        18.837060953956097
+      ],
+      "peak_allocated_gib": 1.5656194686889648
+    }
+  ],
+  "variant": "qwen_rms",
+  "ablation_validation": {
+    "substituted_modules": 113,
+    "last_token_logits": [
+      {
+        "length": 128,
+        "max_abs_logit_error": 0.40625,
+        "mean_abs_logit_error": 0.07115402817726135,
+        "logit_cosine": 0.9995869994163513,
+        "same_argmax": true
+      },
+      {
+        "length": 512,
+        "max_abs_logit_error": 0.125,
+        "mean_abs_logit_error": 0.024746300652623177,
+        "logit_cosine": 0.9999095797538757,
+        "same_argmax": true
+      },
+      {
+        "length": 2048,
+        "max_abs_logit_error": 0.09375,
+        "mean_abs_logit_error": 0.016732189804315567,
+        "logit_cosine": 0.9999409317970276,
+        "same_argmax": true
+      },
+      {
+        "length": 4096,
+        "max_abs_logit_error": 0.15625,
+        "mean_abs_logit_error": 0.022491445764899254,
+        "logit_cosine": 0.9999146461486816,
+        "same_argmax": true
+      }
+    ],
+    "reference_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "candidate_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "greedy_16_match": true,
+    "caution": "Small synthetic checks only. Legacy variants change rounding points; model-ordered candidates preserve explicit storage boundaries but GEMM/reduction order may differ. Not production-quality equivalence validation."
+  }
+}
