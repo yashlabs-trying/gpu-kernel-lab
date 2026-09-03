@@ -43,7 +43,7 @@ def collect_calibration(model):
 
 
 @torch.inference_mode()
-def install_stage2(model):
+def install_stage2(model, *, hybrid=False):
     if getattr(model,'_kernellab_int8_info',None) is not None:
         raise ValueError('INT8 adapter already installed')
     extension()  # compile outside inference timing
@@ -58,8 +58,12 @@ def install_stage2(model):
         model.register_forward_pre_hook(detect,with_kwargs=True)
         calibration, storage, count = {}, 0, 0
 
-        def pack(name,weight):
+        def pack(name,weight,quant=True):
             nonlocal storage
+            if not quant:
+                storage += weight.numel()*weight.element_size()
+                calibration[name] = {'dtype':'BF16','bytes':weight.numel()*weight.element_size()}
+                return weight
             packed = quantize_int8(weight,samples[name])
             storage += packed.storage_bytes
             calibration[name] = {'alpha':packed.alpha,'local_mse':packed.calibration_mse,'bytes':packed.storage_bytes}
@@ -79,7 +83,7 @@ def install_stage2(model):
             if any(m.bias is not None for m in (attention.q_proj,attention.k_proj,attention.v_proj,attention.o_proj,mlp.gate_proj,mlp.up_proj,mlp.down_proj)):
                 raise ValueError('Qwen bias-free projections required')
             sizes = [m.out_features for m in (attention.q_proj,attention.k_proj,attention.v_proj)]
-            qkv = pack(prefix+'.self_attn.q_proj',torch.cat([m.weight for m in (attention.q_proj,attention.k_proj,attention.v_proj)]))
+            qkv = pack(prefix+'.self_attn.q_proj',torch.cat([m.weight for m in (attention.q_proj,attention.k_proj,attention.v_proj)]),quant=not hybrid)
             # Closure-local cache reset at every attention call. q_proj executes
             # before k_proj and v_proj in the inspected Qwen3 implementation.
             def attach_qkv(attention,packed,sizes):
@@ -100,21 +104,24 @@ def install_stage2(model):
                         return pending.pop(slot).reshape(*x.shape[:-1],sizes[slot])
                     module.forward = types.MethodType(forward,module)
             attach_qkv(attention,qkv,sizes)
-            linear(attention.o_proj,pack(prefix+'.self_attn.o_proj',attention.o_proj.weight))
+            if not hybrid:
+                linear(attention.o_proj,pack(prefix+'.self_attn.o_proj',attention.o_proj.weight))
             gu = pack(prefix+'.mlp.gate_proj',torch.cat((mlp.gate_proj.weight,mlp.up_proj.weight)))
-            linear(mlp.down_proj,pack(prefix+'.mlp.down_proj',mlp.down_proj.weight))
+            if not hybrid:
+                linear(mlp.down_proj,pack(prefix+'.mlp.down_proj',mlp.down_proj.weight))
             def attach_mlp(mlp,packed):
                 original = mlp.forward
                 def forward(self,x):
                     if not state['decode'] or x.numel()!=x.shape[-1]:
                         return original(x)
-                    hidden = project(x.reshape(-1),packed,swiglu=True).reshape(*x.shape[:-1],packed.data.shape[0]//2)
+                    hidden = project(x.reshape(-1),packed,swiglu=True,warps=8 if hybrid else 4).reshape(*x.shape[:-1],packed.data.shape[0]//2)
                     return self.down_proj(hidden)
                 mlp.forward = types.MethodType(forward,mlp)
             attach_mlp(mlp,gu)
-            count += 7
+            count += 5 if hybrid else 7
         model._kernellab_int8_info = {'linear_modules':count,'packed_bytes_added':storage,
             'method':'W8A16 AWQ-inspired channel scale search, alpha 0/.5/1; not full AWQ',
+            'hybrid':hybrid,'layout':'BF16 combined QKV + W8 gate/up/SwiGLU, original o/down' if hybrid else 'W8 combined QKV + o + gate/up/SwiGLU + down',
             'calibration':calibration,'calibration_texts':CALIBRATION,
             'warning':'Dense weights retained. Decode only, M=1, BF16, eager, no concurrent forwards. LM head stays BF16 unless separate head adapter installed. Split-KV attention is NOT integrated.'}
         return count
