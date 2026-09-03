@@ -1,0 +1,10 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 5006.12it/s]
+{"substituted_modules": 113, "last_token_logits": [{"length": 2048, "max_abs_logit_error": 0.09375, "mean_abs_logit_error": 0.016732189804315567, "logit_cosine": 0.9999409317970276, "same_argmax": true}], "reference_greedy_16": [[8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835]], "candidate_greedy_16": [[8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835]], "greedy_16_match": true, "quantization_info": null, "int8_info": null, "caution": "Small synthetic checks only. INT4 decode is lossy and retains original weights for prefill; matching prefill logits does not validate quantized decode. Other candidates may differ in rounding/reduction order. Not production-quality equivalence validation."}
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-0032.qdstrm'
+[1/1] [0%                          ] rms_trace.nsys-repProcessing events...
+[1/1] [0%                          ] rms_trace.nsys-rep[1/1] [6%                          ] rms_trace.nsys-rep[1/1] [===========52%              ] rms_trace.nsys-rep[1/1] [========================98% ] rms_trace.nsys-rep[1/1] [==================75%       ] rms_trace.nsys-rep[1/1] [========================100%] rms_trace.nsys-rep[1/1] [========================100%] rms_trace.nsys-rep
+{"phase": "decode", "initial_context": 2048, "decode_steps": 4, "gpu_median_ms": 30.955751419067383, "wall_median_ms": 31.010656151920557, "gpu_samples_ms": [30.955751419067383], "wall_samples_ms": [31.010656151920557], "peak_allocated_gib": 1.3416128158569336}
+Generated:
+	/workspace/gpu-kernel-lab/results/decode_stage2_20260903/rms_trace.nsys-rep

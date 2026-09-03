@@ -1,0 +1,247 @@
+{
+  "torch": "2.8.0+cu128",
+  "transformers": "5.16.1",
+  "backend": "sdpa",
+  "dtype": "bfloat16",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "config": {
+    "transformers_version": "5.16.1",
+    "architectures": [
+      "Qwen3ForCausalLM"
+    ],
+    "output_hidden_states": false,
+    "return_dict": true,
+    "dtype": "bfloat16",
+    "chunk_size_feed_forward": 0,
+    "is_encoder_decoder": false,
+    "id2label": {
+      "0": "LABEL_0",
+      "1": "LABEL_1"
+    },
+    "label2id": {
+      "LABEL_0": 0,
+      "LABEL_1": 1
+    },
+    "problem_type": null,
+    "vocab_size": 151936,
+    "hidden_size": 1024,
+    "intermediate_size": 3072,
+    "num_hidden_layers": 28,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 8,
+    "head_dim": 128,
+    "hidden_act": "silu",
+    "max_position_embeddings": 40960,
+    "initializer_range": 0.02,
+    "rms_norm_eps": 1e-06,
+    "use_cache": true,
+    "tie_word_embeddings": true,
+    "rope_parameters": {
+      "rope_theta": 1000000,
+      "rope_type": "default"
+    },
+    "attention_bias": false,
+    "use_sliding_window": false,
+    "sliding_window": null,
+    "max_window_layers": 28,
+    "layer_types": [
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention"
+    ],
+    "attention_dropout": 0.0,
+    "pad_token_id": null,
+    "bos_token_id": 151643,
+    "eos_token_id": 151645,
+    "_name_or_path": "Qwen/Qwen3-0.6B",
+    "model_type": "qwen3",
+    "output_attentions": false
+  },
+  "workload": "batch=1; cache enabled; last-token logits; decode includes argmax and mask growth",
+  "warmup": 2,
+  "repeats": 5,
+  "measurements": [
+    {
+      "phase": "prefill",
+      "initial_context": 2048,
+      "decode_steps": null,
+      "gpu_median_ms": 52.6354866027832,
+      "wall_median_ms": 52.65629477798939,
+      "gpu_samples_ms": [
+        52.81894302368164,
+        52.72780990600586,
+        52.6354866027832,
+        52.63257598876953,
+        52.57932662963867
+      ],
+      "wall_samples_ms": [
+        52.87608690559864,
+        52.747877314686775,
+        52.65629477798939,
+        52.65451595187187,
+        52.60023660957813
+      ],
+      "peak_allocated_gib": 1.4657087326049805
+    },
+    {
+      "phase": "decode",
+      "initial_context": 2048,
+      "decode_steps": 16,
+      "gpu_median_ms": 22.800447463989258,
+      "wall_median_ms": 22.802789695560932,
+      "gpu_samples_ms": [
+        22.72307014465332,
+        24.460031509399414,
+        22.318912506103516,
+        22.800447463989258,
+        23.198911666870117
+      ],
+      "wall_samples_ms": [
+        22.7252715267241,
+        24.46212840732187,
+        22.320470539852977,
+        22.802789695560932,
+        23.20075628813356
+      ],
+      "peak_allocated_gib": 1.4198942184448242
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 4096,
+      "decode_steps": null,
+      "gpu_median_ms": 114.22207641601562,
+      "wall_median_ms": 114.24536816775799,
+      "gpu_samples_ms": [
+        113.85651397705078,
+        114.94707489013672,
+        114.18511962890625,
+        114.22207641601562,
+        114.4882583618164
+      ],
+      "wall_samples_ms": [
+        113.88255655765533,
+        114.9747483432293,
+        114.20824937522411,
+        114.24536816775799,
+        114.50942605733871
+      ],
+      "peak_allocated_gib": 1.736262321472168
+    },
+    {
+      "phase": "decode",
+      "initial_context": 4096,
+      "decode_steps": 16,
+      "gpu_median_ms": 23.482112884521484,
+      "wall_median_ms": 23.483893368393183,
+      "gpu_samples_ms": [
+        22.466751098632812,
+        22.482112884521484,
+        23.482112884521484,
+        25.107711791992188,
+        25.328441619873047
+      ],
+      "wall_samples_ms": [
+        22.468590061180294,
+        22.483773296698928,
+        23.483893368393183,
+        25.109274894930422,
+        25.330243282951415
+      ],
+      "peak_allocated_gib": 1.6425962448120117
+    }
+  ],
+  "variant": "qwen_rms_int4_head",
+  "ablation_validation": {
+    "substituted_modules": 114,
+    "last_token_logits": [
+      {
+        "length": 2048,
+        "max_abs_logit_error": 0.09375,
+        "mean_abs_logit_error": 0.016732189804315567,
+        "logit_cosine": 0.9999409317970276,
+        "same_argmax": true
+      },
+      {
+        "length": 4096,
+        "max_abs_logit_error": 0.15625,
+        "mean_abs_logit_error": 0.022491445764899254,
+        "logit_cosine": 0.9999146461486816,
+        "same_argmax": true
+      }
+    ],
+    "reference_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "candidate_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "greedy_16_match": true,
+    "quantization_info": {
+      "packed_bytes_added": 82653184,
+      "linear_modules": 1,
+      "lm_head_only": true,
+      "warning": "Dense weights retained for prefill; GPU memory increases in this A/B adapter. Full logits retained for Transformers generation; compact top-k is tested separately."
+    },
+    "int8_info": null,
+    "caution": "Small synthetic checks only. INT4 decode is lossy and retains original weights for prefill; matching prefill logits does not validate quantized decode. Other candidates may differ in rounding/reduction order. Not production-quality equivalence validation."
+  }
+}
