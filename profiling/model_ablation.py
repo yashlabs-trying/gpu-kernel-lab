@@ -6,6 +6,9 @@ import torch
 
 
 def install(model, variant):
+    if variant == 'qwen_rms_cuda_hybrid':
+        from decode_stage2_ablation import install_stage2
+        return install(model, 'qwen_rms') + install_stage2(model, hybrid=True)
     if variant == 'qwen_rms_int4_head':
         from int4_model_ablation import install_int4_decode
         return install(model, 'qwen_rms') + install_int4_decode(model, lm_head_only=True)

@@ -11,7 +11,7 @@ from model_ablation import install
 @torch.inference_mode()
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('--variant',choices=['qwen_rms_int4_head','qwen_rms_int8_cuda','qwen_rms_int8_cuda_int4_head'],required=True)
+    p.add_argument('--variant',choices=['qwen_rms_int4_head','qwen_rms_int8_cuda','qwen_rms_int8_cuda_int4_head','qwen_rms_cuda_hybrid'],required=True)
     p.add_argument('--output',type=Path,required=True)
     args = p.parse_args()
     model = AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-0.6B',dtype=torch.bfloat16,attn_implementation='sdpa',local_files_only=True).eval().cuda()
