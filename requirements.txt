@@ -5,3 +5,4 @@ huggingface-hub>=0.30,<2
 safetensors>=0.4,<1
 psutil>=5.9,<8
 pytest>=8,<10
+ninja>=1.11,<2
