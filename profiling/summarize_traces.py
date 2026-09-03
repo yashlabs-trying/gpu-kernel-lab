@@ -1,4 +1,5 @@
 """Summarize Nsight SQLite data without pretending launch metadata is counters."""
+import argparse
 import json
 import sqlite3
 from collections import defaultdict
@@ -65,7 +66,9 @@ def summarize(path):
 
 
 def main():
-    root = Path('results/profiling_20260831')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--root', type=Path, default=Path('results/profiling_20260831'))
+    root = parser.parse_args().root
     results = [summarize(path) for path in sorted(root.glob('*.sqlite'))]
     (root / 'timeline_summary.json').write_text(json.dumps(results, indent=2) + '\n')
     for entry in results:
