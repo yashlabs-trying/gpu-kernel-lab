@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 
 
-def install_int4_decode(model):
+def install_int4_decode(model, *, lm_head_only=False):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'learning/09_int4'))
     from quantization import quantize_int4
     from kernels import int4_gemv
@@ -21,7 +21,9 @@ def install_int4_decode(model):
         state['single_token'] = ids is not None and ids.ndim == 2 and tuple(ids.shape) == (1,1)
 
     count, packed_bytes = 0, 0
-    for module in model.modules():
+    for name, module in model.named_modules():
+        if lm_head_only and name != 'lm_head':
+            continue
         if isinstance(module, torch.nn.Linear):
             if module.bias is not None:
                 raise ValueError('this Qwen ablation supports bias-free projections only')
@@ -40,6 +42,6 @@ def install_int4_decode(model):
     model.register_forward_pre_hook(detect_decode, with_kwargs=True)
     model._kernellab_int4_installed = True
     model._kernellab_int4_info = {
-        'packed_bytes_added':packed_bytes, 'linear_modules':count,
+        'packed_bytes_added':packed_bytes, 'linear_modules':count, 'lm_head_only':lm_head_only,
         'warning':'Dense weights retained for prefill; GPU memory increases in this A/B adapter. Full logits retained for Transformers generation; compact top-k is tested separately.'}
     return count

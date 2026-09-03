@@ -6,6 +6,16 @@ import torch
 
 
 def install(model, variant):
+    if variant == 'qwen_rms_int4_head':
+        from int4_model_ablation import install_int4_decode
+        return install(model, 'qwen_rms') + install_int4_decode(model, lm_head_only=True)
+    if variant in ('qwen_rms_int8_cuda', 'qwen_rms_int8_cuda_int4_head'):
+        from decode_stage2_ablation import install_stage2
+        count = install(model, 'qwen_rms') + install_stage2(model)
+        if variant.endswith('_int4_head'):
+            from int4_model_ablation import install_int4_decode
+            count += install_int4_decode(model, lm_head_only=True)
+        return count
     if variant == 'int4_decode':
         from int4_model_ablation import install_int4_decode
         return install_int4_decode(model)
@@ -60,4 +70,5 @@ def validate_and_install(model,variant,lengths):
             'reference_greedy_16':reference_tokens,'candidate_greedy_16':tokens,
             'greedy_16_match':tokens==reference_tokens,
             'quantization_info':getattr(model,'_kernellab_int4_info',None),
+            'int8_info':getattr(model,'_kernellab_int8_info',None),
             'caution':'Small synthetic checks only. INT4 decode is lossy and retains original weights for prefill; matching prefill logits does not validate quantized decode. Other candidates may differ in rounding/reduction order. Not production-quality equivalence validation.'}
