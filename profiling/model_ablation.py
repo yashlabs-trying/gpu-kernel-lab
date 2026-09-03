@@ -6,6 +6,9 @@ import torch
 
 
 def install(model, variant):
+    if variant == 'int4_decode':
+        from int4_model_ablation import install_int4_decode
+        return install_int4_decode(model)
     root=Path(__file__).resolve().parents[1]
     sys.path.insert(0,str(root/'learning/03_rmsnorm'))
     sys.path.insert(0,str(root/'learning/02_swiglu'))
@@ -56,4 +59,5 @@ def validate_and_install(model,variant,lengths):
     return {'substituted_modules':count,'last_token_logits':rows,
             'reference_greedy_16':reference_tokens,'candidate_greedy_16':tokens,
             'greedy_16_match':tokens==reference_tokens,
-            'caution':'Small synthetic checks only. Legacy variants change rounding points; model-ordered candidates preserve explicit storage boundaries but GEMM/reduction order may differ. Not production-quality equivalence validation.'}
+            'quantization_info':getattr(model,'_kernellab_int4_info',None),
+            'caution':'Small synthetic checks only. INT4 decode is lossy and retains original weights for prefill; matching prefill logits does not validate quantized decode. Other candidates may differ in rounding/reduction order. Not production-quality equivalence validation.'}
