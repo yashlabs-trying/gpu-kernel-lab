@@ -10,7 +10,7 @@ def category(name):
     lower = name.lower()
     if 'flash' in lower:
         return 'flash_attention'
-    if 'gemm' in lower or 'gemv' in lower:
+    if 'gemm' in lower or 'gemv' in lower or lower.startswith('void projection<'):
         return 'gemm_gemv'
     if 'catarray' in lower:
         return 'concatenation'
