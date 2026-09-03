@@ -18,3 +18,19 @@ def test_split(length,dtype,tile):
     expected = (scores.softmax(-1)[...,None]*vr).sum(1).to(dtype)
     actual = split_kv_attention(q,k,v,tile)
     torch.testing.assert_close(actual,expected,rtol=.02,atol=.002)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(),reason='CUDA required')
+@pytest.mark.parametrize('magnitude',[0.,20.])
+def test_stable_softmax_d64(magnitude):
+    torch.manual_seed(3)
+    q = torch.randn(8,64,device='cuda',dtype=torch.bfloat16)*magnitude
+    k = torch.randn(8,257,64,device='cuda',dtype=torch.bfloat16)
+    v = torch.randn_like(k)
+    scores = (q.float()[:,None,:]*k.float()).sum(-1)/8
+    expected = (scores.softmax(-1)[...,None]*v.float()).sum(1).bfloat16()
+    actual = split_kv_attention(q,k,v,128)
+    assert torch.isfinite(actual).all()
+    torch.testing.assert_close(actual,expected,rtol=.02,atol=.002)
+    with pytest.raises(ValueError):
+        split_kv_attention(q,k[:,:0],v[:,:0])
