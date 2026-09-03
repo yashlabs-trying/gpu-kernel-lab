@@ -1,0 +1,9 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 5147.36it/s]
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-6a10.qdstrm'
+[1/1] [0%                          ] baseline_decode_trace.nsys-repProcessing events...
+[1/1] [0%                          ] baseline_decode_trace.nsys-rep[1/1] [5%                          ] baseline_decode_trace.nsys-rep[1/1] [===========52%              ] baseline_decode_trace.nsys-rep[1/1] [========================98% ] baseline_decode_trace.nsys-rep[1/1] [==================75%       ] baseline_decode_trace.nsys-rep[1/1] [========================100%] baseline_decode_trace.nsys-rep[1/1] [========================100%] baseline_decode_trace.nsys-rep
+{"phase": "decode", "initial_context": 2048, "decode_steps": 4, "gpu_median_ms": 38.541465759277344, "wall_median_ms": 38.57139404863119, "gpu_samples_ms": [38.541465759277344], "wall_samples_ms": [38.57139404863119], "peak_allocated_gib": 1.3416128158569336}
+Generated:
+	/workspace/gpu-kernel-lab/results/profiling_20260903/baseline_decode_trace.nsys-rep
