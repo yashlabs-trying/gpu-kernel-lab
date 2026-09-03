@@ -1,0 +1,242 @@
+{
+  "torch": "2.8.0+cu128",
+  "transformers": "5.16.1",
+  "backend": "sdpa",
+  "dtype": "bfloat16",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "config": {
+    "transformers_version": "5.16.1",
+    "architectures": [
+      "Qwen3ForCausalLM"
+    ],
+    "output_hidden_states": false,
+    "return_dict": true,
+    "dtype": "bfloat16",
+    "chunk_size_feed_forward": 0,
+    "is_encoder_decoder": false,
+    "id2label": {
+      "0": "LABEL_0",
+      "1": "LABEL_1"
+    },
+    "label2id": {
+      "LABEL_0": 0,
+      "LABEL_1": 1
+    },
+    "problem_type": null,
+    "vocab_size": 151936,
+    "hidden_size": 1024,
+    "intermediate_size": 3072,
+    "num_hidden_layers": 28,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 8,
+    "head_dim": 128,
+    "hidden_act": "silu",
+    "max_position_embeddings": 40960,
+    "initializer_range": 0.02,
+    "rms_norm_eps": 1e-06,
+    "use_cache": true,
+    "tie_word_embeddings": true,
+    "rope_parameters": {
+      "rope_theta": 1000000,
+      "rope_type": "default"
+    },
+    "attention_bias": false,
+    "use_sliding_window": false,
+    "sliding_window": null,
+    "max_window_layers": 28,
+    "layer_types": [
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention"
+    ],
+    "attention_dropout": 0.0,
+    "pad_token_id": null,
+    "bos_token_id": 151643,
+    "eos_token_id": 151645,
+    "_name_or_path": "Qwen/Qwen3-0.6B",
+    "model_type": "qwen3",
+    "output_attentions": false
+  },
+  "workload": "batch=1; cache enabled; last-token logits; decode includes argmax and mask growth",
+  "warmup": 2,
+  "repeats": 5,
+  "measurements": [
+    {
+      "phase": "prefill",
+      "initial_context": 2048,
+      "decode_steps": null,
+      "gpu_median_ms": 52.73401641845703,
+      "wall_median_ms": 52.754756063222885,
+      "gpu_samples_ms": [
+        53.4219856262207,
+        52.672447204589844,
+        52.67558288574219,
+        52.73401641845703,
+        52.761600494384766
+      ],
+      "wall_samples_ms": [
+        53.60979586839676,
+        52.694205194711685,
+        52.696747705340385,
+        52.754756063222885,
+        52.7820959687233
+      ],
+      "peak_allocated_gib": 1.3887319564819336
+    },
+    {
+      "phase": "decode",
+      "initial_context": 2048,
+      "decode_steps": 16,
+      "gpu_median_ms": 23.977651596069336,
+      "wall_median_ms": 23.981122416444123,
+      "gpu_samples_ms": [
+        23.977651596069336,
+        23.943296432495117,
+        25.5665340423584,
+        25.388736724853516,
+        23.055871963500977
+      ],
+      "wall_samples_ms": [
+        23.981122416444123,
+        23.946288623847067,
+        25.56831983383745,
+        25.39063896983862,
+        23.0574473971501
+      ],
+      "peak_allocated_gib": 1.3429174423217773
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 4096,
+      "decode_steps": null,
+      "gpu_median_ms": 113.4958724975586,
+      "wall_median_ms": 113.5216262191534,
+      "gpu_samples_ms": [
+        113.61074829101562,
+        113.46943664550781,
+        113.68447875976562,
+        113.47865295410156,
+        113.4958724975586
+      ],
+      "wall_samples_ms": [
+        113.63884434103966,
+        113.49383555352688,
+        113.7133277952671,
+        113.50514553487301,
+        113.5216262191534
+      ],
+      "peak_allocated_gib": 1.659285545349121
+    },
+    {
+      "phase": "decode",
+      "initial_context": 4096,
+      "decode_steps": 16,
+      "gpu_median_ms": 23.654592514038086,
+      "wall_median_ms": 23.656273959204555,
+      "gpu_samples_ms": [
+        23.14975929260254,
+        22.67046356201172,
+        23.654592514038086,
+        24.21293067932129,
+        24.974143981933594
+      ],
+      "wall_samples_ms": [
+        23.151643690653145,
+        22.672078455798328,
+        23.656273959204555,
+        24.215000215917826,
+        24.97607667464763
+      ],
+      "peak_allocated_gib": 1.5656194686889648
+    }
+  ],
+  "variant": "qwen_rms",
+  "ablation_validation": {
+    "substituted_modules": 113,
+    "last_token_logits": [
+      {
+        "length": 2048,
+        "max_abs_logit_error": 0.09375,
+        "mean_abs_logit_error": 0.016732189804315567,
+        "logit_cosine": 0.9999409317970276,
+        "same_argmax": true
+      },
+      {
+        "length": 4096,
+        "max_abs_logit_error": 0.15625,
+        "mean_abs_logit_error": 0.022491445764899254,
+        "logit_cosine": 0.9999146461486816,
+        "same_argmax": true
+      }
+    ],
+    "reference_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "candidate_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "greedy_16_match": true,
+    "quantization_info": null,
+    "int8_info": null,
+    "caution": "Small synthetic checks only. INT4 decode is lossy and retains original weights for prefill; matching prefill logits does not validate quantized decode. Other candidates may differ in rounding/reduction order. Not production-quality equivalence validation."
+  }
+}

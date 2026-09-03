@@ -1,0 +1,1062 @@
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "torch": "2.8.0+cu128",
+  "method": "hot M=1 microbenchmarks; calibration prompts separate from captured test activation; no integrated speed claim",
+  "projections": [
+    {
+      "name": "model.layers.0.self_attn.q_proj",
+      "shape": [
+        2048,
+        1024
+      ],
+      "baseline_ms": 0.011577904792481403,
+      "alpha": 0.0,
+      "calibration_mse": 2.088046656467668e-06,
+      "quantization_relative_l2": 0.0045546554028987885,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.010718244632886809
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.025363493186124807
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.010427066491683946
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01259650441645762
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01091153232579067
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011087596643434353
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 5.960464477539063e-08,
+          "ms": 0.01819535082954372
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 5.960464477539063e-08,
+          "ms": 0.08335620460590136
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 5.960464477539063e-08,
+          "ms": 0.012388379256192007
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 5.960464477539063e-08,
+          "ms": 0.029348470601036385
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 5.960464477539063e-08,
+          "ms": 0.01251637921913674
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 5.960464477539063e-08,
+          "ms": 0.01823910962335558
+        }
+      ]
+    },
+    {
+      "name": "model.layers.0.self_attn.k_proj",
+      "shape": [
+        1024,
+        1024
+      ],
+      "baseline_ms": 0.008167966806109515,
+      "alpha": 0.0,
+      "calibration_mse": 1.9146166607697523e-06,
+      "quantization_relative_l2": 0.00433930242434144,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.007803419110253144
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.0157493670844728
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.00818735270672072
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.008824881661892433
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.007552927591323112
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.007737109766343674
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011042945618862014
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.04907603844756556
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01135651891754948
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01755815414059111
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011152401722375319
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011281509502972447
+        }
+      ]
+    },
+    {
+      "name": "model.layers.0.self_attn.v_proj",
+      "shape": [
+        1024,
+        1024
+      ],
+      "baseline_ms": 0.00810702076216549,
+      "alpha": 0.5,
+      "calibration_mse": 1.0424657546082017e-06,
+      "quantization_relative_l2": 0.007632567081600428,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.007571809572277603
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01530829696044041
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.007614211221736534
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.00860175942418579
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.007864314774494795
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.007539651503485021
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011586616522548583
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.048213085090027794
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011393941531667026
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.017430017387860607
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011584872280323656
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01173690384230479
+        }
+      ]
+    },
+    {
+      "name": "model.layers.0.self_attn.o_proj",
+      "shape": [
+        1024,
+        2048
+      ],
+      "baseline_ms": 0.010688335334089442,
+      "alpha": 0.5,
+      "calibration_mse": 9.503826987611319e-07,
+      "quantization_relative_l2": 0.006004720460623503,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011519131563712759
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.02594163632774379
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.011007732770061568
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.012998722701043892
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01154658878863729
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01094874319287954
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.018064068829338264
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.09054226247713094
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.018237465143012287
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.030168391163978313
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01853445513661583
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01818381205233057
+        }
+      ]
+    },
+    {
+      "name": "model.layers.0.mlp.gate_proj",
+      "shape": [
+        3072,
+        1024
+      ],
+      "baseline_ms": 0.01594657610936122,
+      "alpha": 0.0,
+      "calibration_mse": 1.2405499849895326e-05,
+      "quantization_relative_l2": 0.004487981088459492,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.013933434663929893
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.03612296705165606
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.013899115847521707
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01677307394583243
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014194352980781378
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014699452617450764
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.024151843783804795
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.12124971822325119
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014651602527902444
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.03681355674268195
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014222613218817348
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.02458669061012013
+        }
+      ]
+    },
+    {
+      "name": "model.layers.0.mlp.up_proj",
+      "shape": [
+        3072,
+        1024
+      ],
+      "baseline_ms": 0.015935252497720112,
+      "alpha": 0.5,
+      "calibration_mse": 4.437925364679056e-06,
+      "quantization_relative_l2": 0.006767869461327791,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.013885103183749475
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.03593671994932582
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.013839932808167293
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.016308813492009827
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.013916033635135083
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014205226308447614
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.024615111628908476
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.12101776451714295
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014320169254570381
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.0370629513425525
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014233559445020253
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.0254146377739037
+        }
+      ]
+    },
+    {
+      "name": "model.layers.0.mlp.down_proj",
+      "shape": [
+        1024,
+        3072
+      ],
+      "baseline_ms": 0.013999627983831578,
+      "alpha": 0.5,
+      "calibration_mse": 6.477914951119601e-07,
+      "quantization_relative_l2": 0.00695984810590744,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01384825265721271
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.03615230648370271
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.013848320039871492
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.017244127577056043
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014095629559535729
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.014114084109632658
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.025126707479845748
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.12986587168332137
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.02509843334718658
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.04272198580291079
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.02526043661296628
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.025286371886925833
+        }
+      ]
+    },
+    {
+      "name": "combined_qkv",
+      "shape": [
+        4096,
+        1024
+      ],
+      "baseline_ms": 0.02159179116234831,
+      "alpha": 0.0,
+      "calibration_mse": 1.8615087711282285e-06,
+      "quantization_relative_l2": 0.004740211647003889,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01726926559080111
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.045580000418272835
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.0166936271618736
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.02081654899925505
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01731179628892942
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.01786214113632626
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.030731519448260466
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.15885722577754705
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.020725057690694767
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.049739091323396364
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.02055968989127426
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.03181951964067088
+        }
+      ]
+    },
+    {
+      "name": "fused_gate_up_swiglu",
+      "shape": [
+        6144,
+        1024
+      ],
+      "baseline_ms": 0.0340264521672555,
+      "alpha": 0.5,
+      "calibration_mse": 8.916277863590949e-06,
+      "quantization_relative_l2": 0.006022908259183168,
+      "configs": [
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.02317249279702585
+        },
+        {
+          "int8": false,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.06350008612972195
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.022858713015302467
+        },
+        {
+          "int8": false,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.026584072986942365
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.022561034665378774
+        },
+        {
+          "int8": false,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.024556356375135983
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.03527183883478133
+        },
+        {
+          "int8": true,
+          "warps": 1,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.16774270087480544
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.020606076828495884
+        },
+        {
+          "int8": true,
+          "warps": 4,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.05224973501918732
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": false,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.02060353606859374
+        },
+        {
+          "int8": true,
+          "warps": 8,
+          "persistent": true,
+          "correct": true,
+          "max_abs_error": 0.0,
+          "ms": 0.03666054157892595
+        }
+      ]
+    }
+  ],
+  "attention": [
+    {
+      "length": 128,
+      "sdpa_ms": 0.0152241866620388,
+      "configs": [
+        {
+          "tile": 64,
+          "correct": true,
+          "max_abs_error": 0.001953125,
+          "ms": 0.010823291060337914
+        },
+        {
+          "tile": 128,
+          "correct": true,
+          "max_abs_error": 0.001953125,
+          "ms": 0.012107771939458226
+        },
+        {
+          "tile": 256,
+          "correct": true,
+          "max_abs_error": 0.001953125,
+          "ms": 0.013821059851867393
+        }
+      ]
+    },
+    {
+      "length": 2048,
+      "sdpa_ms": 0.029105943062283084,
+      "configs": [
+        {
+          "tile": 64,
+          "correct": true,
+          "max_abs_error": 0.00048828125,
+          "ms": 0.02364136288389889
+        },
+        {
+          "tile": 128,
+          "correct": true,
+          "max_abs_error": 0.00048828125,
+          "ms": 0.02222250763997597
+        },
+        {
+          "tile": 256,
+          "correct": true,
+          "max_abs_error": 0.00048828125,
+          "ms": 0.02290879327536019
+        }
+      ]
+    },
+    {
+      "length": 8192,
+      "sdpa_ms": 0.06597701955002312,
+      "configs": [
+        {
+          "tile": 64,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.0630962748282355
+        },
+        {
+          "tile": 128,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.055776000130867615
+        },
+        {
+          "tile": 256,
+          "correct": true,
+          "max_abs_error": 0.000244140625,
+          "ms": 0.05324678333595643
+        }
+      ]
+    }
+  ]
+}

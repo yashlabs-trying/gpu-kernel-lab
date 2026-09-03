@@ -1,0 +1,330 @@
+{
+  "method": "pooled median of all listed unprofiled CUDA-event samples; each decode sample averages 16 tokens; uneven run counts, no confidence intervals",
+  "groups": {
+    "qwen_rms": {
+      "files": [
+        "rms_before",
+        "rms_after",
+        "rms_hybrid_control",
+        "rms_final_control"
+      ],
+      "measurements": [
+        {
+          "phase": "prefill",
+          "context": 2048,
+          "samples": 20,
+          "median_ms": 52.73907279968262,
+          "min_ms": 52.59571075439453,
+          "max_ms": 53.4219856262207,
+          "run_medians_ms": [
+            53.05344009399414,
+            52.73401641845703,
+            52.67251205444336,
+            52.801536560058594
+          ],
+          "latency_reduction_vs_rms_pct": 0.0,
+          "inverse_latency_increase_vs_rms_pct": 0.0
+        },
+        {
+          "phase": "prefill",
+          "context": 4096,
+          "samples": 20,
+          "median_ms": 113.62447738647461,
+          "min_ms": 113.46943664550781,
+          "max_ms": 114.32857513427734,
+          "run_medians_ms": [
+            113.6885757446289,
+            113.4958724975586,
+            113.6015396118164,
+            113.72032165527344
+          ],
+          "latency_reduction_vs_rms_pct": 0.0,
+          "inverse_latency_increase_vs_rms_pct": 0.0
+        },
+        {
+          "phase": "decode",
+          "context": 2048,
+          "samples": 20,
+          "median_ms": 23.44889545440674,
+          "min_ms": 21.58372688293457,
+          "max_ms": 26.29952049255371,
+          "run_medians_ms": [
+            22.699840545654297,
+            23.977651596069336,
+            22.935548782348633,
+            24.041149139404297
+          ],
+          "latency_reduction_vs_rms_pct": 0.0,
+          "inverse_latency_increase_vs_rms_pct": 0.0
+        },
+        {
+          "phase": "decode",
+          "context": 4096,
+          "samples": 20,
+          "median_ms": 23.141180992126465,
+          "min_ms": 21.825471878051758,
+          "max_ms": 24.974143981933594,
+          "run_medians_ms": [
+            23.07904052734375,
+            23.654592514038086,
+            22.515199661254883,
+            23.414976119995117
+          ],
+          "latency_reduction_vs_rms_pct": 0.0,
+          "inverse_latency_increase_vs_rms_pct": 0.0
+        }
+      ]
+    },
+    "rms_int4_head": {
+      "files": [
+        "rms_int4_head",
+        "rms_int4_head_b"
+      ],
+      "measurements": [
+        {
+          "phase": "prefill",
+          "context": 2048,
+          "samples": 10,
+          "median_ms": 52.72064018249512,
+          "min_ms": 52.57932662963867,
+          "max_ms": 53.036033630371094,
+          "run_medians_ms": [
+            52.72371292114258,
+            52.6354866027832
+          ],
+          "latency_reduction_vs_rms_pct": 0.03495059015828916,
+          "inverse_latency_increase_vs_rms_pct": 0.03496280986667877
+        },
+        {
+          "phase": "prefill",
+          "context": 4096,
+          "samples": 10,
+          "median_ms": 114.29068756103516,
+          "min_ms": 113.4940185546875,
+          "max_ms": 114.94707489013672,
+          "run_medians_ms": [
+            114.35929870605469,
+            114.22207641601562
+          ],
+          "latency_reduction_vs_rms_pct": -0.5863262827555671,
+          "inverse_latency_increase_vs_rms_pct": -0.5829085367998754
+        },
+        {
+          "phase": "decode",
+          "context": 2048,
+          "samples": 10,
+          "median_ms": 22.82661533355713,
+          "min_ms": 21.495935440063477,
+          "max_ms": 24.775232315063477,
+          "run_medians_ms": [
+            22.852783203125,
+            22.800447463989258
+          ],
+          "latency_reduction_vs_rms_pct": 2.653771569153651,
+          "inverse_latency_increase_vs_rms_pct": 2.7261164730576715
+        },
+        {
+          "phase": "decode",
+          "context": 4096,
+          "samples": 10,
+          "median_ms": 22.82441520690918,
+          "min_ms": 22.229236602783203,
+          "max_ms": 25.328441619873047,
+          "run_medians_ms": [
+            22.816511154174805,
+            23.482112884521484
+          ],
+          "latency_reduction_vs_rms_pct": 1.3688401872188893,
+          "inverse_latency_increase_vs_rms_pct": 1.387837464161601
+        }
+      ]
+    },
+    "rms_int8": {
+      "files": [
+        "rms_int8",
+        "rms_int8_b"
+      ],
+      "measurements": [
+        {
+          "phase": "prefill",
+          "context": 2048,
+          "samples": 10,
+          "median_ms": 52.791215896606445,
+          "min_ms": 52.70220947265625,
+          "max_ms": 53.156864166259766,
+          "run_medians_ms": [
+            52.85670471191406,
+            52.77996826171875
+          ],
+          "latency_reduction_vs_rms_pct": -0.09886995382319963,
+          "inverse_latency_increase_vs_rms_pct": -0.09877229769806872
+        },
+        {
+          "phase": "prefill",
+          "context": 4096,
+          "samples": 10,
+          "median_ms": 113.58873748779297,
+          "min_ms": 113.46431732177734,
+          "max_ms": 113.84422302246094,
+          "run_medians_ms": [
+            113.59334564208984,
+            113.5810546875
+          ],
+          "latency_reduction_vs_rms_pct": 0.03145440093870189,
+          "inverse_latency_increase_vs_rms_pct": 0.0314642978450852
+        },
+        {
+          "phase": "decode",
+          "context": 2048,
+          "samples": 10,
+          "median_ms": 20.49109935760498,
+          "min_ms": 18.04198455810547,
+          "max_ms": 22.250431060791016,
+          "run_medians_ms": [
+            21.454072952270508,
+            18.671537399291992
+          ],
+          "latency_reduction_vs_rms_pct": 12.613797108494085,
+          "inverse_latency_increase_vs_rms_pct": 14.434540798339413
+        },
+        {
+          "phase": "decode",
+          "context": 4096,
+          "samples": 10,
+          "median_ms": 18.94969654083252,
+          "min_ms": 18.344127655029297,
+          "max_ms": 20.296127319335938,
+          "run_medians_ms": [
+            18.585023880004883,
+            20.090805053710938
+          ],
+          "latency_reduction_vs_rms_pct": 18.112664399971855,
+          "inverse_latency_increase_vs_rms_pct": 22.1190056646142
+        }
+      ]
+    },
+    "rms_int8_int4_head": {
+      "files": [
+        "rms_int8_int4_head"
+      ],
+      "measurements": [
+        {
+          "phase": "prefill",
+          "context": 2048,
+          "samples": 5,
+          "median_ms": 52.857601165771484,
+          "min_ms": 52.65407943725586,
+          "max_ms": 52.9541130065918,
+          "run_medians_ms": [
+            52.857601165771484
+          ],
+          "latency_reduction_vs_rms_pct": -0.22474488040218343,
+          "inverse_latency_increase_vs_rms_pct": -0.22424091043621308
+        },
+        {
+          "phase": "prefill",
+          "context": 4096,
+          "samples": 5,
+          "median_ms": 113.49292755126953,
+          "min_ms": 113.43865966796875,
+          "max_ms": 113.55423736572266,
+          "run_medians_ms": [
+            113.49292755126953
+          ],
+          "latency_reduction_vs_rms_pct": 0.1157759650305179,
+          "inverse_latency_increase_vs_rms_pct": 0.11591016113814412
+        },
+        {
+          "phase": "decode",
+          "context": 2048,
+          "samples": 5,
+          "median_ms": 18.94976043701172,
+          "min_ms": 18.474367141723633,
+          "max_ms": 20.10066795349121,
+          "run_medians_ms": [
+            18.94976043701172
+          ],
+          "latency_reduction_vs_rms_pct": 19.18698058142222,
+          "inverse_latency_increase_vs_rms_pct": 23.742437443206587
+        },
+        {
+          "phase": "decode",
+          "context": 4096,
+          "samples": 5,
+          "median_ms": 19.32806396484375,
+          "min_ms": 18.8852481842041,
+          "max_ms": 20.060991287231445,
+          "run_medians_ms": [
+            19.32806396484375
+          ],
+          "latency_reduction_vs_rms_pct": 16.47762501222425,
+          "inverse_latency_increase_vs_rms_pct": 19.728396150894767
+        }
+      ]
+    },
+    "hybrid": {
+      "files": [
+        "hybrid_a",
+        "hybrid_b"
+      ],
+      "measurements": [
+        {
+          "phase": "prefill",
+          "context": 2048,
+          "samples": 10,
+          "median_ms": 52.77180862426758,
+          "min_ms": 52.68867111206055,
+          "max_ms": 52.93977737426758,
+          "run_medians_ms": [
+            52.787200927734375,
+            52.75846481323242
+          ],
+          "latency_reduction_vs_rms_pct": -0.06207129334507844,
+          "inverse_latency_increase_vs_rms_pct": -0.06203278879076679
+        },
+        {
+          "phase": "prefill",
+          "context": 4096,
+          "samples": 10,
+          "median_ms": 113.7070083618164,
+          "min_ms": 113.54108428955078,
+          "max_ms": 114.38483428955078,
+          "run_medians_ms": [
+            113.63839721679688,
+            113.76947021484375
+          ],
+          "latency_reduction_vs_rms_pct": -0.07263485583399731,
+          "inverse_latency_increase_vs_rms_pct": -0.07258213590422002
+        },
+        {
+          "phase": "decode",
+          "context": 2048,
+          "samples": 10,
+          "median_ms": 19.542078018188477,
+          "min_ms": 18.786304473876953,
+          "max_ms": 22.134336471557617,
+          "run_medians_ms": [
+            20.324735641479492,
+            19.30451202392578
+          ],
+          "latency_reduction_vs_rms_pct": 16.660987055081332,
+          "inverse_latency_increase_vs_rms_pct": 19.99182191669715
+        },
+        {
+          "phase": "decode",
+          "context": 4096,
+          "samples": 10,
+          "median_ms": 19.60368061065674,
+          "min_ms": 18.813119888305664,
+          "max_ms": 21.650623321533203,
+          "run_medians_ms": [
+            20.907712936401367,
+            18.956979751586914
+          ],
+          "latency_reduction_vs_rms_pct": 15.286602627036716,
+          "inverse_latency_increase_vs_rms_pct": 18.045082715470826
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 5095.90it/s]
+{
+  "variant": "qwen_rms_int8_cuda_int4_head",
+  "method": "247 held-out teacher-forced tokens and four greedy chats; not a standard quality benchmark",
+  "evaluated_tokens": 247,
+  "baseline_mean_nll": 3.3628540731863277,
+  "candidate_mean_nll": 3.4144042598633053,
+  "argmax_agreement": 0.8987854251012146,
+  "exact_chat_matches": 3
+}
