@@ -1,0 +1,11 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:  26%|██▋       | 82/311 [00:00<00:00, 757.60it/s]Loading weights:  51%|█████     | 158/311 [00:00<00:00, 511.93it/s]Loading weights:  69%|██████▉   | 214/311 [00:00<00:00, 495.76it/s]Loading weights:  86%|████████▌ | 266/311 [00:00<00:00, 447.31it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 511.30it/s]
+{
+  "method": "teacher-forced single-token decode on eight original short passages; not a standard corpus or acceptance threshold",
+  "evaluated_tokens": 247,
+  "baseline_mean_nll": 3.3628540731863277,
+  "int4_mean_nll": 3.7468733887144774,
+  "nll_delta": 0.3840193155281497,
+  "baseline_exp_nll": 28.87147470315978,
+  "int4_exp_nll": 42.388342725400754,
+  "teacher_forced_argmax_agreement": 0.7489878542510121
+}

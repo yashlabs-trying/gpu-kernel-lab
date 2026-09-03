@@ -1,0 +1,1235 @@
+[
+  {
+    "trace": "baseline_decode_trace.sqlite",
+    "kernel_count": 6496,
+    "kernel_time_sum_ms": 23.364158,
+    "kernel_busy_union_ms": 23.364158,
+    "first_to_last_kernel_span_ms": 154.067602,
+    "kernel_busy_fraction_of_span": 0.15164874182957686,
+    "categories_ms": {
+      "other_elementwise_or_misc": 5.7767600000000305,
+      "concatenation": 3.3104400000000114,
+      "copy_or_cast": 1.7691630000000154,
+      "reduction": 1.3475259999999991,
+      "gemm_gemv": 8.227237999999991,
+      "flash_attention": 2.9330310000000015
+    },
+    "kernels": [
+      {
+        "name": "std::enable_if<!T7, void>::type internal::gemvx::kernel<int, int, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, float, (bool)0, (bool)1, (bool)1, (bool)0, (int)7, (bool)0, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<const __nv_bfloat16>, cublasGemvTensorStridedBatched<const __nv_bfloat16>, cublasGemvTensorStridedBatched<__nv_bfloat16>, float>>(T13)",
+        "count": 560,
+        "total_ms": 3.9024459999999976,
+        "registers_per_thread": [
+          162
+        ],
+        "shared_bytes": [
+          528,
+          544
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 6.968653571428567
+      },
+      {
+        "name": "ampere_bf16_s16816gemm_bf16_64x64_sliced1x2_ldg8_f2f_stages_64x5_tn",
+        "count": 224,
+        "total_ms": 2.9029300000000013,
+        "registers_per_thread": [
+          146
+        ],
+        "shared_bytes": [
+          81920
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 12.959508928571434
+      },
+      {
+        "name": "void at::native::<unnamed>::CatArrayBatchedCopy_alignedK_contig<at::native::<unnamed>::OpaqueType<(unsigned int)2>, unsigned int, (int)4, (int)128, (int)1, (int)8>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)",
+        "count": 224,
+        "total_ms": 2.5682940000000016,
+        "registers_per_thread": [
+          38
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 11.465598214285722
+      },
+      {
+        "name": "void pytorch_flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<(int)128, (int)64, (int)128, (int)4, (bool)0, (bool)0, cutlass::bfloat16_t, Flash_kernel_traits<(int)128, (int)64, (int)128, (int)4, cutlass::bfloat16_t>>, (bool)0, (bool)0, (bool)0, (bool)0, (bool)1, (bool)0, (bool)1, (bool)0>(pytorch_flash::Flash_fwd_params)",
+        "count": 112,
+        "total_ms": 2.28391,
+        "registers_per_thread": [
+          244
+        ],
+        "shared_bytes": [
+          81920
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 20.392053571428573
+      },
+      {
+        "name": "void at::native::elementwise_kernel<(int)128, (int)4, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+        "count": 672,
+        "total_ms": 1.4984369999999938,
+        "registers_per_thread": [
+          16
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.229816964285705
+      },
+      {
+        "name": "void gemv2T_kernel_val<int, int, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, float, (int)128, (int)16, (int)4, (int)4, (bool)0, (bool)0, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<const __nv_bfloat16>, cublasGemvTensorStridedBatched<const __nv_bfloat16>, cublasGemvTensorStridedBatched<__nv_bfloat16>, float>>(T13, T6, T6)",
+        "count": 4,
+        "total_ms": 1.415654,
+        "registers_per_thread": [
+          60
+        ],
+        "shared_bytes": [
+          2560
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 353.9135
+      },
+      {
+        "name": "void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, (int)4, (int)4>>(T3)",
+        "count": 452,
+        "total_ms": 1.301125999999999,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          16,
+          1040,
+          2064
+        ],
+        "block_threads": [
+          256,
+          512
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.8785973451327407
+      },
+      {
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 7)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>, (int)4, TrivialOffsetCalculator<(int)1, unsigned int>, TrivialOffsetCalculator<(int)1, unsigned int>, at::native::memory::LoadWithCast<(int)1>, at::native::memory::StoreWithCast<(int)1>>(int, T1, T2, T4, T5, T6, T7)",
+        "count": 456,
+        "total_ms": 1.1966779999999995,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.6242938596491214
+      },
+      {
+        "name": "void at::native::elementwise_kernel<(int)128, (int)2, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+        "count": 452,
+        "total_ms": 0.7957129999999975,
+        "registers_per_thread": [
+          16
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.7604269911504369
+      },
+      {
+        "name": "void at::native::<unnamed>::CatArrayBatchedCopy<at::native::<unnamed>::OpaqueType<(unsigned int)2>, unsigned int, (int)4, (int)64, (int)64>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)",
+        "count": 224,
+        "total_ms": 0.7251540000000002,
+        "registers_per_thread": [
+          39
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          512
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 3.237294642857144
+      },
+      {
+        "name": "void pytorch_flash::flash_fwd_splitkv_combine_kernel<Flash_fwd_kernel_traits<(int)128, (int)64, (int)128, (int)4, (bool)0, (bool)0, cutlass::bfloat16_t, Flash_kernel_traits<(int)128, (int)64, (int)128, (int)4, cutlass::bfloat16_t>>, (int)4, (int)5, (bool)1>(pytorch_flash::Flash_fwd_params)",
+        "count": 112,
+        "total_ms": 0.6491210000000004,
+        "registers_per_thread": [
+          52
+        ],
+        "shared_bytes": [
+          640
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 5.795723214285718
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::rsqrt_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 2)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 452,
+        "total_ms": 0.6206429999999972,
+        "registers_per_thread": [
+          22
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.3731039823008788
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char *, (unsigned long)3>>(int, T2, T3)",
+        "count": 448,
+        "total_ms": 0.5757470000000009,
+        "registers_per_thread": [
+          37
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.2851495535714306
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 460,
+        "total_ms": 0.5500530000000002,
+        "registers_per_thread": [
+          30
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.1957673913043483
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 452,
+        "total_ms": 0.5478440000000008,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.2120442477876123
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, void at::native::<unnamed>::pow_tensor_scalar_kernel_impl<float, float>(at::TensorIteratorBase &, T2)::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 452,
+        "total_ms": 0.5438440000000002,
+        "registers_per_thread": [
+          30
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.203194690265487
+      },
+      {
+        "name": "void at::native::elementwise_kernel<(int)128, (int)4, void at::native::gpu_kernel_impl_nocast<at::native::neg_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 9)]::operator ()() const::[lambda(c10::BFloat16) (instance 1)]>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+        "count": 224,
+        "total_ms": 0.49776300000000046,
+        "registers_per_thread": [
+          16
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.222156250000002
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)3>>(int, T2, T3)",
+        "count": 340,
+        "total_ms": 0.4582089999999999,
+        "registers_per_thread": [
+          37
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.3476735294117645
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::<unnamed>::silu_kernel(at::TensorIteratorBase &)::[lambda() (instance 1)]::operator ()() const::[lambda() (instance 6)]::operator ()() const::[lambda(c10::BFloat16) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 112,
+        "total_ms": 0.18201599999999973,
+        "registers_per_thread": [
+          30
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.6251428571428548
+      },
+      {
+        "name": "void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, (int)4, (int)4>>(T3)",
+        "count": 4,
+        "total_ms": 0.033024,
+        "registers_per_thread": [
+          36
+        ],
+        "shared_bytes": [
+          8208
+        ],
+        "block_threads": [
+          512
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 8.256
+      },
+      {
+        "name": "void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::sum_functor<long, long, long>::operator ()(at::TensorIterator &)::[lambda(long, long) (instance 1)]>, unsigned int, long, (int)4, (int)4>>(T3)",
+        "count": 4,
+        "total_ms": 0.013376,
+        "registers_per_thread": [
+          36
+        ],
+        "shared_bytes": [
+          4112
+        ],
+        "block_threads": [
+          512
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 3.3440000000000003
+      },
+      {
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 11)]::operator ()() const::[lambda(bool) (instance 1)], std::array<char *, (unsigned long)2>, (int)4, TrivialOffsetCalculator<(int)1, unsigned int>, TrivialOffsetCalculator<(int)1, unsigned int>, at::native::memory::LoadWithCast<(int)1>, at::native::memory::StoreWithCast<(int)1>>(int, T1, T2, T4, T5, T6, T7)",
+        "count": 4,
+        "total_ms": 0.011456000000000001,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.8640000000000003
+      },
+      {
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 4)]::operator ()() const::[lambda(long) (instance 1)], std::array<char *, (unsigned long)2>, (int)4, TrivialOffsetCalculator<(int)1, unsigned int>, TrivialOffsetCalculator<(int)1, unsigned int>, at::native::memory::LoadWithCast<(int)1>, at::native::memory::StoreWithCast<(int)1>>(int, T1, T2, T4, T5, T6, T7)",
+        "count": 4,
+        "total_ms": 0.010976,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.7439999999999998
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 8,
+        "total_ms": 0.009856,
+        "registers_per_thread": [
+          28
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.232
+      },
+      {
+        "name": "void at::native::<unnamed>::indexSelectSmallIndex<c10::BFloat16, long, unsigned int, (int)2, (int)2, (int)-2>(at::cuda::detail::TensorInfo<T1, T3>, at::cuda::detail::TensorInfo<const T1, T3>, at::cuda::detail::TensorInfo<const T2, T3>, int, int, T3, long)",
+        "count": 4,
+        "total_ms": 0.0096,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.4
+      },
+      {
+        "name": "void at::native::<unnamed>::CatArrayBatchedCopy_alignedK_contig<at::native::<unnamed>::OpaqueType<(unsigned int)8>, unsigned int, (int)2, (int)128, (int)1, (int)16>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)",
+        "count": 4,
+        "total_ms": 0.009248000000000001,
+        "registers_per_thread": [
+          26
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.3120000000000003
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::cos_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 2)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.008512,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.128
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::sin_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 2)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.008352,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.088
+      },
+      {
+        "name": "void at::native::<unnamed>::CatArrayBatchedCopy_alignedK_contig<at::native::<unnamed>::OpaqueType<(unsigned int)4>, unsigned int, (int)3, (int)128, (int)1, (int)16>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)",
+        "count": 4,
+        "total_ms": 0.007744,
+        "registers_per_thread": [
+          38
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.936
+      },
+      {
+        "name": "void gemmk1_kernel<int, float, (int)256, (int)5, (bool)1, (bool)0, (bool)0, (bool)0, cublasGemvTensorStridedBatched<const float>, cublasGemvTensorStridedBatched<const float>, cublasGemvTensorStridedBatched<float>, float, (int)0>(cublasGemmk1Params<T2, T9, T10, T11, T12, biasType<T11::value_type, T12>::type>)",
+        "count": 4,
+        "total_ms": 0.006208,
+        "registers_per_thread": [
+          20
+        ],
+        "shared_bytes": [
+          1024
+        ],
+        "block_threads": [
+          256
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.552
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)2, at::native::FillFunctor<long>, std::array<char *, (unsigned long)1>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.0054719999999999994,
+        "registers_per_thread": [
+          22
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.3679999999999999
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<long, long, bool, at::native::<unnamed>::CompareEqFunctor<long>>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.00528,
+        "registers_per_thread": [
+          36
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.32
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)2, at::native::CUDAFunctorOnSelf_add<long>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.005216,
+        "registers_per_thread": [
+          36
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.304
+      },
+      {
+        "name": "void <unnamed>::elementwise_kernel_with_index<int, at::native::arange_cuda_out(const c10::Scalar &, const c10::Scalar &, const c10::Scalar &, at::Tensor &)::[lambda() (instance 1)]::operator ()() const::[lambda() (instance 4)]::operator ()() const::[lambda(long) (instance 1)]>(T1, T2, function_traits<T2>::result_type *)",
+        "count": 4,
+        "total_ms": 0.004256,
+        "registers_per_thread": [
+          16
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          64
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.064
+      }
+    ],
+    "limitations": "Busy fraction is a timeline measure, NOT achieved SM occupancy. Local memory metadata is not measured spill traffic. Profiler overhead changes timings."
+  },
+  {
+    "trace": "int4_decode_trace.sqlite",
+    "kernel_count": 6496,
+    "kernel_time_sum_ms": 22.848749,
+    "kernel_busy_union_ms": 22.848749,
+    "first_to_last_kernel_span_ms": 189.497881,
+    "kernel_busy_fraction_of_span": 0.12057522163005084,
+    "categories_ms": {
+      "other_elementwise_or_misc": 5.614523000000047,
+      "concatenation": 3.281332000000006,
+      "copy_or_cast": 1.7064740000000127,
+      "reduction": 1.2507549999999996,
+      "gemm_gemv": 8.098308999999986,
+      "flash_attention": 2.897355999999996
+    },
+    "kernels": [
+      {
+        "name": "_gemv",
+        "count": 788,
+        "total_ms": 8.092164999999987,
+        "registers_per_thread": [
+          39
+        ],
+        "shared_bytes": [
+          64
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 10.269244923857851
+      },
+      {
+        "name": "void at::native::<unnamed>::CatArrayBatchedCopy_alignedK_contig<at::native::<unnamed>::OpaqueType<(unsigned int)2>, unsigned int, (int)4, (int)128, (int)1, (int)8>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)",
+        "count": 224,
+        "total_ms": 2.5496140000000023,
+        "registers_per_thread": [
+          38
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 11.382205357142867
+      },
+      {
+        "name": "void pytorch_flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<(int)128, (int)64, (int)128, (int)4, (bool)0, (bool)0, cutlass::bfloat16_t, Flash_kernel_traits<(int)128, (int)64, (int)128, (int)4, cutlass::bfloat16_t>>, (bool)0, (bool)0, (bool)0, (bool)0, (bool)1, (bool)0, (bool)1, (bool)0>(pytorch_flash::Flash_fwd_params)",
+        "count": 112,
+        "total_ms": 2.2566479999999993,
+        "registers_per_thread": [
+          244
+        ],
+        "shared_bytes": [
+          81920
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 20.14864285714285
+      },
+      {
+        "name": "void at::native::elementwise_kernel<(int)128, (int)4, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+        "count": 672,
+        "total_ms": 1.4745110000000028,
+        "registers_per_thread": [
+          16
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.1942127976190515
+      },
+      {
+        "name": "void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, (int)4, (int)4>>(T3)",
+        "count": 452,
+        "total_ms": 1.2040349999999995,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          16,
+          1040,
+          2064
+        ],
+        "block_threads": [
+          256,
+          512
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.6637942477876098
+      },
+      {
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 7)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>, (int)4, TrivialOffsetCalculator<(int)1, unsigned int>, TrivialOffsetCalculator<(int)1, unsigned int>, at::native::memory::LoadWithCast<(int)1>, at::native::memory::StoreWithCast<(int)1>>(int, T1, T2, T4, T5, T6, T7)",
+        "count": 456,
+        "total_ms": 1.144007999999999,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.5087894736842085
+      },
+      {
+        "name": "void at::native::elementwise_kernel<(int)128, (int)2, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+        "count": 452,
+        "total_ms": 0.7653789999999987,
+        "registers_per_thread": [
+          16
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.693316371681413
+      },
+      {
+        "name": "void at::native::<unnamed>::CatArrayBatchedCopy<at::native::<unnamed>::OpaqueType<(unsigned int)2>, unsigned int, (int)4, (int)64, (int)64>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)",
+        "count": 224,
+        "total_ms": 0.7150769999999995,
+        "registers_per_thread": [
+          39
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          512
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 3.1923080357142837
+      },
+      {
+        "name": "void pytorch_flash::flash_fwd_splitkv_combine_kernel<Flash_fwd_kernel_traits<(int)128, (int)64, (int)128, (int)4, (bool)0, (bool)0, cutlass::bfloat16_t, Flash_kernel_traits<(int)128, (int)64, (int)128, (int)4, cutlass::bfloat16_t>>, (int)4, (int)5, (bool)1>(pytorch_flash::Flash_fwd_params)",
+        "count": 112,
+        "total_ms": 0.6407079999999995,
+        "registers_per_thread": [
+          52
+        ],
+        "shared_bytes": [
+          640
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 5.720607142857139
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::rsqrt_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 2)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 452,
+        "total_ms": 0.5946919999999987,
+        "registers_per_thread": [
+          22
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.3156902654867226
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char *, (unsigned long)3>>(int, T2, T3)",
+        "count": 448,
+        "total_ms": 0.553056,
+        "registers_per_thread": [
+          37
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.2345000000000002
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 460,
+        "total_ms": 0.5401609999999998,
+        "registers_per_thread": [
+          30
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.1742630434782606
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, void at::native::<unnamed>::pow_tensor_scalar_kernel_impl<float, float>(at::TensorIteratorBase &, T2)::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 452,
+        "total_ms": 0.5341450000000004,
+        "registers_per_thread": [
+          30
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.1817367256637177
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 452,
+        "total_ms": 0.5265609999999984,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.1649579646017665
+      },
+      {
+        "name": "void at::native::elementwise_kernel<(int)128, (int)4, void at::native::gpu_kernel_impl_nocast<at::native::neg_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 9)]::operator ()() const::[lambda(c10::BFloat16) (instance 1)]>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+        "count": 224,
+        "total_ms": 0.4919699999999999,
+        "registers_per_thread": [
+          16
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.1962946428571426
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)3>>(int, T2, T3)",
+        "count": 340,
+        "total_ms": 0.4372809999999999,
+        "registers_per_thread": [
+          37
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.2861205882352937
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::<unnamed>::silu_kernel(at::TensorIteratorBase &)::[lambda() (instance 1)]::operator ()() const::[lambda() (instance 6)]::operator ()() const::[lambda(c10::BFloat16) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 112,
+        "total_ms": 0.18060799999999974,
+        "registers_per_thread": [
+          30
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.6125714285714263
+      },
+      {
+        "name": "void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, (int)4, (int)4>>(T3)",
+        "count": 4,
+        "total_ms": 0.033248,
+        "registers_per_thread": [
+          36
+        ],
+        "shared_bytes": [
+          8208
+        ],
+        "block_threads": [
+          512
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 8.312
+      },
+      {
+        "name": "void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::sum_functor<long, long, long>::operator ()(at::TensorIterator &)::[lambda(long, long) (instance 1)]>, unsigned int, long, (int)4, (int)4>>(T3)",
+        "count": 4,
+        "total_ms": 0.013472000000000001,
+        "registers_per_thread": [
+          36
+        ],
+        "shared_bytes": [
+          4112
+        ],
+        "block_threads": [
+          512
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 3.3680000000000003
+      },
+      {
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 11)]::operator ()() const::[lambda(bool) (instance 1)], std::array<char *, (unsigned long)2>, (int)4, TrivialOffsetCalculator<(int)1, unsigned int>, TrivialOffsetCalculator<(int)1, unsigned int>, at::native::memory::LoadWithCast<(int)1>, at::native::memory::StoreWithCast<(int)1>>(int, T1, T2, T4, T5, T6, T7)",
+        "count": 4,
+        "total_ms": 0.011296,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.8240000000000003
+      },
+      {
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 4)]::operator ()() const::[lambda(long) (instance 1)], std::array<char *, (unsigned long)2>, (int)4, TrivialOffsetCalculator<(int)1, unsigned int>, TrivialOffsetCalculator<(int)1, unsigned int>, at::native::memory::LoadWithCast<(int)1>, at::native::memory::StoreWithCast<(int)1>>(int, T1, T2, T4, T5, T6, T7)",
+        "count": 4,
+        "total_ms": 0.011009000000000001,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.7522500000000005
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 8,
+        "total_ms": 0.009664,
+        "registers_per_thread": [
+          28
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.2080000000000002
+      },
+      {
+        "name": "void at::native::<unnamed>::indexSelectSmallIndex<c10::BFloat16, long, unsigned int, (int)2, (int)2, (int)-2>(at::cuda::detail::TensorInfo<T1, T3>, at::cuda::detail::TensorInfo<const T1, T3>, at::cuda::detail::TensorInfo<const T2, T3>, int, int, T3, long)",
+        "count": 4,
+        "total_ms": 0.009472,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.368
+      },
+      {
+        "name": "void at::native::<unnamed>::CatArrayBatchedCopy_alignedK_contig<at::native::<unnamed>::OpaqueType<(unsigned int)8>, unsigned int, (int)2, (int)128, (int)1, (int)16>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)",
+        "count": 4,
+        "total_ms": 0.009087999999999999,
+        "registers_per_thread": [
+          26
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.272
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::cos_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 2)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.008416,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.104
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::sin_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 2)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.008352,
+        "registers_per_thread": [
+          32
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 2.088
+      },
+      {
+        "name": "void at::native::<unnamed>::CatArrayBatchedCopy_alignedK_contig<at::native::<unnamed>::OpaqueType<(unsigned int)4>, unsigned int, (int)3, (int)128, (int)1, (int)16>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)",
+        "count": 4,
+        "total_ms": 0.007553,
+        "registers_per_thread": [
+          38
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.88825
+      },
+      {
+        "name": "void gemmk1_kernel<int, float, (int)256, (int)5, (bool)1, (bool)0, (bool)0, (bool)0, cublasGemvTensorStridedBatched<const float>, cublasGemvTensorStridedBatched<const float>, cublasGemvTensorStridedBatched<float>, float, (int)0>(cublasGemmk1Params<T2, T9, T10, T11, T12, biasType<T11::value_type, T12>::type>)",
+        "count": 4,
+        "total_ms": 0.006144,
+        "registers_per_thread": [
+          20
+        ],
+        "shared_bytes": [
+          1024
+        ],
+        "block_threads": [
+          256
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.536
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)2, at::native::CUDAFunctorOnSelf_add<long>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.005568,
+        "registers_per_thread": [
+          36
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.392
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)2, at::native::FillFunctor<long>, std::array<char *, (unsigned long)1>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.00544,
+        "registers_per_thread": [
+          22
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.36
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<long, long, bool, at::native::<unnamed>::CompareEqFunctor<long>>, std::array<char *, (unsigned long)2>>(int, T2, T3)",
+        "count": 4,
+        "total_ms": 0.005184,
+        "registers_per_thread": [
+          36
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          128
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.296
+      },
+      {
+        "name": "void <unnamed>::elementwise_kernel_with_index<int, at::native::arange_cuda_out(const c10::Scalar &, const c10::Scalar &, const c10::Scalar &, at::Tensor &)::[lambda() (instance 1)]::operator ()() const::[lambda() (instance 4)]::operator ()() const::[lambda(long) (instance 1)]>(T1, T2, function_traits<T2>::result_type *)",
+        "count": 4,
+        "total_ms": 0.004224,
+        "registers_per_thread": [
+          16
+        ],
+        "shared_bytes": [
+          0
+        ],
+        "block_threads": [
+          64
+        ],
+        "local_bytes_per_thread": [
+          0
+        ],
+        "mean_us": 1.056
+      }
+    ],
+    "limitations": "Busy fraction is a timeline measure, NOT achieved SM occupancy. Local memory metadata is not measured spill traffic. Profiler overhead changes timings."
+  }
+]

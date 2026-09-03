@@ -1,0 +1,138 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:  30%|██▉       | 93/311 [00:00<00:00, 863.52it/s]Loading weights:  58%|█████▊    | 180/311 [00:00<00:00, 733.18it/s]Loading weights:  82%|████████▏ | 255/311 [00:00<00:00, 643.39it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 692.02it/s]
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "torch": "2.8.0+cu128",
+  "group_size": 128,
+  "method": "hot microbenchmarks on one real decode activation",
+  "warning": "RTN quantization, not calibrated; original model retained; no end-to-end gain claimed",
+  "projections": [
+    {
+      "name": "model.layers.0.self_attn.q_proj",
+      "shape": [
+        2048,
+        1024
+      ],
+      "bf16_bytes": 4194304,
+      "packed_bytes": 1114112,
+      "kernel_vs_dequantized": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "kernel_pass": true,
+      "quantization_vs_bf16": {
+        "max_abs": 0.21875,
+        "mean_abs": 0.017703533172607422,
+        "relative_l2": 0.06727026402950287
+      },
+      "bf16_ms": 0.011221495200703294,
+      "int4_ms": 0.010574144079635073
+    },
+    {
+      "name": "model.layers.0.mlp.gate_proj",
+      "shape": [
+        3072,
+        1024
+      ],
+      "bf16_bytes": 6291456,
+      "packed_bytes": 1671168,
+      "kernel_vs_dequantized": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "kernel_pass": true,
+      "quantization_vs_bf16": {
+        "max_abs": 0.25,
+        "mean_abs": 0.05119074508547783,
+        "relative_l2": 0.06773838400840759
+      },
+      "bf16_ms": 0.01632181190463722,
+      "int4_ms": 0.01135953150058329
+    },
+    {
+      "name": "model.layers.0.mlp.down_proj",
+      "shape": [
+        1024,
+        3072
+      ],
+      "bf16_bytes": 6291456,
+      "packed_bytes": 1671168,
+      "kernel_vs_dequantized": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "kernel_pass": true,
+      "quantization_vs_bf16": {
+        "max_abs": 0.0693359375,
+        "mean_abs": 0.014189887791872025,
+        "relative_l2": 0.12066737562417984
+      },
+      "bf16_ms": 0.014574376352320388,
+      "int4_ms": 0.021035069950126314
+    },
+    {
+      "name": "lm_head",
+      "shape": [
+        151936,
+        1024
+      ],
+      "bf16_bytes": 311164928,
+      "packed_bytes": 82653184,
+      "kernel_vs_dequantized": {
+        "max_abs": 0.015625,
+        "mean_abs": 5.210164886193525e-07,
+        "relative_l2": 2.6779658583109267e-05
+      },
+      "kernel_pass": true,
+      "quantization_vs_bf16": {
+        "max_abs": 1.90234375,
+        "mean_abs": 0.31326425075531006,
+        "relative_l2": 0.1355038285255432
+      },
+      "bf16_ms": 0.3618830371061608,
+      "int4_ms": 0.14734832929337727,
+      "top1_matches_bf16": true,
+      "selection": [
+        {
+          "top_k": 1,
+          "matches_int4_full_logits": true,
+          "ids": [
+            374
+          ],
+          "fused_ms": 0.160181587963013,
+          "bf16_head_plus_topk_ms": 0.4296518709228208
+        },
+        {
+          "top_k": 4,
+          "matches_int4_full_logits": true,
+          "ids": [
+            374,
+            525,
+            594,
+            1558
+          ],
+          "fused_ms": 0.2628828656740029,
+          "bf16_head_plus_topk_ms": 0.4353150573431277
+        },
+        {
+          "top_k": 8,
+          "matches_int4_full_logits": true,
+          "ids": [
+            374,
+            525,
+            1558,
+            594,
+            9363,
+            3476,
+            653,
+            8573
+          ],
+          "fused_ms": 0.2204788026152825,
+          "bf16_head_plus_topk_ms": 0.435247486434346
+        }
+      ]
+    }
+  ]
+}

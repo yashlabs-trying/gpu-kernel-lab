@@ -1,0 +1,10 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 4807.80it/s]
+{"substituted_modules": 197, "last_token_logits": [{"length": 2048, "max_abs_logit_error": 0.0, "mean_abs_logit_error": 0.0, "logit_cosine": 0.9999999403953552, "same_argmax": true}], "reference_greedy_16": [[8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835]], "candidate_greedy_16": [[8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835, 8835]], "greedy_16_match": true, "quantization_info": {"packed_bytes_added": 316616704, "linear_modules": 197, "warning": "Dense weights retained for prefill; GPU memory increases in this A/B adapter. Full logits retained for Transformers generation; compact top-k is tested separately."}, "caution": "Small synthetic checks only. INT4 decode is lossy and retains original weights for prefill; matching prefill logits does not validate quantized decode. Other candidates may differ in rounding/reduction order. Not production-quality equivalence validation."}
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-8696.qdstrm'
+[1/1] [0%                          ] int4_decode_trace.nsys-repProcessing events...
+[1/1] [0%                          ] int4_decode_trace.nsys-rep[1/1] [6%                          ] int4_decode_trace.nsys-rep[1/1] [===========52%              ] int4_decode_trace.nsys-rep[1/1] [========================98% ] int4_decode_trace.nsys-rep[1/1] [==================75%       ] int4_decode_trace.nsys-rep[1/1] [========================100%] int4_decode_trace.nsys-rep[1/1] [========================100%] int4_decode_trace.nsys-rep
+{"phase": "decode", "initial_context": 2048, "decode_steps": 4, "gpu_median_ms": 47.464111328125, "wall_median_ms": 47.542341984808445, "gpu_samples_ms": [47.464111328125], "wall_samples_ms": [47.542341984808445], "peak_allocated_gib": 1.6379499435424805}
+Generated:
+	/workspace/gpu-kernel-lab/results/profiling_20260903/int4_decode_trace.nsys-rep
