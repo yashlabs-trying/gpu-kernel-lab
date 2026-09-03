@@ -18,6 +18,9 @@ NVIDIA libraries whenever they remain faster.
   and educational online tiled attention.
 - Reproducible correctness, microbenchmark, model-ablation, natural-prompt,
   Nsight Systems, and generated-code inspection tools.
+- Experimental W4A16 decode GEMV, packed INT4 LM-head/local top-k fusion, and
+  an opt-in quantized-decode model adapter. GPU validation is pending; the A/B
+  adapter retains dense weights, so whole-model memory savings are not claimed.
 
 No specialized external kernel repository was copied or integrated. The project
 does use PyTorch, Triton, Transformers, cuBLAS/CUTLASS dispatch, and PyTorch
@@ -49,7 +52,7 @@ promising in isolation, but is not yet integrated into the model cache path.
 slower). Our educational attention loses to optimized SDPA, so SDPA remains the
 backend. Fewer launches alone did not guarantee faster decode.
 
-All current candidate suites passed 241/241 GPU tests. This is not full model
+The pre-quantization candidate suites passed 241/241 GPU tests. This is not full model
 equivalence: RMSNorm still changes some logits, and the combined candidate
 matched only 3/4 natural-language smoke generations. Larger quality evaluation
 is required. Nsight Compute counters were provider-blocked, so achieved
@@ -74,6 +77,7 @@ occupancy and hardware-counter rooflines are not claimed.
 - [Fused projection + SwiGLU](learning/02_swiglu/FUSED_PROJECTION.md)
 - [Qwen RMSNorm](learning/03_rmsnorm/QWEN_RMSNORM.md)
 - [Decode kernels and static cache](learning/08_decode/README.md)
+- [INT4 decode, LM head and compact top-k (unvalidated)](learning/09_int4/README.md)
 
 On a prepared RunPod volume:
 
