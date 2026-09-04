@@ -104,16 +104,16 @@ def _validate(x, gate_weight, up_weight):
 
 
 def fused_projection_swiglu(x, gate_weight, up_weight, *, model_ordered=True):
-    """One final global write; no gate, up, or activation global tensors."""
+    """Dispatch M=1 to GEMV and M>1 to a tensor-core tiled GEMM."""
     _validate(x,gate_weight,up_weight)
     n,k=gate_weight.shape
     original_shape=x.shape[:-1]
-    if x.ndim == 1:
+    m=x.numel()//k
+    if m == 1:
         y=torch.empty(n,device=x.device,dtype=x.dtype)
         grid=lambda meta:(triton.cdiv(n,meta['BN']),)
-        projection_swiglu_gemv_kernel[grid](x,gate_weight,up_weight,y,n,k,model_ordered)
-        return y
-    m=x.numel()//k
+        projection_swiglu_gemv_kernel[grid](x.reshape(-1),gate_weight,up_weight,y,n,k,model_ordered)
+        return y.view(*original_shape,n)
     x=x.view(m,k)
     for bucket in (16,32,64,128,256,512,1024,2048,4096):
         if m <= bucket: break

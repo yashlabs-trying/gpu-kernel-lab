@@ -12,6 +12,8 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'learning/11_static_kv'))
 from static_kv import advance_position,install_fused_static_kv,make_mask,new_static_cache,open_mask
 from model_ablation import install
+sys.path.insert(0,str(ROOT/'learning/12_decode_runtime'))
+from decode_runtime import GreedyDecodeGraph,install_decode_residual_norm
 
 
 @torch.inference_mode()
@@ -26,6 +28,8 @@ def main():
     p.add_argument('--capture-variant',choices=['dynamic','static','fused'],default='fused')
     p.add_argument('--hybrid',action='store_true',help='compose the prior QKV/MLP projection fusion')
     p.add_argument('--split-attention',action='store_true',help='replace masked SDPA with preallocated split-KV GQA')
+    p.add_argument('--residual-norm',action='store_true',help='fuse attention residual add with post-attention RMSNorm')
+    p.add_argument('--cuda-graph',action='store_true',help='capture and replay the fused static greedy decode step')
     args=p.parse_args()
     if args.mode=='capture' and len(args.lengths)!=1:
         raise ValueError('capture takes exactly one context length')
@@ -33,9 +37,11 @@ def main():
         attn_implementation='sdpa',local_files_only=True).eval().cuda()
     install(model,'qwen_rms_cuda_hybrid' if args.hybrid else 'qwen_rms')
     report={'gpu':torch.cuda.get_device_name(),'torch':torch.__version__,'dtype':'bfloat16',
-        'backend':model.config._attn_implementation,'hybrid':args.hybrid,'split_attention':args.split_attention,'steps':args.steps,'warmup':args.warmup,
+        'backend':model.config._attn_implementation,'hybrid':args.hybrid,'split_attention':args.split_attention,
+        'residual_norm':args.residual_norm,'cuda_graph':args.cuda_graph,'steps':args.steps,'warmup':args.warmup,
         'repeats':args.repeats,'method':'B1 cache-enabled greedy decode; argmax included; cache setup/prefill outside timed region','measurements':[]}
-    capacity=max(args.lengths)+args.steps
+    # Graph construction executes one warmup and one capture step before replay.
+    capacity=max(args.lengths)+args.steps+(2 if args.cuda_graph else 0)
     report['capacity']=capacity
 
     def prepare_dynamic(length):
@@ -92,11 +98,20 @@ def main():
         if args.mode=='benchmark' or args.capture_variant=='static':
             measure('static',length,prepare_static,lambda state:static(state,False))
     install_fused_static_kv(model,capacity,split_attention=args.split_attention)
+    if args.residual_norm:
+        install_decode_residual_norm(model)
     for length in args.lengths:
         if args.mode=='benchmark' or args.capture_variant=='fused':
             def prepare_fused(length):
                 return prepare_static(length)
-            measure('fused',length,prepare_fused,lambda state:static(state,True))
+            if args.cuda_graph:
+                def prepare_graph(length):
+                    state=prepare_fused(length)
+                    state['graph']=GreedyDecodeGraph(model,state['token'],state['cache'],state['mapping'],state['position'])
+                    return state
+                measure('fused_graph',length,prepare_graph,lambda state:state['graph'].replay())
+            else:
+                measure('fused',length,prepare_fused,lambda state:static(state,True))
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(report,indent=2)+'\n')
 
