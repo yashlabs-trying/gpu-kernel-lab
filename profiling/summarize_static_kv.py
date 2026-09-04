@@ -28,11 +28,15 @@ def main():
         baselines.extend(x for row in report['measurements'] if row['phase']=='decode' and row['initial_context']==2048 for x in row['gpu_samples_ms'])
     if baselines:
         plain=statistics.median(baselines)
-        fused=statistics.median(samples[('hybrid',2048,'fused')])
         result['plain_baseline_2048']={'samples':len(baselines),'median_ms_per_token':plain,
-            'hybrid_fused_ms_per_token':fused,'latency_reduction_pct':100*(1-fused/plain),
-            'serial_throughput_increase_pct':100*(plain/fused-1),
-            'warning':'different harnesses/processes; dynamic-vs-fused comparisons within each benchmark are stronger evidence'}
+            'comparisons':[],'warning':'different harnesses/processes; dynamic-vs-fused comparisons within each benchmark are stronger evidence'}
+        for group in ('hybrid','hybrid_split'):
+            values=samples.get((group,2048,'fused'))
+            if values:
+                fused=statistics.median(values)
+                result['plain_baseline_2048']['comparisons'].append({'group':group,
+                    'fused_ms_per_token':fused,'latency_reduction_pct':100*(1-fused/plain),
+                    'serial_throughput_increase_pct':100*(plain/fused-1)})
     (args.root/'aggregate.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2))
 
