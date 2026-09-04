@@ -6,7 +6,7 @@ import triton.language as tl
 
 @triton.jit
 def qk_norm_rope_cache_kernel(Q, K, V, QW, KW, COS, SIN, POSITIONS,
-                              Q_OUT, K_CACHE, V_CACHE,
+                              Q_OUT, K_CACHE, V_CACHE, ATTENTION_MASK,
                               Q_HEADS: tl.constexpr, KV_HEADS: tl.constexpr,
                               D: tl.constexpr, CAPACITY: tl.constexpr,
                               BLOCK: tl.constexpr, EPS: tl.constexpr):
@@ -48,10 +48,15 @@ def qk_norm_rope_cache_kernel(Q, K, V, QW, KW, COS, SIN, POSITIONS,
     v = tl.load(V + (batch * KV_HEADS + local_head) * D + col,
                 mask=(~is_q) & valid, other=0.)
     tl.store(V_CACHE + cache_offset, v, mask=(~is_q) & valid)
+    # Exactly one K-head program per batch opens the current position in the
+    # fixed additive mask. This adds no launch and leaves its address unchanged.
+    tl.store(ATTENTION_MASK + batch * CAPACITY + position, 0.0,
+             mask=(~is_q) & (local_head == 0) & valid_head & (col == 0))
 
 
 def fused_qk_norm_rope_cache(q, k, v, q_weight, k_weight, cos, sin,
-                             positions, k_cache, v_cache, epsilon=1e-6,
+                             positions, k_cache, v_cache, attention_mask=None,
+                             epsilon=1e-6,
                              check_bounds=False):
     """Exact logical sizes: Q[B,16,128], K/V[B,8,128], cache[B,8,C,128]."""
     if q.ndim != 3 or k.ndim != 3 or k.shape != v.shape:
@@ -62,7 +67,13 @@ def fused_qk_norm_rope_cache(q, k, v, q_weight, k_weight, cos, sin,
     kv_heads, capacity = k.shape[1], k_cache.shape[2]
     if k_cache.shape != (batch,kv_heads,capacity,d) or v_cache.shape != k_cache.shape:
         raise ValueError('cache must be [B,Hkv,capacity,D]')
-    tensors=(q,k,v,q_weight,k_weight,cos,sin,positions,k_cache,v_cache)
+    if attention_mask is None:
+        # Compatibility allocation for standalone lessons/tests only. The hot
+        # integrated path always supplies one persistent [B,1,1,C] mask.
+        attention_mask=torch.zeros((batch,1,1,capacity),device=q.device,dtype=q.dtype)
+    if attention_mask.shape != (batch,1,1,capacity) or attention_mask.dtype != q.dtype:
+        raise ValueError('attention_mask must be matching-dtype [B,1,1,capacity]')
+    tensors=(q,k,v,q_weight,k_weight,cos,sin,positions,k_cache,v_cache,attention_mask)
     if not all(t.is_cuda and t.device == q.device and t.is_contiguous() for t in tensors):
         raise ValueError('all tensors must be contiguous on one CUDA device')
     if q.dtype not in (torch.float16,torch.bfloat16) or any(t.dtype != q.dtype for t in (k,v,q_weight,k_weight,cos,sin,k_cache,v_cache)):
@@ -78,6 +89,6 @@ def fused_qk_norm_rope_cache(q, k, v, q_weight, k_weight, cos, sin,
     q_out=torch.empty_like(q)
     block=triton.next_power_of_2(d)
     qk_norm_rope_cache_kernel[(q_heads+kv_heads,batch)](
-        q,k,v,q_weight,k_weight,cos,sin,positions,q_out,k_cache,v_cache,
+        q,k,v,q_weight,k_weight,cos,sin,positions,q_out,k_cache,v_cache,attention_mask,
         q_heads,kv_heads,d,capacity,block,epsilon,num_warps=4,enable_fp_fusion=False)
     return q_out
