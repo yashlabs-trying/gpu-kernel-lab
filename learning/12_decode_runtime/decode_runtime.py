@@ -30,7 +30,7 @@ def install_decode_residual_norm(model):
     """
     if getattr(model, "_kernellab_residual_norm", None) is not None:
         raise ValueError("decode residual/RMSNorm fusion already installed")
-    state = {"decode": False, "pending": None}
+    state = {"decode": False, "pending": None, "observer": None}
 
     def detect(_module, positional, keywords):
         ids = keywords.get("input_ids", positional[0] if positional else None)
@@ -76,6 +76,8 @@ def install_decode_residual_norm(model):
                     self.input_layernorm.variance_epsilon,
                 )
                 state["pending"] = None
+                if state["observer"] is not None:
+                    state["observer"](index-1,residual)
             attention_output, _ = self.self_attn(
                 hidden_states=normalized,
                 attention_mask=attention_mask,
@@ -93,7 +95,10 @@ def install_decode_residual_norm(model):
             )
             mlp_output = self.mlp(normalized)
             if index + 1 == len(layers):
-                return residual + mlp_output
+                output=residual+mlp_output
+                if state["observer"] is not None:
+                    state["observer"](index,output)
+                return output
             # The following layer consumes these tensors with its input norm.
             # Returning residual preserves the model loop ABI; that placeholder
             # is intentionally ignored by the next patched layer.

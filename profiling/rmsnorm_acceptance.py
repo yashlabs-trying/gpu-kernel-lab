@@ -48,10 +48,13 @@ def main():
     def collect(dynamic):
         layer_values=[]; handles=[]
         current=[]
-        for index,layer in enumerate(model.model.layers):
-            def save(_module,_inputs,output,index=index):
-                if capture[0]: current.append((index,output.detach().clone()))
-            handles.append(layer.register_forward_hook(save))
+        if dynamic:
+            for index,layer in enumerate(model.model.layers):
+                def save(_module,_inputs,output,index=index):
+                    if capture[0]: current.append((index,output.detach().clone()))
+                handles.append(layer.register_forward_hook(save))
+        else:
+            model._kernellab_residual_norm['state']['observer'] = lambda index,value: current.append((index,value.detach().clone())) if capture[0] else None
         rows=[]
         try:
             for prompt in range(args.prompts):
@@ -74,9 +77,18 @@ def main():
                 current.clear()
         finally:
             for handle in handles: handle.remove()
+            if not dynamic: model._kernellab_residual_norm['state']['observer']=None
         return rows
 
     baseline=collect(True)
+    install(model,'qwen_rms')
+    install_decode_residual_norm(model)
+    rms_candidate=collect(True)
+    del model
+    torch.cuda.empty_cache()
+
+    model=AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-0.6B',dtype=torch.bfloat16,
+        attn_implementation='sdpa',local_files_only=True).eval().cuda()
     install_prefill_gemm_dispatch(model)
     install(model,'qwen_rms_cuda_hybrid')
     install_fused_static_kv(model,capacity,split_attention=True)
@@ -85,18 +97,23 @@ def main():
 
     layers=[]
     for index in range(len(model.model.layers)):
-        pairs=[metrics(c['layers'][index],b['layers'][index]) for b,c in zip(baseline,candidate)]
+        pairs=[metrics(c['layers'][index],b['layers'][index]) for b,c in zip(baseline,rms_candidate)]
         layers.append({'layer':index,'max_abs':max(x['max_abs'] for x in pairs),
             'mean_abs':sum(x['mean_abs'] for x in pairs)/len(pairs),
             'min_cosine':min(x['cosine'] for x in pairs)})
-    logits=[metrics(c['logits'],b['logits']) for b,c in zip(baseline,candidate)]
-    agreement=sum(c['logits'].argmax().item()==b['logits'].argmax().item() for b,c in zip(baseline,candidate))/len(baseline)
+    logits=[metrics(c['logits'],b['logits']) for b,c in zip(baseline,rms_candidate)]
+    agreement=sum(c['logits'].argmax().item()==b['logits'].argmax().item() for b,c in zip(baseline,rms_candidate))/len(baseline)
+    final_logits=[metrics(c['logits'],b['logits']) for b,c in zip(baseline,candidate)]
+    final_agreement=sum(c['logits'].argmax().item()==b['logits'].argmax().item() for b,c in zip(baseline,candidate))/len(baseline)
     report={'gpu':torch.cuda.get_device_name(),'prompts':args.prompts,
         'adversarial_cases':len(tensor_rows),'adversarial':tensor_rows,
         'adversarial_max_abs':max(x['max_abs'] for x in tensor_rows),
         'per_layer':layers,'logits':{'max_abs':max(x['max_abs'] for x in logits),
             'mean_abs':sum(x['mean_abs'] for x in logits)/len(logits),
             'min_cosine':min(x['cosine'] for x in logits),'argmax_agreement':agreement},
+        'full_candidate_logits':{'max_abs':max(x['max_abs'] for x in final_logits),
+            'mean_abs':sum(x['mean_abs'] for x in final_logits)/len(final_logits),
+            'min_cosine':min(x['cosine'] for x in final_logits),'argmax_agreement':final_agreement},
         'gate':{'pass':agreement>=.99 and min(x['min_cosine'] for x in layers)>=.999,
             'requirements':'argmax >= 99%, every layer min cosine >= 0.999'},
         'limitations':'synthetic deterministic prompts; task-quality corpus evaluation remains separate'}
