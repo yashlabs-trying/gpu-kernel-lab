@@ -1,0 +1,50 @@
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "torch": "2.8.0+cu128",
+  "dtype": "bfloat16",
+  "backend": "sdpa",
+  "hybrid": true,
+  "steps": 16,
+  "warmup": 2,
+  "repeats": 5,
+  "method": "B1 cache-enabled greedy decode; argmax included; cache setup/prefill outside timed region",
+  "measurements": [
+    {
+      "variant": "dynamic",
+      "context": 2048,
+      "gpu_samples_ms_per_token": [
+        20.517440795898438,
+        20.219968795776367,
+        20.78656005859375,
+        20.284160614013672,
+        20.238527297973633
+      ],
+      "gpu_median_ms_per_token": 20.284160614013672
+    },
+    {
+      "variant": "static",
+      "context": 2048,
+      "gpu_samples_ms_per_token": [
+        22.177343368530273,
+        22.072704315185547,
+        22.071807861328125,
+        22.171648025512695,
+        22.232511520385742
+      ],
+      "gpu_median_ms_per_token": 22.171648025512695
+    },
+    {
+      "variant": "fused",
+      "context": 2048,
+      "gpu_samples_ms_per_token": [
+        16.070720672607422,
+        16.113792419433594,
+        16.13164710998535,
+        16.145343780517578,
+        16.122751235961914
+      ],
+      "gpu_median_ms_per_token": 16.122751235961914
+    }
+  ],
+  "capacity": 2064
+}

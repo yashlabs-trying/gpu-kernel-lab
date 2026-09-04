@@ -1,0 +1,6 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 4634.43it/s]
+W0904 06:40:14.559000 8953 torch/utils/cpp_extension.py:2425] TORCH_CUDA_ARCH_LIST is not set, all archs for visible cards are included for compilation. 
+W0904 06:40:14.559000 8953 torch/utils/cpp_extension.py:2425] If this is not desired, please set os.environ['TORCH_CUDA_ARCH_LIST'] to specific architectures.
+{"variant": "dynamic", "context": 2048, "gpu_samples_ms_per_token": [20.464448928833008, 20.451520919799805, 20.461183547973633, 20.79795265197754, 20.362436294555664], "gpu_median_ms_per_token": 20.461183547973633}
+{"variant": "static", "context": 2048, "gpu_samples_ms_per_token": [22.321664810180664, 22.91200065612793, 22.316797256469727, 22.89472007751465, 22.266752243041992], "gpu_median_ms_per_token": 22.321664810180664}
+{"variant": "fused", "context": 2048, "gpu_samples_ms_per_token": [15.694656372070312, 15.686911582946777, 15.675262451171875, 15.688639640808105, 15.909695625305176], "gpu_median_ms_per_token": 15.688639640808105}

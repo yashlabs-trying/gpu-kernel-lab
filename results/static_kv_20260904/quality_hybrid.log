@@ -1,0 +1,15 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:  31%|███       | 96/311 [00:00<00:00, 910.97it/s]Loading weights:  60%|██████    | 188/311 [00:00<00:00, 720.60it/s]Loading weights:  85%|████████▍ | 263/311 [00:00<00:00, 643.30it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 687.74it/s]
+W0904 06:28:07.497000 3132 torch/utils/cpp_extension.py:2425] TORCH_CUDA_ARCH_LIST is not set, all archs for visible cards are included for compilation. 
+W0904 06:28:07.497000 3132 torch/utils/cpp_extension.py:2425] If this is not desired, please set os.environ['TORCH_CUDA_ARCH_LIST'] to specific architectures.
+{
+  "method": "eight original passages, teacher-forced single-token decode; not a standard quality benchmark",
+  "hybrid": true,
+  "dynamic_mean_nll": 3.360714563024009,
+  "static_mean_nll": 3.3626740240022497,
+  "fused_mean_nll": 3.3637469690941133,
+  "static_argmax_agreement": 0.9878542510121457,
+  "fused_argmax_agreement": 0.979757085020243,
+  "fused_vs_static_argmax_agreement": 0.9757085020242915,
+  "evaluated_tokens": 247,
+  "capacity": 45
+}

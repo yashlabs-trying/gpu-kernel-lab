@@ -1,0 +1,12 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:  32%|███▏      | 98/311 [00:00<00:00, 954.83it/s]Loading weights:  62%|██████▏   | 194/311 [00:00<00:00, 634.50it/s]Loading weights:  85%|████████▍ | 264/311 [00:00<00:00, 544.87it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 594.71it/s]
+{
+  "method": "eight original passages, teacher-forced single-token decode; not a standard quality benchmark",
+  "dynamic_mean_nll": 3.368741012863892,
+  "static_mean_nll": 3.365696307475446,
+  "fused_mean_nll": 3.3637486484460486,
+  "static_argmax_agreement": 0.9838056680161943,
+  "fused_argmax_agreement": 0.979757085020243,
+  "fused_vs_static_argmax_agreement": 0.9878542510121457,
+  "evaluated_tokens": 247,
+  "capacity": 45
+}

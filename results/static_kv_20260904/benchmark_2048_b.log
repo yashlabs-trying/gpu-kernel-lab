@@ -1,0 +1,5 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 3608.57it/s]
+{"variant": "dynamic", "context": 2048, "gpu_samples_ms_per_token": [22.969215393066406, 22.90323257446289, 22.90483283996582, 23.26265525817871, 22.866239547729492], "gpu_median_ms_per_token": 22.90483283996582}
+[transformers] `get_max_cache_shape` is deprecated, and will be removed in version 5.16. Please use `get_max_length` instead
+{"variant": "static", "context": 2048, "gpu_samples_ms_per_token": [24.8272647857666, 24.954111099243164, 24.813568115234375, 24.938304901123047, 25.01126480102539], "gpu_median_ms_per_token": 24.938304901123047}
+{"variant": "fused", "context": 2048, "gpu_samples_ms_per_token": [19.163007736206055, 19.40825653076172, 18.75149154663086, 18.762496948242188, 18.835712432861328], "gpu_median_ms_per_token": 18.835712432861328}

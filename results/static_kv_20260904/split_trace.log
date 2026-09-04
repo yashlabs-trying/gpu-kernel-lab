@@ -1,0 +1,9 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 6770.31it/s]
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-5ba8.qdstrm'
+[1/1] [0%                          ] split_trace.nsys-repProcessing events...
+[1/1] [0%                          ] split_trace.nsys-rep[1/1] [8%                          ] split_trace.nsys-rep[1/1] [0%                          ] split_trace.nsys-rep[1/1] [6%                          ] split_trace.nsys-rep[1/1] [==================76%       ] split_trace.nsys-rep[1/1] [========================100%] split_trace.nsys-rep[1/1] [========================100%] split_trace.nsys-rep
+{"variant": "fused", "context": 2048, "gpu_samples_ms_per_token": [23.14124870300293], "gpu_median_ms_per_token": 23.14124870300293}
+Generated:
+	/workspace/gpu-kernel-lab/results/static_kv_20260904/split_trace.nsys-rep

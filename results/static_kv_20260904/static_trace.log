@@ -1,0 +1,9 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 5518.33it/s]
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-3077.qdstrm'
+[1/1] [0%                          ] static_trace.nsys-repProcessing events...
+[1/1] [0%                          ] static_trace.nsys-rep[1/1] [9%                          ] static_trace.nsys-rep[1/1] [==18%                       ] static_trace.nsys-rep[1/1] [=============58%            ] static_trace.nsys-rep[1/1] [========================98% ] static_trace.nsys-rep[1/1] [==================75%       ] static_trace.nsys-rep[1/1] [========================100%] static_trace.nsys-rep[1/1] [========================100%] static_trace.nsys-rep
+{"variant": "static", "context": 2048, "gpu_samples_ms_per_token": [35.39877700805664], "gpu_median_ms_per_token": 35.39877700805664}
+Generated:
+	/workspace/gpu-kernel-lab/results/static_kv_20260904/static_trace.nsys-rep

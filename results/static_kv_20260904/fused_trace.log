@@ -1,0 +1,9 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 4585.41it/s]
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-7150.qdstrm'
+[1/1] [0%                          ] fused_trace.nsys-repProcessing events...
+[1/1] [0%                          ] fused_trace.nsys-rep[1/1] [8%                          ] fused_trace.nsys-rep[1/1] [0%                          ] fused_trace.nsys-rep[1/1] [5%                          ] fused_trace.nsys-rep[1/1] [==================76%       ] fused_trace.nsys-rep[1/1] [========================100%] fused_trace.nsys-rep[1/1] [========================100%] fused_trace.nsys-rep
+{"variant": "fused", "context": 2048, "gpu_samples_ms_per_token": [26.69820785522461], "gpu_median_ms_per_token": 26.69820785522461}
+Generated:
+	/workspace/gpu-kernel-lab/results/static_kv_20260904/fused_trace.nsys-rep
