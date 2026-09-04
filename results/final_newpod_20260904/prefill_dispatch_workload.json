@@ -1,0 +1,344 @@
+{
+  "torch": "2.8.0+cu128",
+  "transformers": "5.16.1",
+  "backend": "sdpa",
+  "dtype": "bfloat16",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "config": {
+    "transformers_version": "5.16.1",
+    "architectures": [
+      "Qwen3ForCausalLM"
+    ],
+    "output_hidden_states": false,
+    "return_dict": true,
+    "dtype": "bfloat16",
+    "chunk_size_feed_forward": 0,
+    "is_encoder_decoder": false,
+    "id2label": {
+      "0": "LABEL_0",
+      "1": "LABEL_1"
+    },
+    "label2id": {
+      "LABEL_0": 0,
+      "LABEL_1": 1
+    },
+    "problem_type": null,
+    "vocab_size": 151936,
+    "hidden_size": 1024,
+    "intermediate_size": 3072,
+    "num_hidden_layers": 28,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 8,
+    "head_dim": 128,
+    "hidden_act": "silu",
+    "max_position_embeddings": 40960,
+    "initializer_range": 0.02,
+    "rms_norm_eps": 1e-06,
+    "use_cache": true,
+    "tie_word_embeddings": true,
+    "rope_parameters": {
+      "rope_theta": 1000000,
+      "rope_type": "default"
+    },
+    "attention_bias": false,
+    "use_sliding_window": false,
+    "sliding_window": null,
+    "max_window_layers": 28,
+    "layer_types": [
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention",
+      "full_attention"
+    ],
+    "attention_dropout": 0.0,
+    "pad_token_id": null,
+    "bos_token_id": 151643,
+    "eos_token_id": 151645,
+    "_name_or_path": "Qwen/Qwen3-0.6B",
+    "model_type": "qwen3",
+    "output_attentions": false
+  },
+  "workload": "batch=1; cache enabled; last-token logits; decode includes argmax and mask growth",
+  "warmup": 2,
+  "repeats": 5,
+  "measurements": [
+    {
+      "phase": "prefill",
+      "initial_context": 128,
+      "decode_steps": null,
+      "gpu_median_ms": 29.98681640625,
+      "wall_median_ms": 30.02072696108371,
+      "gpu_samples_ms": [
+        29.98681640625,
+        34.0951042175293,
+        30.073856353759766,
+        29.434879302978516,
+        29.423519134521484
+      ],
+      "wall_samples_ms": [
+        30.02072696108371,
+        34.123937017284334,
+        30.096026021055877,
+        29.455249081365764,
+        29.444379033520818
+      ],
+      "peak_allocated_gib": 1.1350879669189453
+    },
+    {
+      "phase": "decode",
+      "initial_context": 128,
+      "decode_steps": 16,
+      "gpu_median_ms": 30.464895248413086,
+      "wall_median_ms": 30.466970565612428,
+      "gpu_samples_ms": [
+        29.073070526123047,
+        30.44005584716797,
+        30.616256713867188,
+        30.88921546936035,
+        30.464895248413086
+      ],
+      "wall_samples_ms": [
+        29.0753428125754,
+        30.44193812092999,
+        30.6179254403105,
+        30.891586000507232,
+        30.466970565612428
+      ],
+      "peak_allocated_gib": 1.134134292602539
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 512,
+      "decode_steps": null,
+      "gpu_median_ms": 32.849822998046875,
+      "wall_median_ms": 32.87349292077124,
+      "gpu_samples_ms": [
+        30.57254409790039,
+        31.586111068725586,
+        33.63840103149414,
+        37.26233673095703,
+        32.849822998046875
+      ],
+      "wall_samples_ms": [
+        30.608312925323844,
+        31.60749899689108,
+        33.66070904303342,
+        37.288501975126565,
+        32.87349292077124
+      ],
+      "peak_allocated_gib": 1.186793327331543
+    },
+    {
+      "phase": "decode",
+      "initial_context": 512,
+      "decode_steps": 16,
+      "gpu_median_ms": 27.53606414794922,
+      "wall_median_ms": 27.537930123799015,
+      "gpu_samples_ms": [
+        27.092992782592773,
+        27.53606414794922,
+        27.51456069946289,
+        28.003328323364258,
+        28.11870765686035
+      ],
+      "wall_samples_ms": [
+        27.09523349767551,
+        27.537930123799015,
+        27.516345246112905,
+        28.005233558360487,
+        28.12137612636434
+      ],
+      "peak_allocated_gib": 1.1996564865112305
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 2048,
+      "decode_steps": null,
+      "gpu_median_ms": 65.33222198486328,
+      "wall_median_ms": 65.35667704883963,
+      "gpu_samples_ms": [
+        68.25062561035156,
+        65.97734069824219,
+        65.0465316772461,
+        65.33222198486328,
+        64.72191619873047
+      ],
+      "wall_samples_ms": [
+        68.31852404866368,
+        66.00936409085989,
+        65.07086905185133,
+        65.35667704883963,
+        64.74597007036209
+      ],
+      "peak_allocated_gib": 1.3887319564819336
+    },
+    {
+      "phase": "decode",
+      "initial_context": 2048,
+      "decode_steps": 16,
+      "gpu_median_ms": 27.961023330688477,
+      "wall_median_ms": 27.96326000679983,
+      "gpu_samples_ms": [
+        28.00998306274414,
+        27.963327407836914,
+        27.569215774536133,
+        27.961023330688477,
+        27.75237464904785
+      ],
+      "wall_samples_ms": [
+        28.01350475056097,
+        27.966585621470585,
+        27.57078937429469,
+        27.96326000679983,
+        27.755691000493243
+      ],
+      "peak_allocated_gib": 1.3429174423217773
+    },
+    {
+      "phase": "prefill",
+      "initial_context": 4096,
+      "decode_steps": null,
+      "gpu_median_ms": 136.94259643554688,
+      "wall_median_ms": 136.96977507788688,
+      "gpu_samples_ms": [
+        136.99891662597656,
+        136.79615783691406,
+        136.7572479248047,
+        136.94259643554688,
+        138.92710876464844
+      ],
+      "wall_samples_ms": [
+        137.0348350610584,
+        136.82516489643604,
+        136.78314606659114,
+        136.96977507788688,
+        138.9542450197041
+      ],
+      "peak_allocated_gib": 1.659285545349121
+    },
+    {
+      "phase": "decode",
+      "initial_context": 4096,
+      "decode_steps": 16,
+      "gpu_median_ms": 27.621183395385742,
+      "wall_median_ms": 27.623633497569244,
+      "gpu_samples_ms": [
+        30.75814437866211,
+        28.722244262695312,
+        27.386545181274414,
+        27.621183395385742,
+        27.549243927001953
+      ],
+      "wall_samples_ms": [
+        30.76055350538809,
+        28.724258809234016,
+        27.388604627049062,
+        27.623633497569244,
+        27.550958875508513
+      ],
+      "peak_allocated_gib": 1.5656194686889648
+    }
+  ],
+  "variant": "prefill_dispatch",
+  "ablation_validation": {
+    "substituted_modules": 28,
+    "last_token_logits": [
+      {
+        "length": 128,
+        "max_abs_logit_error": 0.0,
+        "mean_abs_logit_error": 0.0,
+        "logit_cosine": 1.0,
+        "same_argmax": true
+      },
+      {
+        "length": 512,
+        "max_abs_logit_error": 0.0,
+        "mean_abs_logit_error": 0.0,
+        "logit_cosine": 1.0,
+        "same_argmax": true
+      },
+      {
+        "length": 2048,
+        "max_abs_logit_error": 0.0,
+        "mean_abs_logit_error": 0.0,
+        "logit_cosine": 0.9999999403953552,
+        "same_argmax": true
+      },
+      {
+        "length": 4096,
+        "max_abs_logit_error": 0.0,
+        "mean_abs_logit_error": 0.0,
+        "logit_cosine": 1.0,
+        "same_argmax": true
+      }
+    ],
+    "reference_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "candidate_greedy_16": [
+      [
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835,
+        8835
+      ]
+    ],
+    "greedy_16_match": true,
+    "quantization_info": null,
+    "int8_info": null,
+    "caution": "Small synthetic checks only. INT4 decode is lossy and retains original weights for prefill; matching prefill logits does not validate quantized decode. Other candidates may differ in rounding/reduction order. Not production-quality equivalence validation."
+  }
+}

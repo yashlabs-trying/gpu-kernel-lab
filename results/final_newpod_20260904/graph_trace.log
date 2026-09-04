@@ -1,0 +1,11 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:  22%|██▏       | 69/311 [00:00<00:00, 618.28it/s]Loading weights:  53%|█████▎    | 164/311 [00:00<00:00, 797.91it/s]Loading weights:  81%|████████  | 251/311 [00:00<00:00, 762.46it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 819.57it/s]
+W0904 14:21:00.983000 5438 torch/utils/cpp_extension.py:2425] TORCH_CUDA_ARCH_LIST is not set, all archs for visible cards are included for compilation. 
+W0904 14:21:00.983000 5438 torch/utils/cpp_extension.py:2425] If this is not desired, please set os.environ['TORCH_CUDA_ARCH_LIST'] to specific architectures.
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-ca48.qdstrm'
+[1/1] [0%                          ] graph_trace.nsys-repProcessing events...
+[1/1] [0%                          ] graph_trace.nsys-rep[1/1] [7%                          ] graph_trace.nsys-rep[1/1] [14%                         ] graph_trace.nsys-rep[1/1] [============56%             ] graph_trace.nsys-rep[1/1] [========================98% ] graph_trace.nsys-rep[1/1] [================68%         ] graph_trace.nsys-rep[1/1] [========================100%] graph_trace.nsys-rep[1/1] [========================100%] graph_trace.nsys-rep
+{"variant": "fused_graph", "context": 2048, "gpu_samples_ms_per_token": [2.341154098510742], "gpu_median_ms_per_token": 2.341154098510742}
+Generated:
+    /workspace/gpu-kernel-lab/results/final_newpod_20260904/graph_trace.nsys-rep

@@ -1,0 +1,161 @@
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "torch": "2.8.0+cu128",
+  "dtype": "bfloat16",
+  "backend": "sdpa",
+  "hybrid": true,
+  "split_attention": true,
+  "residual_norm": true,
+  "cuda_graph": false,
+  "steps": 16,
+  "warmup": 2,
+  "repeats": 5,
+  "method": "B1 cache-enabled greedy decode; argmax included; cache setup/prefill outside timed region",
+  "measurements": [
+    {
+      "variant": "dynamic",
+      "context": 128,
+      "gpu_samples_ms_per_token": [
+        25.205184936523438,
+        24.302528381347656,
+        24.731647491455078,
+        24.096256256103516,
+        21.956480026245117
+      ],
+      "gpu_median_ms_per_token": 24.302528381347656
+    },
+    {
+      "variant": "static",
+      "context": 128,
+      "gpu_samples_ms_per_token": [
+        23.60736083984375,
+        23.975553512573242,
+        23.992658615112305,
+        23.46143913269043,
+        23.826866149902344
+      ],
+      "gpu_median_ms_per_token": 23.826866149902344
+    },
+    {
+      "variant": "dynamic",
+      "context": 512,
+      "gpu_samples_ms_per_token": [
+        21.874048233032227,
+        22.311552047729492,
+        22.11756706237793,
+        23.283199310302734,
+        21.853574752807617
+      ],
+      "gpu_median_ms_per_token": 22.11756706237793
+    },
+    {
+      "variant": "static",
+      "context": 512,
+      "gpu_samples_ms_per_token": [
+        23.92017936706543,
+        24.16422462463379,
+        24.353471755981445,
+        24.119935989379883,
+        23.87295913696289
+      ],
+      "gpu_median_ms_per_token": 24.119935989379883
+    },
+    {
+      "variant": "dynamic",
+      "context": 2048,
+      "gpu_samples_ms_per_token": [
+        21.604032516479492,
+        21.634042739868164,
+        21.357696533203125,
+        21.61497688293457,
+        21.47750473022461
+      ],
+      "gpu_median_ms_per_token": 21.604032516479492
+    },
+    {
+      "variant": "static",
+      "context": 2048,
+      "gpu_samples_ms_per_token": [
+        23.91097640991211,
+        24.24652862548828,
+        24.129535675048828,
+        24.257984161376953,
+        23.792959213256836
+      ],
+      "gpu_median_ms_per_token": 24.129535675048828
+    },
+    {
+      "variant": "dynamic",
+      "context": 4096,
+      "gpu_samples_ms_per_token": [
+        21.896831512451172,
+        21.818496704101562,
+        21.730239868164062,
+        21.809396743774414,
+        21.963903427124023
+      ],
+      "gpu_median_ms_per_token": 21.818496704101562
+    },
+    {
+      "variant": "static",
+      "context": 4096,
+      "gpu_samples_ms_per_token": [
+        24.563199996948242,
+        23.868091583251953,
+        24.287168502807617,
+        23.9368896484375,
+        24.00920867919922
+      ],
+      "gpu_median_ms_per_token": 24.00920867919922
+    },
+    {
+      "variant": "fused",
+      "context": 128,
+      "gpu_samples_ms_per_token": [
+        16.39674186706543,
+        16.320192337036133,
+        16.45350456237793,
+        16.76723289489746,
+        16.413312911987305
+      ],
+      "gpu_median_ms_per_token": 16.413312911987305
+    },
+    {
+      "variant": "fused",
+      "context": 512,
+      "gpu_samples_ms_per_token": [
+        16.9116153717041,
+        16.517568588256836,
+        16.504831314086914,
+        16.42969512939453,
+        16.306304931640625
+      ],
+      "gpu_median_ms_per_token": 16.504831314086914
+    },
+    {
+      "variant": "fused",
+      "context": 2048,
+      "gpu_samples_ms_per_token": [
+        16.323657989501953,
+        16.407808303833008,
+        16.435516357421875,
+        16.442623138427734,
+        16.26233673095703
+      ],
+      "gpu_median_ms_per_token": 16.407808303833008
+    },
+    {
+      "variant": "fused",
+      "context": 4096,
+      "gpu_samples_ms_per_token": [
+        16.877119064331055,
+        16.506492614746094,
+        16.52787208557129,
+        16.684415817260742,
+        16.617151260375977
+      ],
+      "gpu_median_ms_per_token": 16.617151260375977
+    }
+  ],
+  "capacity": 4112
+}
