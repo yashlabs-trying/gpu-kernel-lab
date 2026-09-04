@@ -13,10 +13,13 @@ from qwen_prefill_gemm import qwen_prefill_linear
 # prior isolated benchmark by a meaningful margin selected for integration.
 WINNERS={
     ('q_proj',2048,1024,2048),
-    ('k_proj',4096,1024,1024),
-    ('v_proj',4096,1024,1024),
-    ('gate_proj',512,1024,3072),
-    ('up_proj',512,1024,3072),
+}
+
+# These won isolated GEMMs but lost after model integration, so the dispatcher
+# deliberately does not activate them.
+REJECTED_AFTER_INTEGRATION={
+    ('k_proj',4096,1024,1024),('v_proj',4096,1024,1024),
+    ('gate_proj',512,1024,3072),('up_proj',512,1024,3072),
     ('down_proj',4096,3072,1024),
 }
 
@@ -42,6 +45,7 @@ def install_prefill_gemm_dispatch(model):
         installed.append(name)
     model._kernellab_prefill_dispatch={
         'modules':installed,'winners':sorted(WINNERS),
+        'rejected_after_integration':sorted(REJECTED_AFTER_INTEGRATION),
         'extra_weight_bytes':0,
         'policy':'exact-shape whitelist; PyTorch fallback for all other shapes',
     }
