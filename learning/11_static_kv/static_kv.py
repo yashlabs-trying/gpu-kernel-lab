@@ -23,7 +23,7 @@ class ContiguousStaticCache(StaticCache):
     def initialize(self,model,batch_size=1):
         config=model.config
         layers=len(self.layers)
-        shape=(layers,batch_size,config.num_key_value_heads,self.get_max_cache_shape(),config.head_dim)
+        shape=(layers,batch_size,config.num_key_value_heads,self.layers[0].max_cache_len,config.head_dim)
         options={'device':model.device,'dtype':next(model.parameters()).dtype}
         self.key_storage=torch.zeros(shape,**options)
         self.value_storage=torch.zeros(shape,**options)
