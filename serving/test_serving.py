@@ -31,13 +31,16 @@ def test_chunked_prefill_does_not_block_decode():
     first=s.plan(); assert len(first.prefill)==1 and len(first.prefill[0].token_ids)==4
     s.complete_prefill('long',4)
     second=s.plan(); assert second.prefill[0].request_id=='short'
-    s.complete_prefill('short',2); third=s.plan()
-    assert third.decode_ids==('short',) and third.prefill[0].request_id=='long'
+    s.complete_prefill('short',2)
+    for work in second.prefill[1:]: s.complete_prefill(work.request_id,len(work.token_ids))
+    third=s.plan()
+    assert tuple(x.request_id for x in third.decode)==('short',) and third.prefill[0].request_id=='long'
 
 
 def test_finished_request_releases_blocks():
     a=allocator(); s=ContinuousBatchScheduler(a,CUDAGraphBuckets())
-    s.submit(Request('x',(1,2),1)); s.complete_prefill('x',2); before=a.free_blocks
+    s.submit(Request('x',(1,2),1)); s.plan(); s.complete_prefill('x',2); before=a.free_blocks
+    s.plan()
     s.complete_decode('x',3); assert s.requests['x'].state==RequestState.FINISHED
     assert a.free_blocks>before
 

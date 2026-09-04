@@ -32,11 +32,19 @@ class PrefillWork:
     request_id:str
     token_ids:tuple[int,...]
     start_position:int
+    slots:tuple[tuple[int,int],...]
+
+
+@dataclass(frozen=True)
+class DecodeWork:
+    request_id:str
+    position:int
+    slot:tuple[int,int]
 
 
 @dataclass(frozen=True)
 class StepPlan:
-    decode_ids:tuple[str,...]
+    decode:tuple[DecodeWork,...]
     prefill:tuple[PrefillWork,...]
     graph_batch_size:int|None
 
@@ -48,6 +56,7 @@ class ContinuousBatchScheduler:
         self.allocator=allocator; self.graph_buckets=graph_buckets
         self.max_batch_size=max_batch_size; self.prefill_chunk_size=prefill_chunk_size; self.max_prefill_tokens=max_prefill_tokens
         self.requests:dict[str,Request]={}; self._prefill=deque(); self._decode=deque()
+        self._inflight:dict[str,tuple[str,int]]={}
 
     def submit(self,request):
         if not request.request_id or request.request_id in self.requests: raise ValueError('request id must be unique')
@@ -58,14 +67,18 @@ class ContinuousBatchScheduler:
     def cancel(self,request_id):
         request=self.requests[request_id]
         if request.finished: return False
-        request.state=RequestState.CANCELLED; self.allocator.release(request_id); return True
+        request.state=RequestState.CANCELLED; self._inflight.pop(request_id,None); self.allocator.release(request_id); return True
 
     def plan(self):
+        if self._inflight: raise RuntimeError('complete or fail the current plan before planning again')
         decode=[]
         for _ in range(min(len(self._decode),self.max_batch_size)):
             request_id=self._decode.popleft(); request=self.requests[request_id]
             if request.state==RequestState.DECODE:
-                decode.append(request_id); self._decode.append(request_id)
+                position=self.allocator.length(request_id)
+                slot=self.allocator.append_slots(request_id,1)[0]
+                decode.append(DecodeWork(request_id,position,slot)); self._inflight[request_id]=('decode',1)
+                self._decode.append(request_id)
         remaining_slots=self.max_batch_size-len(decode); token_budget=self.max_prefill_tokens; prefill=[]
         # One chunk per request per iteration prevents a long prompt monopolizing prefill.
         visits=min(len(self._prefill),remaining_slots)
@@ -76,32 +89,36 @@ class ContinuousBatchScheduler:
             if count<=0:
                 self._prefill.appendleft(request_id); break
             start=request.prefill_cursor
-            prefill.append(PrefillWork(request_id,request.prompt_token_ids[start:start+count],start))
+            slots=tuple(self.allocator.append_slots(request_id,count))
+            prefill.append(PrefillWork(request_id,request.prompt_token_ids[start:start+count],start,slots))
+            self._inflight[request_id]=('prefill',count)
             token_budget-=count; self._prefill.append(request_id)
-        bucket=self.graph_buckets.select(len(decode),max((self.allocator.length(i) for i in decode),default=0)) if decode else None
+        bucket=self.graph_buckets.select(len(decode),max((self.allocator.length(x.request_id) for x in decode),default=0)) if decode else None
         return StepPlan(tuple(decode),tuple(prefill),None if bucket is None else bucket[0])
 
     def complete_prefill(self,request_id,count):
         request=self.requests[request_id]
-        if request.state!=RequestState.PREFILL or count<=0 or count>request.remaining_prompt: raise ValueError('invalid prefill completion')
-        self.allocator.append_slots(request_id,count); request.prefill_cursor+=count
+        if self._inflight.get(request_id)!=('prefill',count) or request.state!=RequestState.PREFILL or count<=0 or count>request.remaining_prompt: raise ValueError('invalid prefill completion')
+        self._inflight.pop(request_id)
+        request.prefill_cursor+=count
         if request.remaining_prompt==0:
             request.state=RequestState.DECODE
             self._remove(self._prefill,request_id); self._decode.append(request_id)
 
     def complete_decode(self,request_id,token_id,stopped=False):
         request=self.requests[request_id]
-        if request.state!=RequestState.DECODE: raise ValueError('request is not decoding')
-        self.allocator.append_slots(request_id,1); request.generated.append(int(token_id))
+        if self._inflight.get(request_id)!=('decode',1) or request.state!=RequestState.DECODE: raise ValueError('request is not decoding')
+        self._inflight.pop(request_id)
+        request.generated.append(int(token_id))
         if stopped or len(request.generated)>=request.max_new_tokens:
             request.state=RequestState.FINISHED; self._remove(self._decode,request_id); self.allocator.release(request_id)
 
     def fail(self,request_id,error):
         request=self.requests[request_id]; request.state=RequestState.FAILED; request.error=str(error)
+        self._inflight.pop(request_id,None)
         self._remove(self._prefill,request_id); self._remove(self._decode,request_id); self.allocator.release(request_id)
 
     @staticmethod
     def _remove(queue,value):
         try: queue.remove(value)
         except ValueError: pass
-

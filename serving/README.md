@@ -10,7 +10,8 @@ next integration boundary.
 - `PagedKVAllocator` owns fixed physical K/V blocks, per-request logical block
   tables, valid lengths, atomic reservation, and immediate block reuse.
 - `ContinuousBatchScheduler` prioritizes ready decode work while admitting one
-  bounded prefill chunk per waiting request in round-robin order.
+  bounded prefill chunk per waiting request in round-robin order. Every plan
+  reserves and returns physical `(block, offset)` slots before GPU execution.
 - `CUDAGraphBuckets` selects the smallest registered `(batch,sequence)` bucket
   and enforces fixed input signatures during capture/replay.
 - `Sampler` implements deterministic temperature, top-k, top-p, repetition
