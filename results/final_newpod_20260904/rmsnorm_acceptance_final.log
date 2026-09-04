@@ -1,0 +1,23 @@
+{
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "prompts": 256,
+  "adversarial_cases": 60,
+  "adversarial_max_abs": 0.03125,
+  "logits": {
+    "max_abs": 0.390625,
+    "mean_abs": 0.025184802797411976,
+    "min_cosine": 0.9991046190261841,
+    "argmax_agreement": 0.98046875
+  },
+  "full_candidate_logits": {
+    "max_abs": 0.455078125,
+    "mean_abs": 0.03567691367788939,
+    "min_cosine": 0.9988458752632141,
+    "argmax_agreement": 0.96484375
+  },
+  "gate": {
+    "pass": false,
+    "requirements": "argmax >= 99%, every layer min cosine >= 0.999"
+  },
+  "limitations": "synthetic deterministic prompts; task-quality corpus evaluation remains separate"
+}
