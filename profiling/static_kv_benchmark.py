@@ -25,6 +25,7 @@ def main():
     p.add_argument('--mode',choices=['benchmark','capture'],default='benchmark')
     p.add_argument('--capture-variant',choices=['dynamic','static','fused'],default='fused')
     p.add_argument('--hybrid',action='store_true',help='compose the prior QKV/MLP projection fusion')
+    p.add_argument('--split-attention',action='store_true',help='replace masked SDPA with preallocated split-KV GQA')
     args=p.parse_args()
     if args.mode=='capture' and len(args.lengths)!=1:
         raise ValueError('capture takes exactly one context length')
@@ -32,7 +33,7 @@ def main():
         attn_implementation='sdpa',local_files_only=True).eval().cuda()
     install(model,'qwen_rms_cuda_hybrid' if args.hybrid else 'qwen_rms')
     report={'gpu':torch.cuda.get_device_name(),'torch':torch.__version__,'dtype':'bfloat16',
-        'backend':model.config._attn_implementation,'hybrid':args.hybrid,'steps':args.steps,'warmup':args.warmup,
+        'backend':model.config._attn_implementation,'hybrid':args.hybrid,'split_attention':args.split_attention,'steps':args.steps,'warmup':args.warmup,
         'repeats':args.repeats,'method':'B1 cache-enabled greedy decode; argmax included; cache setup/prefill outside timed region','measurements':[]}
     capacity=max(args.lengths)+args.steps
     report['capacity']=capacity
@@ -90,7 +91,7 @@ def main():
             measure('dynamic',length,prepare_dynamic,dynamic)
         if args.mode=='benchmark' or args.capture_variant=='static':
             measure('static',length,prepare_static,lambda state:static(state,False))
-    install_fused_static_kv(model,capacity)
+    install_fused_static_kv(model,capacity,split_attention=args.split_attention)
     for length in args.lengths:
         if args.mode=='benchmark' or args.capture_variant=='fused':
             def prepare_fused(length):

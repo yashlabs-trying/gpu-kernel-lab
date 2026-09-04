@@ -15,6 +15,8 @@ from transformers.models.qwen3.modeling_qwen3 import ALL_ATTENTION_FUNCTIONS, ea
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'learning/08_decode'))
 from fused_qkv_cache import fused_qk_norm_rope_cache
+sys.path.insert(0,str(ROOT/'learning/10_cuda_decode'))
+from split_kv import split_kv_attention
 
 
 class ContiguousStaticCache(StaticCache):
@@ -73,7 +75,7 @@ def make_mask(batch,capacity,valid,dtype,device):
 
 
 @torch.inference_mode()
-def install_fused_static_kv(model,capacity,batch_size=1):
+def install_fused_static_kv(model,capacity,batch_size=1,split_attention=False):
     if getattr(model,'_kernellab_static_kv',None) is not None:
         raise ValueError('static KV integration already installed')
     config=model.config
@@ -93,6 +95,10 @@ def install_fused_static_kv(model,capacity,batch_size=1):
     del positions,full_cos,full_sin
     rotary_dummy=torch.empty((batch_size,1,config.head_dim),device=device,dtype=torch.bfloat16)
     state={'decode':False}
+    splits=triton.cdiv(capacity,128)
+    attention_output=torch.empty((config.num_attention_heads,config.head_dim),device=device,dtype=torch.bfloat16)
+    attention_local=torch.empty((config.num_attention_heads,splits,config.head_dim),device=device,dtype=torch.float32)
+    attention_lse=torch.empty((config.num_attention_heads,splits),device=device,dtype=torch.float32)
 
     def rotary(self,x,position_ids):
         if state['decode'] and x.shape[-2]==1:
@@ -120,10 +126,16 @@ def install_fused_static_kv(model,capacity,batch_size=1):
             q=fused_qk_norm_rope_cache(q,k,v,self.q_norm.weight,self.k_norm.weight,
                 cos,sin,position_ids[:,0],layer.keys,layer.values,attention_mask,
                 epsilon=self.q_norm.variance_epsilon)
-            interface=ALL_ATTENTION_FUNCTIONS.get_interface(self.config._attn_implementation,eager_attention_forward)
-            output,weights=interface(self,q.unsqueeze(2),layer.keys,layer.values,attention_mask,
-                dropout=0.0,scaling=self.scaling,sliding_window=self.sliding_window,**kwargs)
-            output=output.reshape(*hidden_states.shape[:-1],-1).contiguous()
+            if split_attention:
+                output=split_kv_attention(q[0],layer.keys[0],layer.values[0],128,
+                    valid_position=position_ids[:,0],output=attention_output,
+                    local=attention_local,lse=attention_lse).reshape(1,1,-1)
+                weights=None
+            else:
+                interface=ALL_ATTENTION_FUNCTIONS.get_interface(self.config._attn_implementation,eager_attention_forward)
+                output,weights=interface(self,q.unsqueeze(2),layer.keys,layer.values,attention_mask,
+                    dropout=0.0,scaling=self.scaling,sliding_window=self.sliding_window,**kwargs)
+                output=output.reshape(*hidden_states.shape[:-1],-1).contiguous()
             return self.o_proj(output),weights
         attention.forward=types.MethodType(forward,attention)
 
@@ -131,8 +143,9 @@ def install_fused_static_kv(model,capacity,batch_size=1):
         ids=keywords.get('input_ids',positional[0] if positional else None)
         state['decode']=ids is not None and tuple(ids.shape)==(1,1)
     model.register_forward_pre_hook(detect,with_kwargs=True)
-    model._kernellab_static_kv={'capacity':capacity,'batch_size':batch_size,
+    model._kernellab_static_kv={'capacity':capacity,'batch_size':batch_size,'split_attention':split_attention,
         'cos':cos,'sin':sin,'state':state,
+        'attention_workspaces':(attention_output,attention_local,attention_lse),
         'limitations':'eager B1 one-token decode; explicit fixed position/mask; no generate/concurrent forwards; cache length metadata stays at prefill length'}
     return model
 
