@@ -37,8 +37,9 @@ def main():
     graph=GreedyDecodeGraph(model,graph_token,graph_cache,graph_mask,graph_pos)
 
     eager_tokens=[]
-    # Match the graph constructor's warmup and captured execution, then replay.
-    for _ in range(steps+2):
+    # Graph construction executes one warmup. Capture records the second step;
+    # it does not replay it until the first explicit graph.replay().
+    for _ in range(steps+1):
         out=model(input_ids=eager_token,attention_mask=eager_mask,
             position_ids=eager_pos.view(1,1),past_key_values=eager_cache,
             use_cache=True,logits_to_keep=1)
@@ -50,8 +51,8 @@ def main():
     torch.cuda.synchronize()
     result={
         'steps_checked':steps,
-        'tokens_match':graph_tokens==eager_tokens[2:],
-        'eager_tokens':eager_tokens[2:],
+        'tokens_match':graph_tokens==eager_tokens[1:],
+        'eager_tokens':eager_tokens[1:],
         'graph_tokens':graph_tokens,
         'position_match':graph_pos.item()==eager_pos.item(),
         'final_position':graph_pos.item(),

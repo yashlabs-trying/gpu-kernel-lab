@@ -8,6 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'learning/10_cuda_decode'))
 from activation_int8 import quantize_int8
 from cuda_decode import project, extension
+sys.path.insert(0,str(ROOT/'learning/02_swiglu'))
+from fused_projection_swiglu import fused_projection_swiglu
 
 # Separate from the eight held-out quality passages. These small calibration
 # prompts are an experiment, not a representative production calibration set.
@@ -112,8 +114,19 @@ def install_stage2(model, *, hybrid=False):
             def attach_mlp(mlp,packed):
                 original = mlp.forward
                 def forward(self,x):
-                    if not state['decode'] or x.numel()!=x.shape[-1]:
+                    rows=x.numel()//x.shape[-1]
+                    if not state['decode']:
+                        # Prefill has enough M parallelism for tensor-core tiles.
+                        # Keep the decode-only quantized weights out of this path.
+                        if rows > 4096:
+                            return original(x)
+                        hidden=fused_projection_swiglu(
+                            x,self.gate_proj.weight,self.up_proj.weight)
+                        return self.down_proj(hidden)
+                    if rows != 1:
                         return original(x)
+                    # Decode is M=1: stream packed gate/up weights once through
+                    # independent warp reductions, then apply the SwiGLU epilogue.
                     hidden = project(x.reshape(-1),packed,swiglu=True,warps=8 if hybrid else 4).reshape(*x.shape[:-1],packed.data.shape[0]//2)
                     return self.down_proj(hidden)
                 mlp.forward = types.MethodType(forward,mlp)
@@ -121,7 +134,7 @@ def install_stage2(model, *, hybrid=False):
             count += 5 if hybrid else 7
         model._kernellab_int8_info = {'linear_modules':count,'packed_bytes_added':storage,
             'method':'W8A16 AWQ-inspired channel scale search, alpha 0/.5/1; not full AWQ',
-            'hybrid':hybrid,'layout':'BF16 combined QKV + W8 gate/up/SwiGLU, original o/down' if hybrid else 'W8 combined QKV + o + gate/up/SwiGLU + down',
+            'hybrid':hybrid,'layout':'prefill: tiled BF16 gate/up/SwiGLU; decode: W8 dual GEMV/SwiGLU; '+('BF16 combined QKV + original o/down' if hybrid else 'W8 combined QKV + o + down'),
             'calibration':calibration,'calibration_texts':CALIBRATION,
             'warning':'Dense weights retained. Decode only, M=1, BF16, eager, no concurrent forwards. LM head stays BF16 unless separate head adapter installed. Split-KV attention is NOT integrated.'}
         return count
