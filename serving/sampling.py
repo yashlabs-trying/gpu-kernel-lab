@@ -31,7 +31,14 @@ class SampleResult:
 
 class Sampler:
     def __init__(self,params:SamplingParams,device='cpu'):
-        self.params=params; self.generator=torch.Generator(device=device); self.generator.manual_seed(params.seed)
+        self.params=params; self.generators={}
+        if device is not None: self._generator(torch.device(device))
+
+    def _generator(self,device):
+        key=str(device)
+        if key not in self.generators:
+            self.generators[key]=torch.Generator(device=device).manual_seed(self.params.seed)
+        return self.generators[key]
 
     @torch.inference_mode()
     def sample(self,logits,history=()):
@@ -50,8 +57,7 @@ class Sampler:
                 ordered,index=scores.sort(descending=True); probabilities=ordered.softmax(0)
                 remove=probabilities.cumsum(0)-probabilities>p.top_p
                 scores[index[remove]]=-torch.inf
-            token=int(torch.multinomial(scores.softmax(0),1,generator=self.generator))
+            token=int(torch.multinomial(scores.softmax(0),1,generator=self._generator(scores.device)))
         log_probabilities=scores.log_softmax(0); count=min(p.logprobs,scores.numel())
         top=() if not count else tuple((int(i),float(v)) for v,i in zip(*log_probabilities.topk(count)))
         return SampleResult(token,float(log_probabilities[token]),top,token in p.stop_token_ids)
-

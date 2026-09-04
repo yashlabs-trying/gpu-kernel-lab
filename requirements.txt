@@ -6,3 +6,5 @@ safetensors>=0.4,<1
 psutil>=5.9,<8
 pytest>=8,<10
 ninja>=1.11,<2
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1

@@ -104,8 +104,12 @@ class PagedKVAllocator:
     def free_blocks(self): return len(self._free)
     @property
     def capacity_tokens(self): return self.num_blocks*self.block_size
+    @property
+    def storage_bytes(self): return self.keys.numel()*self.keys.element_size()+self.values.numel()*self.values.element_size()
+    def blocks_for_tokens(self,count):
+        if count<0: raise ValueError('token count must be nonnegative')
+        return math.ceil(count/self.block_size)
 
     def _get(self,request_id):
         try: return self._requests[request_id]
         except KeyError: raise KeyError(f'unknown request {request_id!r}') from None
-

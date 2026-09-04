@@ -3,11 +3,15 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass,field
 from enum import Enum
+import time
 from .sampling import SamplingParams
 
 
 class RequestState(str,Enum):
-    WAITING='waiting'; PREFILL='prefill'; DECODE='decode'; FINISHED='finished'; CANCELLED='cancelled'; FAILED='failed'
+    WAITING='waiting'; PREFILL='prefill'; DECODE='decode'; FINISHED='finished'; CANCELLED='cancelled'; TIMED_OUT='timed_out'; REJECTED='rejected'; FAILED='failed'
+
+
+class AdmissionError(RuntimeError): pass
 
 
 @dataclass
@@ -16,15 +20,18 @@ class Request:
     prompt_token_ids:tuple[int,...]
     max_new_tokens:int
     sampling:SamplingParams=field(default_factory=SamplingParams)
+    priority:int=0
+    timeout_s:float|None=60.0
     state:RequestState=RequestState.WAITING
     prefill_cursor:int=0
     generated:list[int]=field(default_factory=list)
     error:str|None=None
+    submitted_at:float=field(default_factory=time.monotonic)
 
     @property
     def remaining_prompt(self): return len(self.prompt_token_ids)-self.prefill_cursor
     @property
-    def finished(self): return self.state in (RequestState.FINISHED,RequestState.CANCELLED,RequestState.FAILED)
+    def finished(self): return self.state in (RequestState.FINISHED,RequestState.CANCELLED,RequestState.TIMED_OUT,RequestState.REJECTED,RequestState.FAILED)
 
 
 @dataclass(frozen=True)
@@ -57,20 +64,30 @@ class ContinuousBatchScheduler:
         self.max_batch_size=max_batch_size; self.prefill_chunk_size=prefill_chunk_size; self.max_prefill_tokens=max_prefill_tokens
         self.requests:dict[str,Request]={}; self._prefill=deque(); self._decode=deque()
         self._inflight:dict[str,tuple[str,int]]={}
+        self._reserved_blocks:dict[str,int]={}
 
     def submit(self,request):
         if not request.request_id or request.request_id in self.requests: raise ValueError('request id must be unique')
         if not request.prompt_token_ids or request.max_new_tokens<=0: raise ValueError('nonempty prompt and positive max_new_tokens required')
+        if request.timeout_s is not None and request.timeout_s<=0: raise ValueError('timeout must be positive')
+        reserve=self.allocator.blocks_for_tokens(len(request.prompt_token_ids)+request.max_new_tokens)
+        if reserve>self.allocator.num_blocks-sum(self._reserved_blocks.values()):
+            request.state=RequestState.REJECTED; request.error='insufficient KV capacity'; self.requests[request.request_id]=request
+            raise AdmissionError(request.error)
         self.allocator.create(request.request_id); request.state=RequestState.PREFILL
-        self.requests[request.request_id]=request; self._prefill.append(request.request_id)
+        request.submitted_at=time.monotonic(); self.requests[request.request_id]=request
+        self._reserved_blocks[request.request_id]=reserve; self._prefill.append(request.request_id)
 
     def cancel(self,request_id):
         request=self.requests[request_id]
         if request.finished: return False
-        request.state=RequestState.CANCELLED; self._inflight.pop(request_id,None); self.allocator.release(request_id); return True
+        request.state=RequestState.CANCELLED; self._cleanup(request_id); return True
 
     def plan(self):
         if self._inflight: raise RuntimeError('complete or fail the current plan before planning again')
+        self.expire()
+        self._decode=deque(sorted(self._decode,key=lambda i:-self.requests[i].priority))
+        self._prefill=deque(sorted(self._prefill,key=lambda i:-self.requests[i].priority))
         decode=[]
         for _ in range(min(len(self._decode),self.max_batch_size)):
             request_id=self._decode.popleft(); request=self.requests[request_id]
@@ -111,11 +128,24 @@ class ContinuousBatchScheduler:
         self._inflight.pop(request_id)
         request.generated.append(int(token_id))
         if stopped or len(request.generated)>=request.max_new_tokens:
-            request.state=RequestState.FINISHED; self._remove(self._decode,request_id); self.allocator.release(request_id)
+            request.state=RequestState.FINISHED; self._cleanup(request_id)
 
     def fail(self,request_id,error):
         request=self.requests[request_id]; request.state=RequestState.FAILED; request.error=str(error)
-        self._inflight.pop(request_id,None)
+        self._cleanup(request_id)
+
+    def expire(self,now=None):
+        now=time.monotonic() if now is None else now; expired=[]
+        for request_id,request in tuple(self.requests.items()):
+            if not request.finished and request.timeout_s is not None and now-request.submitted_at>=request.timeout_s:
+                request.state=RequestState.TIMED_OUT; request.error='request deadline exceeded'; self._cleanup(request_id); expired.append(request_id)
+        return tuple(expired)
+
+    @property
+    def admitted_blocks(self): return sum(self._reserved_blocks.values())
+
+    def _cleanup(self,request_id):
+        self._inflight.pop(request_id,None); self._reserved_blocks.pop(request_id,None)
         self._remove(self._prefill,request_id); self._remove(self._decode,request_id); self.allocator.release(request_id)
 
     @staticmethod
