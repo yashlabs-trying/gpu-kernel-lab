@@ -7,6 +7,8 @@ from serving.graph_buckets import CUDAGraphBuckets
 from serving.paged_kv import PagedKVAllocator
 from serving.sampling import Sampler,SamplingParams
 from serving.scheduler import AdmissionError,ContinuousBatchScheduler,Request,RequestState
+from serving.api import create_app
+from fastapi.testclient import TestClient
 
 
 def allocator(blocks=8):
@@ -91,3 +93,36 @@ def test_concurrent_stress_and_metrics():
         assert a.free_blocks==a.num_blocks
         assert all(not q.empty() for q in queues)
     asyncio.run(run())
+
+
+class FakeTokenizer:
+    def encode(self,text,add_special_tokens=True): return [1]+[2+(ord(c)%13) for c in text]
+    def decode(self,ids,skip_special_tokens=False): return ''.join(chr(97+(i%26)) for i in ids)
+    def apply_chat_template(self,messages,tokenize=False,add_generation_prompt=True):
+        return '\n'.join(f"{x['role']}: {x['content']}" for x in messages)+'\nassistant:'
+
+
+def api_client(blocks=64):
+    a=allocator(blocks); scheduler=ContinuousBatchScheduler(a,CUDAGraphBuckets(),max_batch_size=4,prefill_chunk_size=8)
+    return TestClient(create_app(ServingEngine(scheduler,FakeExecutor()),FakeTokenizer()))
+
+
+def test_openai_json_streaming_health_and_metrics():
+    with api_client() as client:
+        assert client.get('/health').json()['status']=='ok'
+        assert client.get('/v1/models').status_code==200
+        response=client.post('/v1/completions',json={'prompt':'hello','max_tokens':2,'seed':4})
+        assert response.status_code==200 and response.json()['usage']=={'prompt_tokens':6,'completion_tokens':2,'total_tokens':8}
+        with client.stream('POST','/v1/chat/completions',json={'messages':[{'role':'user','content':'hi'}],'stream':True,'max_tokens':2}) as stream:
+            body=''.join(stream.iter_text())
+        assert stream.status_code==200 and 'chat.completion.chunk' in body and 'data: [DONE]' in body
+        metrics=client.get('/metrics').json(); assert metrics['requests']['completed']==2
+        assert metrics['tokens']['generated']==4 and metrics['kv']['used_blocks']==0
+
+
+def test_api_validation_unknown_model_and_capacity_rejection():
+    with api_client(1) as client:
+        assert client.post('/v1/completions',json={'prompt':'x','max_tokens':0}).status_code==422
+        assert client.post('/v1/completions',json={'model':'missing','prompt':'x'}).status_code==404
+        rejected=client.post('/v1/completions',json={'prompt':'long','max_tokens':8})
+        assert rejected.status_code==503 and rejected.headers['retry-after']=='1'
