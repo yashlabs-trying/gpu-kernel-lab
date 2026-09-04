@@ -1,9 +1,12 @@
 import pytest
 import torch
+import asyncio
+import time
+from serving.engine import ServingEngine
 from serving.graph_buckets import CUDAGraphBuckets
 from serving.paged_kv import PagedKVAllocator
 from serving.sampling import Sampler,SamplingParams
-from serving.scheduler import ContinuousBatchScheduler,Request,RequestState
+from serving.scheduler import AdmissionError,ContinuousBatchScheduler,Request,RequestState
 
 
 def allocator(blocks=8):
@@ -56,3 +59,35 @@ def test_sampling_is_deterministic_and_honors_stop():
     assert a==b and len(a.top_logprobs)==2
     greedy=Sampler(SamplingParams(stop_token_ids=frozenset({2}))).sample(logits)
     assert greedy.token_id==2 and greedy.stopped
+
+
+def test_admission_timeout_priority_and_reclamation():
+    a=allocator(4); s=ContinuousBatchScheduler(a,CUDAGraphBuckets(),max_batch_size=2,prefill_chunk_size=2)
+    s.submit(Request('low',(1,2),2,priority=0)); s.submit(Request('high',(3,4),2,priority=10))
+    with pytest.raises(AdmissionError): s.submit(Request('too-large',tuple(range(20)),1))
+    plan=s.plan(); assert plan.prefill[0].request_id=='high'
+    for work in plan.prefill: s.complete_prefill(work.request_id,len(work.token_ids))
+    s.requests['low'].submitted_at=time.monotonic()-100
+    assert s.expire()==('low',) and s.requests['low'].state==RequestState.TIMED_OUT
+
+
+class FakeExecutor:
+    async def prefill(self,work,allocator): await asyncio.sleep(0)
+    async def decode(self,work,metadata,graph_batch_size):
+        await asyncio.sleep(0)
+        return {x.request_id:torch.tensor([0.,1.,3.,2.]) for x in work}
+
+
+def test_concurrent_stress_and_metrics():
+    async def run():
+        a=allocator(1024); scheduler=ContinuousBatchScheduler(a,CUDAGraphBuckets(),max_batch_size=8,prefill_chunk_size=8,max_prefill_tokens=32)
+        engine=ServingEngine(scheduler,FakeExecutor())
+        requests=[Request(f'r{i}',tuple(range(1+(i%31))),1+(i%3),timeout_s=10) for i in range(100)]
+        queues=await asyncio.gather(*(engine.submit(r) for r in requests))
+        while engine.active_requests: assert await engine.step()
+        snapshot=engine.snapshot()
+        assert snapshot['requests']['completed']==100 and snapshot['requests']['failed']==0
+        assert snapshot['tokens']['generated']==sum(r.max_new_tokens for r in requests)
+        assert a.free_blocks==a.num_blocks
+        assert all(not q.empty() for q in queues)
+    asyncio.run(run())

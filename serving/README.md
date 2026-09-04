@@ -33,6 +33,23 @@ only logical KV positions below `lengths[b]` are valid, and block-table entry
   invalid cache reads.
 - Random generators are per request, so batching order does not change sampling.
 
+## HTTP surface
+
+`create_app(engine, tokenizer)` exposes:
+
+- `POST /v1/completions`
+- `POST /v1/chat/completions`
+- `DELETE /v1/requests/{request_id}`
+- `GET /v1/models`
+- `GET /health`
+- `GET /metrics`
+
+Completion endpoints support ordinary JSON responses and OpenAI-style SSE
+streaming. Disconnecting a stream cancels its request and reclaims KV blocks.
+Admission failures return HTTP 503 with `Retry-After`; schema errors use FastAPI's
+HTTP 422 response. Executor failures become terminal request events, release
+memory, and leave the serving loop alive for subsequent work.
+
 ## Next GPU integration
 
 1. Change the split-KV kernel from contiguous `[B,H,C,D]` addressing to physical
