@@ -1,0 +1,49 @@
+{
+  "requests": 5000,
+  "seed": 20260904,
+  "wall_s": 25.277060586959124,
+  "requests_per_second": 197.80781008135048,
+  "generated_tokens_per_second_wall": 1646.9478267373242,
+  "cancelled_by_test": 136,
+  "metrics": {
+    "uptime_s": 25.278312703594565,
+    "requests": {
+      "submitted": 5000,
+      "completed": 4864,
+      "cancelled": 136,
+      "timed_out": 0,
+      "rejected": 0,
+      "failed": 0,
+      "active": 0
+    },
+    "tokens": {
+      "prompt": 638905,
+      "generated": 41630,
+      "generated_per_second": 1646.866248081512
+    },
+    "latency_ms": {
+      "ttft": {
+        "p50": 13900.72771254927,
+        "p90": 23317.08670016378,
+        "p95": 24079.477269388735,
+        "p99": 24825.96393994987
+      },
+      "itl": {
+        "p50": 5.566098727285862,
+        "p90": 5.9618378058075905,
+        "p95": 6.070611625909805,
+        "p99": 72.62504393234849
+      }
+    },
+    "kv": {
+      "total_blocks": 60000,
+      "free_blocks": 60000,
+      "used_blocks": 0,
+      "block_size": 16,
+      "storage_bytes": 7680000,
+      "reserved_blocks": 0
+    }
+  },
+  "all_blocks_reclaimed": true,
+  "terminal_events_present": true
+}
