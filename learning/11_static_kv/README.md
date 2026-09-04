@@ -64,6 +64,23 @@ ordinary model outputs. Static KV addresses are necessary for CUDA Graphs, but
 the entire decode is **not graph-captured yet**. Token/logit workspaces and all
 other graph inputs must also be made graph-stable before claiming that.
 
+### Optional split-KV attention
+
+`--split-attention` replaces masked SDPA during the fused decode path with the
+GQA-aware kernel from stage 10. It reads only positions `0..position` from the
+fixed-capacity cache, without expanding 8 KV heads into 16 copied heads. Cache
+capacity and every pointer remain fixed; the valid-position value changes in
+place. Each KV chunk produces a normalized partial output plus log-sum-exp, and
+a second kernel merges the chunks stably.
+
+The partial-output, log-sum-exp and final-output workspaces are allocated once
+at installation, then shared sequentially by all 28 layers. This is safe only
+because layers execute on one stream and a layer's output projection consumes
+the workspace before the next layer overwrites it. The integration adds two
+attention launches per layer, so it must beat the previous attention/copy work
+by enough to justify those launches. It supports only the fixed valid-prefix
+mask; arbitrary masks still require another implementation.
+
 ## Why static cache alone can be slower
 
 Transformers `StaticCache` fixes addresses but still performs separate Q/K norms,
