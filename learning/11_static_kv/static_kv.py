@@ -17,6 +17,32 @@ sys.path.insert(0,str(ROOT/'learning/08_decode'))
 from fused_qkv_cache import fused_qk_norm_rope_cache
 
 
+class ContiguousStaticCache(StaticCache):
+    """StaticCache API backed by physical [layer,B,Hkv,C,D] tensors."""
+    @torch.no_grad()
+    def initialize(self,model,batch_size=1):
+        config=model.config
+        layers=len(self.layers)
+        shape=(layers,batch_size,config.num_key_value_heads,self.get_max_cache_shape(),config.head_dim)
+        options={'device':model.device,'dtype':next(model.parameters()).dtype}
+        self.key_storage=torch.zeros(shape,**options)
+        self.value_storage=torch.zeros(shape,**options)
+        for index,layer in enumerate(self.layers):
+            if getattr(layer,'is_sliding',False):
+                raise ValueError('contiguous experiment does not support sliding layers')
+            layer.keys=self.key_storage[index]
+            layer.values=self.value_storage[index]
+            layer.dtype=options['dtype']; layer.device=options['device']
+            layer.batch_size=batch_size; layer.num_heads=config.num_key_value_heads
+            layer.k_head_dim=config.head_dim; layer.v_head_dim=config.head_dim
+            layer.cumulative_length=torch.tensor(0,dtype=torch.long,device=model.device)
+            torch._dynamo.mark_static_address(layer.keys)
+            torch._dynamo.mark_static_address(layer.values)
+            torch._dynamo.mark_static_address(layer.cumulative_length)
+            layer.is_initialized=True
+        return self
+
+
 @triton.jit
 def advance_position_kernel(POSITION):
     # A fixed-address scalar replaces arange/allocation on every decode step.
@@ -112,4 +138,4 @@ def install_fused_static_kv(model,capacity,batch_size=1):
 
 
 def new_static_cache(model,capacity):
-    return StaticCache(config=model.config,max_cache_len=capacity)
+    return ContiguousStaticCache(config=model.config,max_cache_len=capacity).initialize(model)
