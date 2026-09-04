@@ -35,6 +35,8 @@ def main():
                 position=torch.tensor([8],device='cuda',dtype=torch.long)
                 mask=make_mask(1,capacity,8,torch.bfloat16,'cuda')
                 mapping={'full_attention':mask}
+                pointers=[(layer.keys.data_ptr(),layer.values.data_ptr()) for layer in cache.layers]
+                mask_pointer,position_pointer=mask.data_ptr(),position.data_ptr()
             for pos in range(8,ids.shape[1]-1):
                 if mode=='dynamic':
                     prefix_mask=torch.cat((prefix_mask,torch.ones((1,1),device='cuda',dtype=torch.long)),1)
@@ -44,6 +46,9 @@ def main():
                     out=model(input_ids=ids[:,pos:pos+1],attention_mask=mapping,position_ids=position.view(1,1),past_key_values=cache,use_cache=True,logits_to_keep=1)
                     advance_position(position)
                 cache=out.past_key_values
+                if mode!='dynamic':
+                    assert pointers==[(layer.keys.data_ptr(),layer.values.data_ptr()) for layer in cache.layers]
+                    assert mask.data_ptr()==mask_pointer and position.data_ptr()==position_pointer
                 logits=out.logits[0,-1].float()
                 losses.append((-logits.log_softmax(0)[ids[0,pos+1]]).item()); choices.append(logits.argmax().item())
         return {'mean_nll':sum(losses)/len(losses),'argmax':choices,'tokens':len(losses)}
