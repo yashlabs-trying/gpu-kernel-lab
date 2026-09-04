@@ -1,0 +1,11 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 7566.95it/s]
+W0904 14:21:24.705000 6074 torch/utils/cpp_extension.py:2425] TORCH_CUDA_ARCH_LIST is not set, all archs for visible cards are included for compilation. 
+W0904 14:21:24.705000 6074 torch/utils/cpp_extension.py:2425] If this is not desired, please set os.environ['TORCH_CUDA_ARCH_LIST'] to specific architectures.
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-6959.qdstrm'
+[1/1] [0%                          ] dynamic_trace.nsys-repProcessing events...
+[1/1] [0%                          ] dynamic_trace.nsys-rep[1/1] [7%                          ] dynamic_trace.nsys-rep[1/1] [14%                         ] dynamic_trace.nsys-rep[1/1] [============56%             ] dynamic_trace.nsys-rep[1/1] [========================98% ] dynamic_trace.nsys-rep[1/1] [=============59%            ] dynamic_trace.nsys-rep[1/1] [==================75%       ] dynamic_trace.nsys-rep[1/1] [========================100%] dynamic_trace.nsys-rep[1/1] [========================100%] dynamic_trace.nsys-rep
+{"variant": "dynamic", "context": 2048, "gpu_samples_ms_per_token": [28.219324111938477], "gpu_median_ms_per_token": 28.219324111938477}
+Generated:
+    /workspace/gpu-kernel-lab/results/final_newpod_20260904/dynamic_trace.nsys-rep

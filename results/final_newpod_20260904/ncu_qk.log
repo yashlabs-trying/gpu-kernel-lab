@@ -1,0 +1,7 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:  35%|███▌      | 109/311 [00:00<00:00, 1088.04it/s]Loading weights:  70%|███████   | 218/311 [00:00<00:00, 791.00it/s] Loading weights: 100%|██████████| 311/311 [00:00<00:00, 873.99it/s]
+==PROF== Connected to process 6628 (/usr/bin/python3.12)
+W0904 14:23:05.591000 6628 torch/utils/cpp_extension.py:2425] TORCH_CUDA_ARCH_LIST is not set, all archs for visible cards are included for compilation. 
+W0904 14:23:05.591000 6628 torch/utils/cpp_extension.py:2425] If this is not desired, please set os.environ['TORCH_CUDA_ARCH_LIST'] to specific architectures.
+==ERROR== ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters on the target device 0. For instructions on enabling permissions and to get more information see https://developer.nvidia.com/ERR_NVGPUCTRPERM
+{"variant": "fused", "context": 2048, "gpu_samples_ms_per_token": [65.4637451171875], "gpu_median_ms_per_token": 65.4637451171875}
+==PROF== Disconnected from process 6628
