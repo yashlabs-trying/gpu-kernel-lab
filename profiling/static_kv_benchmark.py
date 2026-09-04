@@ -30,15 +30,21 @@ def main():
     p.add_argument('--split-attention',action='store_true',help='replace masked SDPA with preallocated split-KV GQA')
     p.add_argument('--residual-norm',action='store_true',help='fuse attention residual add with post-attention RMSNorm')
     p.add_argument('--cuda-graph',action='store_true',help='capture and replay the fused static greedy decode step')
+    p.add_argument('--protected-mlp-layers',type=int,nargs='*',default=[],help='hybrid layers whose gate/up stay BF16')
     args=p.parse_args()
     if args.mode=='capture' and len(args.lengths)!=1:
         raise ValueError('capture takes exactly one context length')
     model=AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-0.6B',dtype=torch.bfloat16,
         attn_implementation='sdpa',local_files_only=True).eval().cuda()
-    install(model,'qwen_rms_cuda_hybrid' if args.hybrid else 'qwen_rms')
+    if args.hybrid and args.protected_mlp_layers:
+        install(model,'qwen_rms')
+        from decode_stage2_ablation import install_stage2
+        install_stage2(model,hybrid=True,protected_layers=args.protected_mlp_layers)
+    else:
+        install(model,'qwen_rms_cuda_hybrid' if args.hybrid else 'qwen_rms')
     report={'gpu':torch.cuda.get_device_name(),'torch':torch.__version__,'dtype':'bfloat16',
         'backend':model.config._attn_implementation,'hybrid':args.hybrid,'split_attention':args.split_attention,
-        'residual_norm':args.residual_norm,'cuda_graph':args.cuda_graph,'steps':args.steps,'warmup':args.warmup,
+        'residual_norm':args.residual_norm,'cuda_graph':args.cuda_graph,'protected_mlp_layers':args.protected_mlp_layers,'steps':args.steps,'warmup':args.warmup,
         'repeats':args.repeats,'method':'B1 cache-enabled greedy decode; argmax included; cache setup/prefill outside timed region','measurements':[]}
     # Graph construction executes one warmup and one capture step before replay.
     capacity=max(args.lengths)+args.steps+(2 if args.cuda_graph else 0)

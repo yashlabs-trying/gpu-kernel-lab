@@ -46,13 +46,16 @@ def collect_calibration(model):
 
 
 @torch.inference_mode()
-def install_stage2(model, *, hybrid=False):
+def install_stage2(model, *, hybrid=False, protected_layers=()):
     if getattr(model,'_kernellab_int8_info',None) is not None:
         raise ValueError('INT8 adapter already installed')
     extension()  # compile outside inference timing
     old_tf32 = torch.backends.cuda.matmul.allow_tf32
     torch.backends.cuda.matmul.allow_tf32 = False
     try:
+        protected_layers=frozenset(int(i) for i in protected_layers)
+        if any(i<0 or i>=len(model.model.layers) for i in protected_layers):
+            raise ValueError('protected layer index out of range')
         samples = collect_calibration(model)
         state = {'decode':False}
         def detect(module,positional,keywords):
@@ -109,7 +112,8 @@ def install_stage2(model, *, hybrid=False):
             attach_qkv(attention,qkv,sizes)
             if not hybrid:
                 linear(attention.o_proj,pack(prefix+'.self_attn.o_proj',attention.o_proj.weight))
-            gu = pack(prefix+'.mlp.gate_proj',torch.cat((mlp.gate_proj.weight,mlp.up_proj.weight)))
+            protect=index in protected_layers
+            gu = pack(prefix+'.mlp.gate_proj',torch.cat((mlp.gate_proj.weight,mlp.up_proj.weight)),quant=not protect)
             if not hybrid:
                 linear(mlp.down_proj,pack(prefix+'.mlp.down_proj',mlp.down_proj.weight))
             def attach_mlp(mlp,packed):
@@ -133,13 +137,14 @@ def install_stage2(model, *, hybrid=False):
                         return original(x)
                     # Decode is M=1: stream packed gate/up weights once through
                     # independent warp reductions, then apply the SwiGLU epilogue.
-                    hidden = project(x.reshape(-1),packed,swiglu=True,warps=8 if hybrid else 4).reshape(*x.shape[:-1],packed.data.shape[0]//2)
+                    hidden = project(x.reshape(-1),packed,swiglu=True,warps=8 if hybrid else 4).reshape(*x.shape[:-1],packed.shape[0]//2 if isinstance(packed,torch.Tensor) else packed.data.shape[0]//2)
                     return self.down_proj(hidden)
                 mlp.forward = types.MethodType(forward,mlp)
             attach_mlp(mlp,gu)
             count += 5 if hybrid else 7
         model._kernellab_int8_info = {'linear_modules':count,'packed_bytes_added':storage,
             'method':'W8A16 AWQ-inspired channel scale search, alpha 0/.5/1; not full AWQ',
+            'protected_bf16_mlp_layers':sorted(protected_layers),
             'hybrid':hybrid,'layout':'prefill: tiled BF16 gate/up/SwiGLU; decode: W8 dual GEMV/SwiGLU; '+('BF16 combined QKV + original o/down' if hybrid else 'W8 combined QKV + o + down'),
             'calibration':calibration,'calibration_texts':CALIBRATION,
             'warning':'Dense weights retained. Decode only, M=1, BF16, eager, no concurrent forwards. LM head stays BF16 unless separate head adapter installed. Split-KV attention is NOT integrated.'}
