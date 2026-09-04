@@ -6,6 +6,10 @@ import torch
 
 
 def install(model, variant):
+    if variant == 'prefill_dispatch':
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'learning/06_gemm'))
+        from prefill_dispatch import install_prefill_gemm_dispatch
+        return install_prefill_gemm_dispatch(model)
     if variant == 'qwen_rms_cuda_hybrid':
         from decode_stage2_ablation import install_stage2
         return install(model, 'qwen_rms') + install_stage2(model, hybrid=True)
