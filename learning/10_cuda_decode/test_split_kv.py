@@ -34,3 +34,20 @@ def test_stable_softmax_d64(magnitude):
     torch.testing.assert_close(actual,expected,rtol=.02,atol=.002)
     with pytest.raises(ValueError):
         split_kv_attention(q,k[:,:0],v[:,:0])
+
+
+@pytest.mark.parametrize('position',[0,128,256])
+def test_fixed_capacity_valid_position(position):
+    torch.manual_seed(19)
+    q=torch.randn(16,128,device='cuda',dtype=torch.bfloat16)
+    k=torch.randn(8,272,128,device='cuda',dtype=torch.bfloat16)
+    v=torch.randn_like(k)
+    valid=torch.tensor([position],device='cuda',dtype=torch.long)
+    local=torch.empty(16,3,128,device='cuda',dtype=torch.float32)
+    lse=torch.empty(16,3,device='cuda',dtype=torch.float32)
+    output=torch.empty_like(q)
+    expected=torch.nn.functional.scaled_dot_product_attention(
+        q[None,:,None],k[:,:position+1][None],v[:,:position+1][None],enable_gqa=True)[0,:,0]
+    actual=split_kv_attention(q,k,v,128,valid_position=valid,output=output,local=local,lse=lse)
+    assert actual.data_ptr()==output.data_ptr()
+    torch.testing.assert_close(actual,expected,rtol=.03,atol=.003)

@@ -15,7 +15,7 @@ from model_ablation import install
 
 @torch.inference_mode()
 def main():
-    p=argparse.ArgumentParser(); p.add_argument('--output',type=Path,required=True); p.add_argument('--hybrid',action='store_true'); args=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument('--output',type=Path,required=True); p.add_argument('--hybrid',action='store_true'); p.add_argument('--split-attention',action='store_true'); args=p.parse_args()
     model=AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-0.6B',dtype=torch.bfloat16,attn_implementation='sdpa',local_files_only=True).eval().cuda()
     tokenizer=AutoTokenizer.from_pretrained('Qwen/Qwen3-0.6B',local_files_only=True)
     install(model,'qwen_rms_cuda_hybrid' if args.hybrid else 'qwen_rms')
@@ -54,9 +54,9 @@ def main():
         return {'mean_nll':sum(losses)/len(losses),'argmax':choices,'tokens':len(losses)}
 
     dynamic=evaluate('dynamic'); static=evaluate('static')
-    install_fused_static_kv(model,capacity)
+    install_fused_static_kv(model,capacity,split_attention=args.split_attention)
     fused=evaluate('fused')
-    report={'method':'eight original passages, teacher-forced single-token decode; not a standard quality benchmark','hybrid':args.hybrid,
+    report={'method':'eight original passages, teacher-forced single-token decode; not a standard quality benchmark','hybrid':args.hybrid,'split_attention':args.split_attention,
         'dynamic_mean_nll':dynamic['mean_nll'],'static_mean_nll':static['mean_nll'],'fused_mean_nll':fused['mean_nll'],
         'static_argmax_agreement':sum(a==b for a,b in zip(dynamic['argmax'],static['argmax']))/dynamic['tokens'],
         'fused_argmax_agreement':sum(a==b for a,b in zip(dynamic['argmax'],fused['argmax']))/dynamic['tokens'],
