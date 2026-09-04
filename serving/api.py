@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI,HTTPException,Request as HTTPRequest
 from fastapi.responses import JSONResponse,StreamingResponse
@@ -26,11 +27,14 @@ class ChatBody(CompletionBody):
 
 
 def create_app(engine,tokenizer,model_id='Qwen/Qwen3-0.6B'):
-    app=FastAPI(title='KernelLab OpenAI-compatible server')
-    @app.on_event('startup')
-    async def startup(): await engine.start()
-    @app.on_event('shutdown')
-    async def shutdown(): await engine.close()
+    @asynccontextmanager
+    async def lifespan(_app):
+        await engine.start()
+        try:
+            yield
+        finally:
+            await engine.close()
+    app=FastAPI(title='KernelLab OpenAI-compatible server',lifespan=lifespan)
 
     @app.get('/health')
     async def health(): return {'status':'ok','model':model_id,'active_requests':engine.active_requests}
