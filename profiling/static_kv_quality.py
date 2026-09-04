@@ -17,10 +17,15 @@ from decode_runtime import install_decode_residual_norm
 
 @torch.inference_mode()
 def main():
-    p=argparse.ArgumentParser(); p.add_argument('--output',type=Path,required=True); p.add_argument('--hybrid',action='store_true'); p.add_argument('--split-attention',action='store_true'); p.add_argument('--residual-norm',action='store_true'); args=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument('--output',type=Path,required=True); p.add_argument('--hybrid',action='store_true'); p.add_argument('--split-attention',action='store_true'); p.add_argument('--residual-norm',action='store_true'); p.add_argument('--protected-mlp-layers',type=int,nargs='*',default=[]); args=p.parse_args()
     model=AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-0.6B',dtype=torch.bfloat16,attn_implementation='sdpa',local_files_only=True).eval().cuda()
     tokenizer=AutoTokenizer.from_pretrained('Qwen/Qwen3-0.6B',local_files_only=True)
-    install(model,'qwen_rms_cuda_hybrid' if args.hybrid else 'qwen_rms')
+    if args.hybrid and args.protected_mlp_layers:
+        install(model,'qwen_rms')
+        from decode_stage2_ablation import install_stage2
+        install_stage2(model,hybrid=True,protected_layers=args.protected_mlp_layers)
+    else:
+        install(model,'qwen_rms_cuda_hybrid' if args.hybrid else 'qwen_rms')
     token_sets=[tokenizer(text,return_tensors='pt').input_ids[:,:48].cuda() for text in TEXTS]
     capacity=max(ids.shape[1] for ids in token_sets)
 
@@ -59,7 +64,7 @@ def main():
     install_fused_static_kv(model,capacity,split_attention=args.split_attention)
     if args.residual_norm: install_decode_residual_norm(model)
     fused=evaluate('fused')
-    report={'method':'eight original passages, teacher-forced single-token decode; not a standard quality benchmark','hybrid':args.hybrid,'split_attention':args.split_attention,'residual_norm':args.residual_norm,
+    report={'method':'eight original passages, teacher-forced single-token decode; not a standard quality benchmark','hybrid':args.hybrid,'split_attention':args.split_attention,'residual_norm':args.residual_norm,'protected_mlp_layers':args.protected_mlp_layers,
         'dynamic_mean_nll':dynamic['mean_nll'],'static_mean_nll':static['mean_nll'],'fused_mean_nll':fused['mean_nll'],
         'static_argmax_agreement':sum(a==b for a,b in zip(dynamic['argmax'],static['argmax']))/dynamic['tokens'],
         'fused_argmax_agreement':sum(a==b for a,b in zip(dynamic['argmax'],fused['argmax']))/dynamic['tokens'],
