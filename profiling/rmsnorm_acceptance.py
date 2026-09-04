@@ -45,10 +45,10 @@ def main():
         attn_implementation='sdpa',local_files_only=True).eval().cuda()
     vocab=model.config.vocab_size; context=16; capacity=context+2
 
-    def collect(dynamic):
+    def collect(dynamic,logical_observer=False):
         layer_values=[]; handles=[]
         current=[]
-        if dynamic:
+        if not logical_observer:
             for index,layer in enumerate(model.model.layers):
                 def save(_module,_inputs,output,index=index):
                     if capture[0]: current.append((index,output.detach().clone()))
@@ -77,13 +77,13 @@ def main():
                 current.clear()
         finally:
             for handle in handles: handle.remove()
-            if not dynamic: model._kernellab_residual_norm['state']['observer']=None
+            if logical_observer: model._kernellab_residual_norm['state']['observer']=None
         return rows
 
     baseline=collect(True)
     install(model,'qwen_rms')
     install_decode_residual_norm(model)
-    rms_candidate=collect(True)
+    rms_candidate=collect(True,logical_observer=True)
     del model
     torch.cuda.empty_cache()
 
@@ -93,7 +93,7 @@ def main():
     install(model,'qwen_rms_cuda_hybrid')
     install_fused_static_kv(model,capacity,split_attention=True)
     install_decode_residual_norm(model)
-    candidate=collect(False)
+    candidate=collect(False,logical_observer=True)
 
     layers=[]
     for index in range(len(model.model.layers)):
