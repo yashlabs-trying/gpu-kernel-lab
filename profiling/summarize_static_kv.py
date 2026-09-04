@@ -9,6 +9,7 @@ def main():
     samples=defaultdict(list); files=defaultdict(set)
     for path in args.root.glob('benchmark*.json'):
         report=json.loads(path.read_text()); group='hybrid' if report.get('hybrid') else 'rms'
+        if report.get('split_attention'): group += '_split'
         for row in report['measurements']:
             key=(group,row['context'],row['variant'])
             samples[key].extend(row['gpu_samples_ms_per_token']); files[key].add(path.name)
