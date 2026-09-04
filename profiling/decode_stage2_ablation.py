@@ -3,6 +3,7 @@ import sys
 import types
 from pathlib import Path
 import torch
+import torch.nn.functional as F
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'learning/10_cuda_decode'))
@@ -120,6 +121,11 @@ def install_stage2(model, *, hybrid=False):
                         # Keep the decode-only quantized weights out of this path.
                         if rows > 4096:
                             return original(x)
+                        if rows == 512:
+                            # Let the exact-shape dispatcher use its measured
+                            # gate/up winners at this one validated M value.
+                            hidden=F.silu(self.gate_proj(x))*self.up_proj(x)
+                            return self.down_proj(hidden)
                         hidden=fused_projection_swiglu(
                             x,self.gate_proj.weight,self.up_proj.weight)
                         return self.down_proj(hidden)

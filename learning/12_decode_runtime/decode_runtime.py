@@ -30,15 +30,16 @@ def install_decode_residual_norm(model):
     """
     if getattr(model, "_kernellab_residual_norm", None) is not None:
         raise ValueError("decode residual/RMSNorm fusion already installed")
-    state = {"decode": False}
+    state = {"decode": False, "pending": None}
 
     def detect(_module, positional, keywords):
         ids = keywords.get("input_ids", positional[0] if positional else None)
         state["decode"] = ids is not None and tuple(ids.shape) == (1, 1)
+        state["pending"] = None
 
     hook = model.register_forward_pre_hook(detect, with_kwargs=True)
     layers = list(model.model.layers)
-    for layer in layers:
+    for index, layer in enumerate(layers):
         original = layer.forward
 
         def forward(
@@ -50,6 +51,7 @@ def install_decode_residual_norm(model):
             use_cache=False,
             position_embeddings=None,
             original=original,
+            index=index,
             **kwargs,
         ):
             if not state["decode"] or hidden_states.shape != (1, 1, hidden_states.shape[-1]):
@@ -62,8 +64,18 @@ def install_decode_residual_norm(model):
                     position_embeddings=position_embeddings,
                     **kwargs,
                 )
-            residual = hidden_states
-            normalized = self.input_layernorm(hidden_states)
+            if state["pending"] is None:
+                residual = hidden_states
+                normalized = self.input_layernorm(hidden_states)
+            else:
+                mlp_output, previous_residual = state["pending"]
+                normalized, residual = triton_qwen_residual_rmsnorm(
+                    mlp_output,
+                    previous_residual,
+                    self.input_layernorm.weight,
+                    self.input_layernorm.variance_epsilon,
+                )
+                state["pending"] = None
             attention_output, _ = self.self_attn(
                 hidden_states=normalized,
                 attention_mask=attention_mask,
@@ -79,7 +91,14 @@ def install_decode_residual_norm(model):
                 self.post_attention_layernorm.weight,
                 self.post_attention_layernorm.variance_epsilon,
             )
-            return residual + self.mlp(normalized)
+            mlp_output = self.mlp(normalized)
+            if index + 1 == len(layers):
+                return residual + mlp_output
+            # The following layer consumes these tensors with its input norm.
+            # Returning residual preserves the model loop ABI; that placeholder
+            # is intentionally ignored by the next patched layer.
+            state["pending"] = (mlp_output, residual)
+            return residual
 
         layer.forward = types.MethodType(forward, layer)
 
@@ -87,7 +106,7 @@ def install_decode_residual_norm(model):
         "layers": len(layers),
         "state": state,
         "hook": hook,
-        "fused_boundary": "attention output + residual + post-attention RMSNorm",
+        "fused_boundary": "attention residual -> post norm; MLP residual -> next-layer input norm",
     }
     return len(layers)
 

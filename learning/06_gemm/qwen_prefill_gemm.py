@@ -21,6 +21,7 @@ PREFILL_CONFIGS = [
 @triton.jit
 def qwen_prefill_gemm_kernel(A, B, C, M, M_BUCKET: tl.constexpr,
                              N: tl.constexpr, K: tl.constexpr,
+                             LINEAR_WEIGHT: tl.constexpr,
                              BM: tl.constexpr, BN: tl.constexpr,
                              BK: tl.constexpr, GROUP_M: tl.constexpr):
     pid = tl.program_id(0)
@@ -39,8 +40,12 @@ def qwen_prefill_gemm_kernel(A, B, C, M, M_BUCKET: tl.constexpr,
         k = start * BK + kk
         a = tl.load(A + rows[:, None] * K + k[None, :],
                     mask=(rows[:, None] < M) & (k[None, :] < K), other=0.)
-        b = tl.load(B + k[:, None] * N + cols[None, :],
-                    mask=(k[:, None] < K) & (cols[None, :] < N), other=0.)
+        if LINEAR_WEIGHT:
+            b = tl.load(B + cols[None, :] * K + k[:, None],
+                        mask=(k[:, None] < K) & (cols[None, :] < N), other=0.)
+        else:
+            b = tl.load(B + k[:, None] * N + cols[None, :],
+                        mask=(k[:, None] < K) & (cols[None, :] < N), other=0.)
         accum += tl.dot(a, b)
     tl.store(C + rows[:, None] * N + cols[None, :], accum,
              mask=(rows[:, None] < M) & (cols[None, :] < N))
@@ -68,5 +73,20 @@ def qwen_prefill_gemm(a, b):
     bucket = _bucket_m(m)
     out = torch.empty((m, n), device=a.device, dtype=a.dtype)
     grid = lambda meta: (triton.cdiv(bucket, meta['BM']) * triton.cdiv(n, meta['BN']),)
-    qwen_prefill_gemm_kernel[grid](a, b, out, m, bucket, n, k)
+    qwen_prefill_gemm_kernel[grid](a, b, out, m, bucket, n, k, False)
     return out
+
+
+def qwen_prefill_linear(x, weight):
+    """`F.linear(x, weight)` for contiguous bias-free `[N,K]` weights."""
+    if x.ndim < 2 or weight.ndim != 2 or x.shape[-1] != weight.shape[1]:
+        raise ValueError('expected X[...,K] and weight [N,K]')
+    if not x.is_cuda or weight.device != x.device or x.dtype != weight.dtype:
+        raise ValueError('same-dtype tensors on one CUDA device required')
+    if x.dtype not in (torch.float16,torch.bfloat16) or not x.is_contiguous() or not weight.is_contiguous():
+        raise ValueError('contiguous FP16/BF16 tensors required')
+    k=x.shape[-1]; m=x.numel()//k; n=weight.shape[0]; bucket=_bucket_m(m)
+    out=torch.empty((m,n),device=x.device,dtype=x.dtype)
+    grid=lambda meta:(triton.cdiv(bucket,meta['BM'])*triton.cdiv(n,meta['BN']),)
+    qwen_prefill_gemm_kernel[grid](x.view(m,k),weight,out,m,bucket,n,k,True)
+    return out.view(*x.shape[:-1],n)
