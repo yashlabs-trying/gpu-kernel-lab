@@ -50,7 +50,7 @@ def qk_norm_rope_cache_kernel(Q, K, V, QW, KW, COS, SIN, POSITIONS,
     tl.store(V_CACHE + cache_offset, v, mask=(~is_q) & valid)
     # Exactly one K-head program per batch opens the current position in the
     # fixed additive mask. This adds no launch and leaves its address unchanged.
-    tl.store(ATTENTION_MASK + batch * CAPACITY + position, 0.0,
+    tl.store(ATTENTION_MASK + batch * CAPACITY + position + col, 0.0,
              mask=(~is_q) & (local_head == 0) & valid_head & (col == 0))
 
 
