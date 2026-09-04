@@ -1,0 +1,372 @@
+{
+  "method": "pooled median of every unprofiled CUDA-event sample found in benchmark*.json; each sample averages 16 sequential tokens; no confidence intervals",
+  "measurements": [
+    {
+      "group": "hybrid",
+      "context": 2048,
+      "variant": "dynamic",
+      "samples": 10,
+      "median_ms_per_token": 20.502432823181152,
+      "min_ms": 20.219968795776367,
+      "max_ms": 20.78656005859375,
+      "latency_reduction_vs_dynamic_pct": 0.0,
+      "serial_tokens_per_second": 48.77469950148288,
+      "files": [
+        "benchmark_hybrid_2048_a.json",
+        "benchmark_hybrid_2048_b.json"
+      ]
+    },
+    {
+      "group": "hybrid",
+      "context": 2048,
+      "variant": "fused",
+      "samples": 10,
+      "median_ms_per_token": 16.22710418701172,
+      "min_ms": 16.070720672607422,
+      "max_ms": 16.819007873535156,
+      "latency_reduction_vs_dynamic_pct": 20.852786949924873,
+      "serial_tokens_per_second": 61.6252899146606,
+      "files": [
+        "benchmark_hybrid_2048_a.json",
+        "benchmark_hybrid_2048_b.json"
+      ]
+    },
+    {
+      "group": "hybrid",
+      "context": 2048,
+      "variant": "static",
+      "samples": 10,
+      "median_ms_per_token": 22.333855628967285,
+      "min_ms": 22.071807861328125,
+      "max_ms": 23.04863929748535,
+      "latency_reduction_vs_dynamic_pct": -8.932709701238117,
+      "serial_tokens_per_second": 44.77507227650329,
+      "files": [
+        "benchmark_hybrid_2048_a.json",
+        "benchmark_hybrid_2048_b.json"
+      ]
+    },
+    {
+      "group": "hybrid_split",
+      "context": 2048,
+      "variant": "dynamic",
+      "samples": 10,
+      "median_ms_per_token": 20.631200790405273,
+      "min_ms": 20.22540855407715,
+      "max_ms": 22.10950469970703,
+      "latency_reduction_vs_dynamic_pct": 0.0,
+      "serial_tokens_per_second": 48.47027616856209,
+      "files": [
+        "benchmark_hybrid_split_2048_a.json",
+        "benchmark_hybrid_split_2048_b.json"
+      ]
+    },
+    {
+      "group": "hybrid_split",
+      "context": 2048,
+      "variant": "fused",
+      "samples": 10,
+      "median_ms_per_token": 15.668127059936523,
+      "min_ms": 15.569343566894531,
+      "max_ms": 15.909695625305176,
+      "latency_reduction_vs_dynamic_pct": 24.0561554360756,
+      "serial_tokens_per_second": 63.82383779341468,
+      "files": [
+        "benchmark_hybrid_split_2048_a.json",
+        "benchmark_hybrid_split_2048_b.json"
+      ]
+    },
+    {
+      "group": "hybrid_split",
+      "context": 2048,
+      "variant": "static",
+      "samples": 10,
+      "median_ms_per_token": 22.29177474975586,
+      "min_ms": 22.078527450561523,
+      "max_ms": 22.91200065612793,
+      "latency_reduction_vs_dynamic_pct": -8.048847840804552,
+      "serial_tokens_per_second": 44.859595578452186,
+      "files": [
+        "benchmark_hybrid_split_2048_a.json",
+        "benchmark_hybrid_split_2048_b.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 128,
+      "variant": "dynamic",
+      "samples": 5,
+      "median_ms_per_token": 23.158910751342773,
+      "min_ms": 22.930879592895508,
+      "max_ms": 23.46771240234375,
+      "latency_reduction_vs_dynamic_pct": 0.0,
+      "serial_tokens_per_second": 43.179923733762784,
+      "files": [
+        "benchmark_128.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 128,
+      "variant": "fused",
+      "samples": 5,
+      "median_ms_per_token": 19.51852798461914,
+      "min_ms": 18.228416442871094,
+      "max_ms": 20.114303588867188,
+      "latency_reduction_vs_dynamic_pct": 15.719145022883085,
+      "serial_tokens_per_second": 51.233371737254636,
+      "files": [
+        "benchmark_128.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 128,
+      "variant": "static",
+      "samples": 5,
+      "median_ms_per_token": 25.400447845458984,
+      "min_ms": 24.7774715423584,
+      "max_ms": 26.359615325927734,
+      "latency_reduction_vs_dynamic_pct": -9.678940077033825,
+      "serial_tokens_per_second": 39.36938459054678,
+      "files": [
+        "benchmark_128.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 512,
+      "variant": "dynamic",
+      "samples": 5,
+      "median_ms_per_token": 23.43814468383789,
+      "min_ms": 23.19385528564453,
+      "max_ms": 23.850112915039062,
+      "latency_reduction_vs_dynamic_pct": 0.0,
+      "serial_tokens_per_second": 42.665493087836616,
+      "files": [
+        "benchmark_512.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 512,
+      "variant": "fused",
+      "samples": 5,
+      "median_ms_per_token": 18.65996742248535,
+      "min_ms": 18.451583862304688,
+      "max_ms": 18.851903915405273,
+      "latency_reduction_vs_dynamic_pct": 20.386328891669482,
+      "serial_tokens_per_second": 53.59066162114491,
+      "files": [
+        "benchmark_512.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 512,
+      "variant": "static",
+      "samples": 5,
+      "median_ms_per_token": 25.088191986083984,
+      "min_ms": 24.89356803894043,
+      "max_ms": 25.3940486907959,
+      "latency_reduction_vs_dynamic_pct": -7.040008176858414,
+      "serial_tokens_per_second": 39.859388853317284,
+      "files": [
+        "benchmark_512.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 2048,
+      "variant": "dynamic",
+      "samples": 10,
+      "median_ms_per_token": 22.922368049621582,
+      "min_ms": 22.84435272216797,
+      "max_ms": 23.336000442504883,
+      "latency_reduction_vs_dynamic_pct": 0.0,
+      "serial_tokens_per_second": 43.62551014952876,
+      "files": [
+        "benchmark_2048_a.json",
+        "benchmark_2048_b.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 2048,
+      "variant": "fused",
+      "samples": 10,
+      "median_ms_per_token": 19.130142211914062,
+      "min_ms": 18.75149154663086,
+      "max_ms": 19.75551986694336,
+      "latency_reduction_vs_dynamic_pct": 16.543778677221454,
+      "serial_tokens_per_second": 52.273526716242074,
+      "files": [
+        "benchmark_2048_a.json",
+        "benchmark_2048_b.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 2048,
+      "variant": "static",
+      "samples": 10,
+      "median_ms_per_token": 25.06112003326416,
+      "min_ms": 24.813568115234375,
+      "max_ms": 25.759552001953125,
+      "latency_reduction_vs_dynamic_pct": -9.330414636972396,
+      "serial_tokens_per_second": 39.90244644583636,
+      "files": [
+        "benchmark_2048_a.json",
+        "benchmark_2048_b.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 4096,
+      "variant": "dynamic",
+      "samples": 5,
+      "median_ms_per_token": 23.543296813964844,
+      "min_ms": 23.47609519958496,
+      "max_ms": 24.169727325439453,
+      "latency_reduction_vs_dynamic_pct": 0.0,
+      "serial_tokens_per_second": 42.47493492104488,
+      "files": [
+        "benchmark_4096.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 4096,
+      "variant": "fused",
+      "samples": 5,
+      "median_ms_per_token": 18.44384002685547,
+      "min_ms": 18.42176055908203,
+      "max_ms": 18.52524757385254,
+      "latency_reduction_vs_dynamic_pct": 21.65990951651513,
+      "serial_tokens_per_second": 54.21864419469768,
+      "files": [
+        "benchmark_4096.json"
+      ]
+    },
+    {
+      "group": "rms",
+      "context": 4096,
+      "variant": "static",
+      "samples": 5,
+      "median_ms_per_token": 24.970815658569336,
+      "min_ms": 24.86195182800293,
+      "max_ms": 27.25548553466797,
+      "latency_reduction_vs_dynamic_pct": -6.0633770023140965,
+      "serial_tokens_per_second": 40.04674952044772,
+      "files": [
+        "benchmark_4096.json"
+      ]
+    },
+    {
+      "group": "rms_split",
+      "context": 2048,
+      "variant": "dynamic",
+      "samples": 10,
+      "median_ms_per_token": 22.825727462768555,
+      "min_ms": 22.44870376586914,
+      "max_ms": 23.84556770324707,
+      "latency_reduction_vs_dynamic_pct": 0.0,
+      "serial_tokens_per_second": 43.81021378753942,
+      "files": [
+        "benchmark_split_2048_a.json",
+        "benchmark_split_2048_b.json"
+      ]
+    },
+    {
+      "group": "rms_split",
+      "context": 2048,
+      "variant": "fused",
+      "samples": 10,
+      "median_ms_per_token": 18.148576736450195,
+      "min_ms": 17.95065689086914,
+      "max_ms": 18.37164878845215,
+      "latency_reduction_vs_dynamic_pct": 20.49069732365526,
+      "serial_tokens_per_second": 55.100739552295984,
+      "files": [
+        "benchmark_split_2048_a.json",
+        "benchmark_split_2048_b.json"
+      ]
+    },
+    {
+      "group": "rms_split",
+      "context": 2048,
+      "variant": "static",
+      "samples": 10,
+      "median_ms_per_token": 25.239551544189453,
+      "min_ms": 24.255168914794922,
+      "max_ms": 27.30182456970215,
+      "latency_reduction_vs_dynamic_pct": -10.575014905256053,
+      "serial_tokens_per_second": 39.62035530818359,
+      "files": [
+        "benchmark_split_2048_a.json",
+        "benchmark_split_2048_b.json"
+      ]
+    },
+    {
+      "group": "rms_split",
+      "context": 4096,
+      "variant": "dynamic",
+      "samples": 5,
+      "median_ms_per_token": 22.70796775817871,
+      "min_ms": 22.690303802490234,
+      "max_ms": 22.770496368408203,
+      "latency_reduction_vs_dynamic_pct": 0.0,
+      "serial_tokens_per_second": 44.037406193684184,
+      "files": [
+        "benchmark_split_4096.json"
+      ]
+    },
+    {
+      "group": "rms_split",
+      "context": 4096,
+      "variant": "fused",
+      "samples": 5,
+      "median_ms_per_token": 18.05606460571289,
+      "min_ms": 18.02822494506836,
+      "max_ms": 18.099456787109375,
+      "latency_reduction_vs_dynamic_pct": 20.485774869881734,
+      "serial_tokens_per_second": 55.38305393987141,
+      "files": [
+        "benchmark_split_4096.json"
+      ]
+    },
+    {
+      "group": "rms_split",
+      "context": 4096,
+      "variant": "static",
+      "samples": 5,
+      "median_ms_per_token": 24.787328720092773,
+      "min_ms": 24.662015914916992,
+      "max_ms": 25.3121280670166,
+      "latency_reduction_vs_dynamic_pct": -9.156966330309935,
+      "serial_tokens_per_second": 40.343193544264146,
+      "files": [
+        "benchmark_split_4096.json"
+      ]
+    }
+  ],
+  "plain_baseline_2048": {
+    "samples": 10,
+    "median_ms_per_token": 27.862943649291992,
+    "comparisons": [
+      {
+        "group": "hybrid",
+        "fused_ms_per_token": 16.22710418701172,
+        "latency_reduction_pct": 41.76098408244078,
+        "serial_throughput_increase_pct": 71.70619802634704
+      },
+      {
+        "group": "hybrid_split",
+        "fused_ms_per_token": 15.668127059936523,
+        "latency_reduction_pct": 43.76715088990729,
+        "serial_throughput_increase_pct": 77.8319995919466
+      }
+    ],
+    "warning": "different harnesses/processes; dynamic-vs-fused comparisons within each benchmark are stronger evidence"
+  }
+}

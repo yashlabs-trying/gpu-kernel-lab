@@ -1,0 +1,13 @@
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:  19%|█▉        | 59/311 [00:00<00:00, 562.73it/s]Loading weights:  37%|███▋      | 116/311 [00:00<00:00, 384.90it/s]Loading weights:  51%|█████     | 158/311 [00:00<00:00, 362.57it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 728.55it/s]
+[transformers] `get_max_cache_shape` is deprecated, and will be removed in version 5.16. Please use `get_max_length` instead
+{
+  "method": "eight original passages, teacher-forced single-token decode; not a standard quality benchmark",
+  "dynamic_mean_nll": 3.368741012863892,
+  "static_mean_nll": 3.365696307475446,
+  "fused_mean_nll": 3.3637486484460486,
+  "static_argmax_agreement": 0.9838056680161943,
+  "fused_argmax_agreement": 0.979757085020243,
+  "fused_vs_static_argmax_agreement": 0.9878542510121457,
+  "evaluated_tokens": 247,
+  "capacity": 45
+}

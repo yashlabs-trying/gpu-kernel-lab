@@ -1,0 +1,18 @@
+{
+  "platform": "Linux-6.8.0-107-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "torch": "2.8.0+cu128",
+  "torch_cuda": "12.8",
+  "transformers": "5.16.1",
+  "triton": "3.4.0",
+  "cuda_available": true,
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 3090",
+    "total_vram_gib": 23.559,
+    "compute_capability": "8.6",
+    "multiprocessors": 82
+  },
+  "git_revision": "0c051a4ed5c0f4f65b193db456079ecc7e14fc18",
+  "nvidia_smi": "NVIDIA GeForce RTX 3090, 580.126.20, 24576 MiB, 8.6"
+}
+CUDA tensor smoke test: PASS

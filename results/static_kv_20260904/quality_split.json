@@ -1,0 +1,13 @@
+{
+  "method": "eight original passages, teacher-forced single-token decode; not a standard quality benchmark",
+  "hybrid": false,
+  "split_attention": true,
+  "dynamic_mean_nll": 3.368741012863892,
+  "static_mean_nll": 3.365696307475446,
+  "fused_mean_nll": 3.3630333250716777,
+  "static_argmax_agreement": 0.9838056680161943,
+  "fused_argmax_agreement": 0.979757085020243,
+  "fused_vs_static_argmax_agreement": 0.979757085020243,
+  "evaluated_tokens": 247,
+  "capacity": 45
+}
