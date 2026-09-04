@@ -24,14 +24,15 @@ def main():
     p.add_argument('--repeats',type=int,default=5)
     p.add_argument('--mode',choices=['benchmark','capture'],default='benchmark')
     p.add_argument('--capture-variant',choices=['dynamic','static','fused'],default='fused')
+    p.add_argument('--hybrid',action='store_true',help='compose the prior QKV/MLP projection fusion')
     args=p.parse_args()
     if args.mode=='capture' and len(args.lengths)!=1:
         raise ValueError('capture takes exactly one context length')
     model=AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-0.6B',dtype=torch.bfloat16,
         attn_implementation='sdpa',local_files_only=True).eval().cuda()
-    install(model,'qwen_rms')
+    install(model,'qwen_rms_cuda_hybrid' if args.hybrid else 'qwen_rms')
     report={'gpu':torch.cuda.get_device_name(),'torch':torch.__version__,'dtype':'bfloat16',
-        'backend':model.config._attn_implementation,'steps':args.steps,'warmup':args.warmup,
+        'backend':model.config._attn_implementation,'hybrid':args.hybrid,'steps':args.steps,'warmup':args.warmup,
         'repeats':args.repeats,'method':'B1 cache-enabled greedy decode; argmax included; cache setup/prefill outside timed region','measurements':[]}
     capacity=max(args.lengths)+args.steps
     report['capacity']=capacity
