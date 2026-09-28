@@ -1,0 +1,35 @@
+# Models - never commit
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+models/
+model_cache/
+*.onnx
+*.engine
+*.plan
+
+# HuggingFace cache
+.hf_cache/
+.cache/
+
+# Profiling reports
+*.ncu-rep
+*.nsys-rep
+*.sqlite
+profiling/reports/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Logs / misc
+*.log
+wandb/
+.env

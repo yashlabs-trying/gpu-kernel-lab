@@ -1,0 +1,11 @@
+torch>=2.8
+vllm>=0.9
+transformers>=4.45
+accelerate
+sentencepiece
+datasets
+bitsandbytes
+llm-compressor
+numpy
+pandas
+matplotlib
