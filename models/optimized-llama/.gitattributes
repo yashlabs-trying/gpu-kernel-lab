@@ -1,0 +1,5 @@
+# Force LF line endings for scripts so they run on Linux GPU
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf

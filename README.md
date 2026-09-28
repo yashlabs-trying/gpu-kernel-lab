@@ -33,6 +33,23 @@ The serving control plane passes functional and stress tests. Its acceptance
 tests currently use an executor interface; connecting that interface to the real
 paged GPU Qwen runtime is the main remaining production-integration task.
 
+## Four-model portfolio
+
+This repository now hosts multiple optimized model projects under
+[`models/`](models/):
+
+| Slot | Model | Optimization focus | Status |
+|---:|---|---|---|
+| 1 | Qwen3-0.6B | Custom Triton/CUDA kernels, static decode, CUDA Graphs, serving control plane | Implemented; quality gate open |
+| 2 | [Llama-3.2-3B](models/optimized-llama/README.md) | vLLM continuous batching, throughput sweeps, profiling, deployment study | Integrated from `optimized-llama` |
+| 3 | To be selected | Architecture-specific optimization | Planned |
+| 4 | To be selected | Architecture-specific optimization | Planned |
+
+The Llama source is pinned at upstream commit `80087ed` and included directly,
+so a normal clone receives it without submodule commands. See its
+[provenance record](models/optimized-llama/UPSTREAM.md) and the
+[portfolio roadmap](models/README.md).
+
 ## Measured final results
 
 RTX 3090 24 GiB, PyTorch 2.8.0+cu128, Triton 3.4.0, Transformers 5.16.1,
@@ -173,6 +190,7 @@ rooflines are therefore not invented.
 ```text
 baseline/     reference implementations
 learning/     kernels, tests, benchmarks, and teaching notes
+models/       self-contained optimized LLM projects and four-model roadmap
 profiling/    workloads, ablations, quality gates, and Nsight helpers
 serving/      paged KV, scheduler, sampling, metrics, engine, and API
 scripts/      RunPod setup, model download, activation, and smoke tests
