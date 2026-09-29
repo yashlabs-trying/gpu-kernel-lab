@@ -57,11 +57,16 @@ class QwenPagedExecutor:
         if self.device.type!='cuda':
             raise ValueError('QwenPagedExecutor requires a CUDA model')
         self._prefill_caches={}
+        policy_qkv=policy_mlp=frozenset()
         if policy is not None:
             if direct_attention or direct_attention_layers is not None:
                 raise ValueError('explicit direct-attention settings conflict with policy')
             direct_attention_layers=policy.direct_attention_layers
             attention_tile=policy.attention_tile
+            fused_gather=policy.fused_gather
+            native_gqa=policy.native_gqa
+            policy_qkv=policy.fused_qkv_layers
+            policy_mlp=policy.fused_mlp_layers
             if allocator.block_size!=policy.block_size:
                 raise ValueError('allocator block size does not match selected policy')
         if attention_tile not in (64,128,256): raise ValueError('attention tile must be 64, 128, or 256')
@@ -79,6 +84,8 @@ class QwenPagedExecutor:
         self._attention_workspaces={}
         self._gather_workspaces={}
         self._projection_weights=None
+        if policy_qkv or policy_mlp:
+            self.enable_fused_projections(qkv=policy_qkv,mlp=policy_mlp)
 
     def enable_fused_projections(self,*,qkv=True,mlp=True):
         """Prepack decode-only QKV and gate/up weights outside timed execution."""

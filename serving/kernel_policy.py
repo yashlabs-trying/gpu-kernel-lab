@@ -37,6 +37,10 @@ class QwenKernelPolicy:
     block_size:int
     attention_tile:int
     direct_attention_layers:frozenset[int]
+    fused_gather:bool
+    native_gqa:bool
+    fused_qkv_layers:frozenset[int]
+    fused_mlp_layers:frozenset[int]
     calibrated:bool
     reason:str
 
@@ -65,20 +69,28 @@ def select_qwen_policy(capabilities,signature,profiles):
         'head_dim':signature.head_dim,
     }
     if actual!=expected:
-        return QwenKernelPolicy('fallback',capabilities.architecture,16,128,frozenset(),False,
-                                'model signature is not calibrated')
+        return QwenKernelPolicy(
+            'fallback',capabilities.architecture,16,128,frozenset(),False,False,
+            frozenset(),frozenset(),False,'model signature is not calibrated')
     row=profiles.get('architectures',{}).get(capabilities.architecture)
     if row is None or not row.get('quality_gate_passed',False):
-        return QwenKernelPolicy('fallback',capabilities.architecture,16,128,frozenset(),False,
-                                'GPU architecture has no accepted quality profile')
+        return QwenKernelPolicy(
+            'fallback',capabilities.architecture,16,128,frozenset(),False,False,
+            frozenset(),frozenset(),False,
+            'GPU architecture has no accepted quality profile')
     layers=frozenset(int(x) for x in row.get('direct_attention_layers',()))
-    if any(x<0 or x>=signature.layers for x in layers):
+    qkv_layers=frozenset(int(x) for x in row.get('fused_qkv_layers',()))
+    mlp_layers=frozenset(int(x) for x in row.get('fused_mlp_layers',()))
+    if any(x<0 or x>=signature.layers for x in layers|qkv_layers|mlp_layers):
         raise ValueError('calibration contains an invalid layer index')
     block=int(row.get('block_size',16)); tile=int(row.get('attention_tile',128))
     if block&(block-1) or tile not in (64,128,256):
         raise ValueError('calibration contains an invalid block/tile size')
-    return QwenKernelPolicy(row.get('name',capabilities.architecture),capabilities.architecture,
-                            block,tile,layers,True,'matched accepted architecture profile')
+    return QwenKernelPolicy(
+        row.get('name',capabilities.architecture),capabilities.architecture,
+        block,tile,layers,bool(row.get('fused_gather',False)),
+        bool(row.get('native_gqa',False)),qkv_layers,mlp_layers,True,
+        'matched accepted architecture profile')
 
 
 def load_qwen_policy(model,device=None,path=DEFAULT_PROFILES):
