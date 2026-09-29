@@ -85,11 +85,11 @@ class QwenPagedExecutor:
         packed=[]
         with torch.no_grad():
             for layer in self.model.model.layers:
-                attention,mlp=layer.self_attn,layer.mlp
+                attention,layer_mlp=layer.self_attn,layer.mlp
                 packed.append((
                     torch.cat((attention.q_proj.weight,attention.k_proj.weight,
                                attention.v_proj.weight),dim=0).contiguous(),
-                    torch.cat((mlp.gate_proj.weight,mlp.up_proj.weight),dim=0).contiguous(),
+                    torch.cat((layer_mlp.gate_proj.weight,layer_mlp.up_proj.weight),dim=0).contiguous(),
                 ))
         self._projection_weights=tuple(packed); count=len(packed)
         def layers(value):
