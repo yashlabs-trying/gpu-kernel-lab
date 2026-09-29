@@ -42,7 +42,7 @@ This repository now hosts multiple optimized model projects under
 
 | Slot | Model | Optimization focus | Status |
 |---:|---|---|---|
-| 1 | Qwen3-0.6B | Custom Triton/CUDA kernels, static decode, CUDA Graphs, serving control plane | Exact production path; faster experimental paths gated |
+| 1 | [Qwen3-0.6B](models/qwen3-0.6b/README.md) | Custom Triton/CUDA kernels, static decode, CUDA Graphs, serving control plane | Exact production path; faster experimental paths gated |
 | 2 | [Llama-3.2-3B](models/optimized-llama/README.md) | vLLM continuous batching, throughput sweeps, profiling, deployment study | Integrated from `optimized-llama` |
 | 3 | To be selected | Architecture-specific optimization | Planned |
 | 4 | To be selected | Architecture-specific optimization | Planned |

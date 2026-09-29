@@ -14,7 +14,7 @@ and architecture-specific notes while sharing the laboratory's acceptance rules:
 
 | Slot | Model project | Architecture | Status |
 |---:|---|---|---|
-| 1 | [Qwen3-0.6B](../README.md) | Qwen3 | Kernel/runtime research implemented; production quality gate still open |
+| 1 | [Qwen3-0.6B](qwen3-0.6b/README.md) | Qwen3 | Exact single-GPU serving path accepted on SM86/SM89; portable fallback and real concurrent load tested |
 | 2 | [Llama-3.2-3B](optimized-llama/README.md) | Llama | Imported optimized vLLM benchmark and profiling project |
 | 3 | To be selected | — | Planned |
 | 4 | To be selected | — | Planned |
