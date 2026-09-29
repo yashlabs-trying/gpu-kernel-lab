@@ -67,7 +67,7 @@ class QwenPagedExecutor:
         if attention_tile not in (64,128,256): raise ValueError('attention tile must be 64, 128, or 256')
         self.policy=policy; self.attention_tile=attention_tile; self.fused_gather=bool(fused_gather)
         self.native_gqa=bool(native_gqa)
-        self.fused_projections=False
+        self.fused_qkv=False; self.fused_mlp=False
         layer_count=len(model.model.layers)
         if direct_attention_layers is None:
             self.direct_attention_layers=(frozenset(range(layer_count)) if direct_attention else frozenset())
@@ -80,7 +80,7 @@ class QwenPagedExecutor:
         self._gather_workspaces={}
         self._projection_weights=None
 
-    def enable_fused_projections(self):
+    def enable_fused_projections(self,*,qkv=True,mlp=True):
         """Prepack decode-only QKV and gate/up weights outside timed execution."""
         packed=[]
         with torch.no_grad():
@@ -91,7 +91,8 @@ class QwenPagedExecutor:
                                attention.v_proj.weight),dim=0).contiguous(),
                     torch.cat((mlp.gate_proj.weight,mlp.up_proj.weight),dim=0).contiguous(),
                 ))
-        self._projection_weights=tuple(packed); self.fused_projections=True
+        self._projection_weights=tuple(packed)
+        self.fused_qkv=bool(qkv); self.fused_mlp=bool(mlp)
         return self
 
     async def prefill(self,work,allocator):
@@ -154,7 +155,7 @@ class QwenPagedExecutor:
             residual=hidden
             normalized=layer.input_layernorm(hidden)
             attention=layer.self_attn
-            if self.fused_projections:
+            if self.fused_qkv:
                 q_size=attention.q_proj.out_features; k_size=attention.k_proj.out_features
                 q_raw,k_raw,v_raw=F.linear(normalized,self._projection_weights[layer_index][0]).split(
                     (q_size,k_size,attention.v_proj.out_features),dim=-1)
@@ -213,7 +214,7 @@ class QwenPagedExecutor:
             hidden=residual+attention.o_proj(output)
             residual=hidden
             normalized=layer.post_attention_layernorm(hidden)
-            if self.fused_projections:
+            if self.fused_mlp:
                 gate,up=F.linear(normalized,self._projection_weights[layer_index][1]).chunk(2,dim=-1)
                 mlp_output=layer.mlp.down_proj(layer.mlp.act_fn(gate)*up)
             else:
