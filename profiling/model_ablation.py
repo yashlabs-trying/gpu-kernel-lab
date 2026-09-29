@@ -35,10 +35,13 @@ def install(model, variant):
     from fused_projection_swiglu import fused_projection_swiglu
     count=0
     for module in model.modules():
-        if variant in ('triton_rms','triton_both','qwen_rms','qwen_rms_exact','qwen_rms_fused_mlp') and type(module).__name__=='Qwen3RMSNorm':
+        if variant in ('triton_rms','triton_both','qwen_rms','qwen_rms_precise','qwen_rms_exact','qwen_rms_fused_mlp') and type(module).__name__=='Qwen3RMSNorm':
             def forward(self, hidden_states):
                 if variant == 'qwen_rms_exact':
                     kernel = qwen_rmsnorm_reference
+                elif variant == 'qwen_rms_precise':
+                    return triton_qwen_rmsnorm(hidden_states,self.weight,self.variance_epsilon,
+                                               precise_math=True)
                 else:
                     kernel = triton_qwen_rmsnorm if variant in ('qwen_rms','qwen_rms_fused_mlp') else triton_rmsnorm
                 return kernel(hidden_states,self.weight,self.variance_epsilon)

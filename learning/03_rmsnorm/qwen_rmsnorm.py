@@ -12,14 +12,15 @@ import triton.language as tl
 
 @triton.jit
 def qwen_rmsnorm_kernel(X, W, Y, N: tl.constexpr, EPS: tl.constexpr,
-                        BLOCK: tl.constexpr):
+                        BLOCK: tl.constexpr, PRECISE_MATH: tl.constexpr):
     row = tl.program_id(0)
     col = tl.arange(0, BLOCK)
     valid = col < N
     # Neighboring logical lanes address neighboring elements of one row.
     x = tl.load(X + row * N + col, valid, other=0).to(tl.float32)
     variance = tl.sum(x * x, axis=0) / N
-    normalized = x * tl.rsqrt(variance + EPS)
+    inverse_rms = 1.0 / tl.sqrt(variance + EPS) if PRECISE_MATH else tl.rsqrt(variance + EPS)
+    normalized = x * inverse_rms
     # Important: materialize Qwen's low-precision rounding BEFORE weight multiply.
     rounded = normalized.to(X.dtype.element_ty).to(tl.float32)
     weight = tl.load(W + col, valid, other=0).to(tl.float32)
@@ -29,7 +30,7 @@ def qwen_rmsnorm_kernel(X, W, Y, N: tl.constexpr, EPS: tl.constexpr,
 @triton.jit
 def qwen_residual_rmsnorm_kernel(X, RESIDUAL, W, Y, RESIDUAL_OUT,
                                  N: tl.constexpr, EPS: tl.constexpr,
-                                 BLOCK: tl.constexpr):
+                                 BLOCK: tl.constexpr, PRECISE_MATH: tl.constexpr):
     """Fuse Qwen's low-precision residual add with the following RMSNorm."""
     row = tl.program_id(0)
     col = tl.arange(0, BLOCK)
@@ -42,7 +43,8 @@ def qwen_residual_rmsnorm_kernel(X, RESIDUAL, W, Y, RESIDUAL_OUT,
     tl.store(RESIDUAL_OUT + offsets, combined, valid)
     combined_fp32 = combined.to(tl.float32)
     variance = tl.sum(combined_fp32 * combined_fp32, axis=0) / N
-    normalized = combined_fp32 * tl.rsqrt(variance + EPS)
+    inverse_rms = 1.0 / tl.sqrt(variance + EPS) if PRECISE_MATH else tl.rsqrt(variance + EPS)
+    normalized = combined_fp32 * inverse_rms
     rounded = normalized.to(X.dtype.element_ty).to(tl.float32)
     weight = tl.load(W + col, valid, other=0).to(tl.float32)
     tl.store(Y + offsets, rounded * weight, valid)
@@ -60,7 +62,7 @@ def qwen_residual_rmsnorm_reference(x, residual, weight, epsilon=1e-6):
     return qwen_rmsnorm_reference(combined, weight, epsilon), combined
 
 
-def triton_qwen_rmsnorm(x, weight, epsilon=1e-6, num_warps=4):
+def triton_qwen_rmsnorm(x, weight, epsilon=1e-6, num_warps=4, precise_math=False):
     """Contiguous, matching-dtype CUDA tensors only; no silent copies/fallbacks."""
     if x.ndim < 1 or x.shape[-1] == 0:
         raise ValueError('input must have a nonempty last dimension')
@@ -76,6 +78,8 @@ def triton_qwen_rmsnorm(x, weight, epsilon=1e-6, num_warps=4):
         raise ValueError('epsilon must be finite and positive')
     if num_warps not in (2, 4, 8):
         raise ValueError('num_warps must be 2, 4, or 8')
+    if not isinstance(precise_math, bool):
+        raise ValueError('precise_math must be bool')
     if torch.is_grad_enabled() and (x.requires_grad or weight.requires_grad):
         raise ValueError('inference only; use torch.inference_mode()')
     n = x.shape[-1]
@@ -86,13 +90,14 @@ def triton_qwen_rmsnorm(x, weight, epsilon=1e-6, num_warps=4):
     if x.numel():
         with torch.cuda.device(x.device):
             qwen_rmsnorm_kernel[(x.numel() // n,)](
-                x, weight, output, n, epsilon, block,
+                x, weight, output, n, epsilon, block, precise_math,
                 num_warps=num_warps, enable_fp_fusion=False,
             )
     return output
 
 
-def triton_qwen_residual_rmsnorm(x, residual, weight, epsilon=1e-6, num_warps=4):
+def triton_qwen_residual_rmsnorm(x, residual, weight, epsilon=1e-6, num_warps=4,
+                                 precise_math=False):
     """Return `(normalized, residual_stream)` without materializing add then norm."""
     if residual.shape != x.shape or residual.dtype != x.dtype or residual.device != x.device:
         raise ValueError('residual must match input shape, dtype, and device')
@@ -107,6 +112,8 @@ def triton_qwen_residual_rmsnorm(x, residual, weight, epsilon=1e-6, num_warps=4)
         raise ValueError('contiguous input and matching vector weight required')
     if not math.isfinite(epsilon) or epsilon <= 0 or num_warps not in (2, 4, 8):
         raise ValueError('invalid epsilon or num_warps')
+    if not isinstance(precise_math, bool):
+        raise ValueError('precise_math must be bool')
     if torch.is_grad_enabled() and (x.requires_grad or residual.requires_grad or weight.requires_grad):
         raise ValueError('inference only; use torch.inference_mode()')
     n = x.shape[-1]
@@ -118,6 +125,7 @@ def triton_qwen_residual_rmsnorm(x, residual, weight, epsilon=1e-6, num_warps=4)
         with torch.cuda.device(x.device):
             qwen_residual_rmsnorm_kernel[(x.numel() // n,)](
                 x, residual, weight, output, residual_output, n, epsilon, block,
+                precise_math,
                 num_warps=num_warps, enable_fp_fusion=False,
             )
     return output, residual_output
