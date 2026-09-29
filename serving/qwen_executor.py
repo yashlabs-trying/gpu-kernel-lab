@@ -130,7 +130,7 @@ class QwenPagedExecutor:
         with torch.inference_mode():
             for row,item in enumerate(work):
                 self._prefill_caches.pop(item.request_id,None)
-                if int(metadata.lengths[row].item())!=item.position+1:
+                if metadata.host_lengths and metadata.host_lengths[row]!=item.position+1:
                     raise ValueError('decode cache length must include exactly the new slot')
             output=self._forward_batch(work,metadata.block_tables,metadata.lengths)
         return {item.request_id:output[row] for row,item in enumerate(work)}
@@ -153,10 +153,11 @@ class QwenPagedExecutor:
             raise ValueError('executor received a different paged allocator')
 
     def _forward_batch(self,work,block_tables,lengths):
-        batch=len(work); host_lengths=lengths.tolist(); maximum=max(host_lengths)
+        batch=len(work); host_lengths=[item.position+1 for item in work]
+        maximum=max(host_lengths)
         needs_mask=any(length!=maximum for length in host_lengths)
         for row,item in enumerate(work):
-            self._validate_slot(item.position,item.slot,block_tables[row])
+            self._validate_slot(item.request_id,item.position,item.slot)
         token=torch.tensor([[item.token_id] for item in work],device=self.device,dtype=torch.long)
         position_ids=torch.tensor([[item.position] for item in work],device=self.device,dtype=torch.long)
         hidden=self.model.model.embed_tokens(token)
@@ -270,10 +271,11 @@ class QwenPagedExecutor:
             layer,self.allocator.block_size,self.attention_tile,
             output=workspace[0],partial=workspace[1],lse=workspace[2])
 
-    def _validate_slot(self,position,slot,block_table):
+    def _validate_slot(self,request_id,position,slot):
         logical_block,offset=divmod(position,self.allocator.block_size)
-        if logical_block>=block_table.numel():
+        blocks=self.allocator.blocks(request_id)
+        if logical_block>=len(blocks):
             raise ValueError('position is outside the block table')
-        expected=(int(block_table[logical_block].item()),offset)
+        expected=(blocks[logical_block],offset)
         if tuple(slot)!=expected:
             raise ValueError(f'physical slot mismatch: expected {expected}, got {slot}')

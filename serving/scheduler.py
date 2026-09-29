@@ -55,6 +55,7 @@ class StepPlan:
     decode:tuple[DecodeWork,...]
     prefill:tuple[PrefillWork,...]
     graph_batch_size:int|None
+    graph_sequence_length:int|None
 
 
 class ContinuousBatchScheduler:
@@ -114,7 +115,9 @@ class ContinuousBatchScheduler:
             self._inflight[request_id]=('prefill',count)
             token_budget-=count; self._prefill.append(request_id)
         bucket=self.graph_buckets.select(len(decode),max((self.allocator.length(x.request_id) for x in decode),default=0)) if decode else None
-        return StepPlan(tuple(decode),tuple(prefill),None if bucket is None else bucket[0])
+        return StepPlan(tuple(decode),tuple(prefill),
+                        None if bucket is None else bucket[0],
+                        None if bucket is None else bucket[1])
 
     def complete_prefill(self,request_id,count):
         request=self.requests[request_id]

@@ -21,6 +21,7 @@ def test_paged_allocation_boundary_metadata_and_reuse():
     a.create('b'); a.append_slots('b',1); assert a.blocks('b')==(2,)
     meta=a.metadata(('a','b'),device='cpu')
     assert meta.block_tables.tolist()==[[0,1],[2,-1]] and meta.lengths.tolist()==[5,1]
+    assert meta.host_lengths==(5,1)
     assert a.release('a'); a.create('c'); a.append_slots('c',1); assert a.blocks('c')==(0,)
 
 
@@ -75,6 +76,15 @@ def test_finished_request_releases_blocks():
 
 def test_graph_bucket_rounds_up_both_dimensions():
     b=CUDAGraphBuckets(); assert b.select(3,700)==(4,2048); assert b.select(17,10) is None
+
+
+def test_scheduler_exposes_the_complete_graph_bucket():
+    a=allocator(64); s=ContinuousBatchScheduler(a,CUDAGraphBuckets())
+    s.submit(Request('x',(1,),2)); plan=s.plan()
+    assert plan.graph_batch_size is None and plan.graph_sequence_length is None
+    assert s.complete_prefill('x',1); s.complete_prefill_sample('x',3)
+    plan=s.plan()
+    assert plan.graph_batch_size==1 and plan.graph_sequence_length==128
 
 
 def test_sampling_is_deterministic_and_honors_stop():

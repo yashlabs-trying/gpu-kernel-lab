@@ -15,6 +15,7 @@ class BatchKVMetadata:
     block_tables: torch.Tensor  # int32 [B,max_blocks], -1 means unused
     lengths: torch.Tensor       # int32 [B]
     query_positions: torch.Tensor  # int64 [B]
+    host_lengths: tuple[int,...] = ()
 
 
 @dataclass
@@ -93,9 +94,11 @@ class PagedKVAllocator:
             tables=torch.full((len(ids),width),-1,dtype=torch.int32)
             for row,a in enumerate(allocations):
                 if a.blocks: tables[row,:len(a.blocks)]=torch.tensor(a.blocks,dtype=torch.int32)
-            lengths=torch.tensor([a.length for a in allocations],dtype=torch.int32)
+            host_lengths=tuple(a.length for a in allocations)
+            lengths=torch.tensor(host_lengths,dtype=torch.int32)
         target=self.keys.device if device is None else torch.device(device)
-        return BatchKVMetadata(ids,tables.to(target),lengths.to(target),lengths.to(torch.int64).to(target))
+        return BatchKVMetadata(ids,tables.to(target),lengths.to(target),
+                               lengths.to(torch.int64).to(target),host_lengths)
 
     def write(self,layer,request_id,positions,key,value):
         """Correctness/reference writer; fused kernels should write slots directly."""
