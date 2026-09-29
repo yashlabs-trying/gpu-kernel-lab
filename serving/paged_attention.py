@@ -4,6 +4,7 @@ from __future__ import annotations
 import torch
 import triton
 import triton.language as tl
+from triton.language.extra import libdevice
 
 
 @triton.jit
@@ -31,14 +32,14 @@ def _partial(Q,K,V,TABLE,LENGTHS,O,LSE,LAYER,
     maximum=tl.max(score,axis=0)
     split_active=split*TILE<length
     safe_max=tl.where(split_active,maximum,0.0)
-    probability=tl.exp(score-safe_max)
+    probability=libdevice.exp(score-safe_max)
     denominator=tl.sum(probability,axis=0)
     value=tl.load(V+LAYER*VSL+physical[:,None]*VSB+kv_head*VSH+
                   offset[:,None]*VST+dimension[None,:],mask=active[:,None],other=0).to(tl.float32)
     result=tl.where(split_active,tl.sum(probability[:,None]*value,axis=0)/denominator,0.0)
     base=(bh*SPLITS+split)
     tl.store(O+base*D+dimension,result)
-    tl.store(LSE+base,tl.where(split_active,safe_max+tl.log(denominator),-float('inf')))
+    tl.store(LSE+base,tl.where(split_active,safe_max+libdevice.log(denominator),-float('inf')))
 
 
 @triton.jit
@@ -46,7 +47,7 @@ def _merge(O,LSE,Y,D:tl.constexpr,SPLITS:tl.constexpr,SB:tl.constexpr):
     bh=tl.program_id(0)
     split=tl.arange(0,SB); dimension=tl.arange(0,D)
     logsum=tl.load(LSE+bh*SPLITS+split,mask=split<SPLITS,other=-float('inf'))
-    weight=tl.exp(logsum-tl.max(logsum,axis=0))
+    weight=libdevice.exp(logsum-tl.max(logsum,axis=0))
     partial=tl.load(O+(bh*SPLITS+split[:,None])*D+dimension[None,:],
                     mask=split[:,None]<SPLITS,other=0.0)
     result=tl.sum(weight[:,None]*partial,axis=0)/tl.sum(weight,axis=0)
