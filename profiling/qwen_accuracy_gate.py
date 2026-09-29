@@ -100,7 +100,7 @@ def load_model(model_id, local_only):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="Qwen/Qwen3-0.6B")
-    parser.add_argument("--candidate", choices=("exact-rms", "fast-rms", "precise-rms", "fast-residual-rms"), default="fast-rms")
+    parser.add_argument("--candidate", choices=("exact-rms", "fast-rms", "qk-fast-rms", "precise-rms", "fast-residual-rms"), default="fast-rms")
     parser.add_argument("--prompts", type=int, default=1000)
     parser.add_argument("--trace-prompts", type=int, default=32)
     parser.add_argument("--teacher-forced-prompts", type=int, default=64)
@@ -127,7 +127,10 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, local_files_only=args.local_files_only)
     baseline, candidate = load_model(args.model, args.local_files_only), load_model(args.model, args.local_files_only)
-    variant = {"exact-rms": "qwen_rms_exact", "precise-rms": "qwen_rms_precise"}.get(args.candidate, "qwen_rms")
+    variant = {
+        "exact-rms": "qwen_rms_exact", "precise-rms": "qwen_rms_precise",
+        "qk-fast-rms": "qwen_qk_rms_fast",
+    }.get(args.candidate, "qwen_rms")
     install(candidate, variant)
     if args.candidate == "fast-residual-rms":
         sys.path.insert(0, str(ROOT / "learning/12_decode_runtime"))
