@@ -60,7 +60,7 @@ The initial real executor is deliberately conservative:
 
 - exact eager Qwen layer math;
 - exact tiled SDPA prefill with each new K/V range scattered once into pages;
-- serial request execution in the initial integration baseline;
+- batched variable-length decode with decode-first mixed-plan execution;
 - direct writes into `[layer, block, kv_head, block_token, head_dim]`;
 - variable-length lookup through `BatchKVMetadata.block_tables`;
 - no dense growing mask and no cache concatenation;
@@ -69,14 +69,12 @@ The initial real executor is deliberately conservative:
 This gives the direct paged Triton/CUDA kernel a trustworthy A/B target. It is
 not advertised as a throughput winner.
 
-## Next GPU optimization
+## Deferred experimental optimization
 
-1. Replace gather-plus-SDPA with GQA-aware physical block-table reads inside the
-   split-KV online-softmax kernel.
-2. Batch decode requests and implement a tiled, causal chunked-prefill path.
-3. Capture one graph per supported batch/sequence bucket with inactive-slot masks.
-4. Run dynamic-cache versus paged-executor token/logit acceptance on the GPU.
-5. Measure concurrent p50/p90/p99 and reclaim/cancellation behavior under load.
+Direct block-table attention remains opt-in because it has not passed the 99%
+quality gate. The accepted path uses batched decode, chunked prefill, stable
+sequence-bucket metadata, and architecture-specific policy selection. Concurrent
+p50/p90/p99 results are recorded under `results/qwen_phase56_a4000/`.
 
 ## Architecture policy
 

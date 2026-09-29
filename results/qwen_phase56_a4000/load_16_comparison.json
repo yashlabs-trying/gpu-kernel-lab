@@ -1,0 +1,6 @@
+{
+  "workload": {"requests": 16, "prompt_lengths": [32, 64, 128, 256], "output_tokens": 16, "max_batch_size": 8},
+  "before": {"wall_time_s": 4.467349970713258, "tokens_per_second": 57.30392542199555, "ttft_p50_ms": 2358.9944653213024, "itl_p50_ms": 50.77263992279768, "itl_p90_ms": 180.17309457063675, "itl_p99_ms": 674.5297141559423},
+  "adaptive_decode_first": {"decode_prefill_chunk": 96, "wall_time_s": 3.934876710176468, "tokens_per_second": 65.05833611176925, "ttft_p50_ms": 1884.7060026600957, "itl_p50_ms": 40.18566012382507, "itl_p90_ms": 150.84107592701912, "itl_p99_ms": 500.51527727395296},
+  "serial_batch_1": {"wall_time_s": 9.330198233947158, "tokens_per_second": 27.437629867005207, "ttft_p50_ms": 4323.213276453316, "itl_p50_ms": 28.962266631424427, "itl_p90_ms": 30.164014734327793, "itl_p99_ms": 31.701843086630113}
+}

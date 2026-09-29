@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "environment": {"gpu": "NVIDIA RTX A4000", "compute_capability": [8, 6], "torch": "2.13.0+cu130"},
+  "policy": {"name": "ampere-sm86-lossless-paged-gather", "architecture": "sm86", "calibrated": true, "reason": "matched accepted architecture profile"},
+  "workload": {"requests": 64, "prompt_lengths": [32, 64, 128, 256], "output_tokens": 16, "max_batch_size": 8, "prefill_chunk": 128, "prefill_budget": 512, "decode_prefill_chunk": 96, "tokenization_and_http_excluded": true},
+  "wall_time_s": 15.629718087613583,
+  "completed_requests_per_second": 4.0947635549946,
+  "metrics": {
+    "uptime_s": 15.629789300262928,
+    "requests": {"submitted": 64, "completed": 64, "cancelled": 0, "timed_out": 0, "rejected": 0, "failed": 0, "active": 0},
+    "tokens": {"prompt": 7680, "generated": 1024, "generated_per_second": 65.51591837407392},
+    "latency_ms": {
+      "ttft": {"p50": 8136.135044507682, "p90": 14152.644287608564, "p95": 14549.862022232264, "p99": 14937.021239157766},
+      "itl": {"p50": 40.57386238127947, "p90": 182.3513470590115, "p95": 264.9165575392542, "p99": 407.28774704039097}
+    },
+    "kv": {"total_blocks": 544, "free_blocks": 544, "used_blocks": 0, "block_size": 16, "storage_bytes": 998244352, "reserved_blocks": 0}
+  }
+}
