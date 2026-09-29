@@ -110,9 +110,15 @@ class QwenPagedExecutor:
                                       position+1,self.allocator.block_size)[None]
             values=materialize_paged_kv(self.allocator.values,layer_index,block_table,
                                         position+1,self.allocator.block_size)[None]
+            # Transformers' Qwen SDPA path explicitly expands K/V heads. Native
+            # ``enable_gqa`` is semantically equivalent but changes reduction
+            # ordering enough to flip close argmax decisions in BF16.
+            groups=attention.config.num_attention_heads//attention.config.num_key_value_heads
+            keys=keys.repeat_interleave(groups,dim=1)
+            values=values.repeat_interleave(groups,dim=1)
             output=F.scaled_dot_product_attention(
                 q,keys,values,dropout_p=0.0,is_causal=False,
-                scale=getattr(attention,'scaling',attention.head_dim**-0.5),enable_gqa=True)
+                scale=getattr(attention,'scaling',attention.head_dim**-0.5))
             output=output.transpose(1,2).reshape(1,1,-1)
             hidden=residual+attention.o_proj(output)
             residual=hidden
