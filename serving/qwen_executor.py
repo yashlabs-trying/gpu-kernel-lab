@@ -43,7 +43,7 @@ class QwenPagedExecutor:
     mixed-batch kernels are enabled.
     """
     def __init__(self,model,allocator,*,direct_attention=False,direct_attention_layers=None,
-                 attention_tile=128,policy=None,fused_gather=True):
+                 attention_tile=128,policy=None,fused_gather=True,native_gqa=False):
         self.model=model.eval(); self.allocator=allocator
         self.device=next(model.parameters()).device
         self.dtype=next(model.parameters()).dtype
@@ -66,6 +66,7 @@ class QwenPagedExecutor:
                 raise ValueError('allocator block size does not match selected policy')
         if attention_tile not in (64,128,256): raise ValueError('attention tile must be 64, 128, or 256')
         self.policy=policy; self.attention_tile=attention_tile; self.fused_gather=bool(fused_gather)
+        self.native_gqa=bool(native_gqa)
         layer_count=len(model.model.layers)
         if direct_attention_layers is None:
             self.direct_attention_layers=(frozenset(range(layer_count)) if direct_attention else frozenset())
@@ -161,7 +162,8 @@ class QwenPagedExecutor:
                     mask.masked_fill_(~valid[:,None,None,:],torch.finfo(self.dtype).min)
                 output=F.scaled_dot_product_attention(
                     q,keys,values,attn_mask=mask,dropout_p=0.0,is_causal=False,
-                    scale=getattr(attention,'scaling',attention.head_dim**-0.5))
+                    scale=getattr(attention,'scaling',attention.head_dim**-0.5),
+                    enable_gqa=self.native_gqa)
             else:
                 gathered_keys=[]; gathered_values=[]
                 for row,length in enumerate(host_lengths):
@@ -198,12 +200,15 @@ class QwenPagedExecutor:
         batch,width=block_tables.shape; capacity=width*self.allocator.block_size
         key=(batch,width); workspace=self._gather_workspaces.get(key)
         if workspace is None:
-            shape=(batch,self.model.config.num_attention_heads,capacity,self.model.config.head_dim)
+            heads=(self.model.config.num_key_value_heads if self.native_gqa
+                   else self.model.config.num_attention_heads)
+            shape=(batch,heads,capacity,self.model.config.head_dim)
             workspace=(torch.empty(shape,device=self.device,dtype=self.dtype),
                        torch.empty(shape,device=self.device,dtype=self.dtype))
             self._gather_workspaces[key]=workspace
         gather_paged_gqa(self.allocator.keys,self.allocator.values,block_tables,lengths,
-                         layer,self.allocator.block_size,key_output=workspace[0],value_output=workspace[1])
+                         layer,self.allocator.block_size,key_output=workspace[0],value_output=workspace[1],
+                         expand_gqa=not self.native_gqa)
         return workspace[0][:,:,:maximum],workspace[1][:,:,:maximum]
 
     def _paged_attention(self,q,block_tables,lengths,layer):
