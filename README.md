@@ -209,6 +209,7 @@ Recommended reading:
 7. [Static KV](learning/11_static_kv/README.md)
 8. [Serving engine](serving/README.md)
 9. [Final profiling report](results/final_newpod_20260904/REPORT.md)
+10. [Qwen numerical-accuracy gate](docs/QWEN_NUMERICAL_ACCURACY.md)
 
 ## Reproduce on RunPod
 
