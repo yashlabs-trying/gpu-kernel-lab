@@ -42,7 +42,7 @@ class QwenPagedExecutor:
     establishes exact token/cache semantics before direct paged attention and
     mixed-batch kernels are enabled.
     """
-    def __init__(self,model,allocator,*,direct_attention=False):
+    def __init__(self,model,allocator,*,direct_attention=False,direct_attention_layers=None):
         self.model=model.eval(); self.allocator=allocator
         self.device=next(model.parameters()).device
         self.dtype=next(model.parameters()).dtype
@@ -56,7 +56,14 @@ class QwenPagedExecutor:
         if self.device.type!='cuda':
             raise ValueError('QwenPagedExecutor requires a CUDA model')
         self._prefill_caches={}
-        self.direct_attention=bool(direct_attention)
+        layer_count=len(model.model.layers)
+        if direct_attention_layers is None:
+            self.direct_attention_layers=(frozenset(range(layer_count)) if direct_attention else frozenset())
+        else:
+            selected=frozenset(int(x) for x in direct_attention_layers)
+            if any(x<0 or x>=layer_count for x in selected):
+                raise ValueError('direct attention layer index out of range')
+            self.direct_attention_layers=selected
         self._attention_workspaces={}
 
     async def prefill(self,work,allocator):
@@ -131,7 +138,7 @@ class QwenPagedExecutor:
                 block,block_offset=item.slot
                 self.allocator.keys[layer_index,block,:,block_offset].copy_(k[row,:,0])
                 self.allocator.values[layer_index,block,:,block_offset].copy_(v[row,:,0])
-            if self.direct_attention:
+            if layer_index in self.direct_attention_layers:
                 output=self._paged_attention(q[:,:,0],block_tables,lengths,layer_index)[:,:,None]
             else:
                 gathered_keys=[]; gathered_values=[]
