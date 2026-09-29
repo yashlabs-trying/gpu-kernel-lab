@@ -79,16 +79,13 @@ class QwenPagedExecutor:
     async def decode(self,work,metadata,graph_batch_size):
         if metadata.request_ids!=tuple(item.request_id for item in work):
             raise ValueError('decode metadata order does not match work order')
-        logits={}
         with torch.inference_mode():
             for row,item in enumerate(work):
                 self._prefill_caches.pop(item.request_id,None)
                 if int(metadata.lengths[row].item())!=item.position+1:
                     raise ValueError('decode cache length must include exactly the new slot')
-                logits[item.request_id]=self._forward_token(
-                    item.token_id,item.position,item.slot,metadata.block_tables[row],
-                    metadata.lengths[row:row+1])
-        return logits
+            output=self._forward_batch(work,metadata.block_tables,metadata.lengths)
+        return {item.request_id:output[row] for row,item in enumerate(work)}
 
     def release(self,request_id):
         """Release executor-private temporary state after any terminal event."""
@@ -107,10 +104,13 @@ class QwenPagedExecutor:
         if allocator is not self.allocator:
             raise ValueError('executor received a different paged allocator')
 
-    def _forward_token(self,token_id,position,slot,block_table,lengths):
-        self._validate_slot(position,slot,block_table)
-        token=torch.tensor([[token_id]],device=self.device,dtype=torch.long)
-        position_ids=torch.tensor([[position]],device=self.device,dtype=torch.long)
+    def _forward_batch(self,work,block_tables,lengths):
+        batch=len(work); host_lengths=lengths.tolist(); maximum=max(host_lengths)
+        needs_mask=any(length!=maximum for length in host_lengths)
+        for row,item in enumerate(work):
+            self._validate_slot(item.position,item.slot,block_tables[row])
+        token=torch.tensor([[item.token_id] for item in work],device=self.device,dtype=torch.long)
+        position_ids=torch.tensor([[item.position] for item in work],device=self.device,dtype=torch.long)
         hidden=self.model.model.embed_tokens(token)
         cos,sin=self.model.model.rotary_emb(hidden,position_ids)
         cos=cos[:,None,:,:]; sin=sin[:,None,:,:]
@@ -120,53 +120,65 @@ class QwenPagedExecutor:
             normalized=layer.input_layernorm(hidden)
             attention=layer.self_attn
             q=attention.q_norm(attention.q_proj(normalized).view(
-                1,1,attention.config.num_attention_heads,attention.head_dim)).transpose(1,2)
+                batch,1,attention.config.num_attention_heads,attention.head_dim)).transpose(1,2)
             k=attention.k_norm(attention.k_proj(normalized).view(
-                1,1,attention.config.num_key_value_heads,attention.head_dim)).transpose(1,2)
+                batch,1,attention.config.num_key_value_heads,attention.head_dim)).transpose(1,2)
             v=attention.v_proj(normalized).view(
-                1,1,attention.config.num_key_value_heads,attention.head_dim).transpose(1,2)
+                batch,1,attention.config.num_key_value_heads,attention.head_dim).transpose(1,2)
             q=q*cos+_rotate_half(q)*sin
             k=k*cos+_rotate_half(k)*sin
-            block,block_offset=slot
-            self.allocator.keys[layer_index,block,:,block_offset].copy_(k[0,:,0])
-            self.allocator.values[layer_index,block,:,block_offset].copy_(v[0,:,0])
+            for row,item in enumerate(work):
+                block,block_offset=item.slot
+                self.allocator.keys[layer_index,block,:,block_offset].copy_(k[row,:,0])
+                self.allocator.values[layer_index,block,:,block_offset].copy_(v[row,:,0])
             if self.direct_attention:
-                output=self._paged_attention(q[:,:,0],block_table,lengths,layer_index)[:,:,None]
+                output=self._paged_attention(q[:,:,0],block_tables,lengths,layer_index)[:,:,None]
             else:
-                keys=materialize_paged_kv(self.allocator.keys,layer_index,block_table,
-                                          position+1,self.allocator.block_size)[None]
-                values=materialize_paged_kv(self.allocator.values,layer_index,block_table,
-                                            position+1,self.allocator.block_size)[None]
+                gathered_keys=[]; gathered_values=[]
+                for row,length in enumerate(host_lengths):
+                    keys=materialize_paged_kv(self.allocator.keys,layer_index,block_tables[row],
+                                              length,self.allocator.block_size)
+                    values=materialize_paged_kv(self.allocator.values,layer_index,block_tables[row],
+                                                length,self.allocator.block_size)
+                    gathered_keys.append(F.pad(keys,(0,0,0,maximum-length)))
+                    gathered_values.append(F.pad(values,(0,0,0,maximum-length)))
+                keys=torch.stack(gathered_keys); values=torch.stack(gathered_values)
                 # Match Transformers' explicit Qwen GQA expansion ordering.
                 groups=attention.config.num_attention_heads//attention.config.num_key_value_heads
                 keys=keys.repeat_interleave(groups,dim=1)
                 values=values.repeat_interleave(groups,dim=1)
+                mask=None
+                if needs_mask:
+                    positions=torch.arange(maximum,device=self.device)
+                    valid=positions[None,:]<lengths[:,None]
+                    mask=torch.zeros((len(work),1,1,maximum),device=self.device,dtype=self.dtype)
+                    mask.masked_fill_(~valid[:,None,None,:],torch.finfo(self.dtype).min)
                 output=F.scaled_dot_product_attention(
-                    q,keys,values,dropout_p=0.0,is_causal=False,
+                    q,keys,values,attn_mask=mask,dropout_p=0.0,is_causal=False,
                     scale=getattr(attention,'scaling',attention.head_dim**-0.5))
-            output=output.transpose(1,2).reshape(1,1,-1)
+            output=output.transpose(1,2).reshape(batch,1,-1)
             hidden=residual+attention.o_proj(output)
             residual=hidden
             hidden=residual+layer.mlp(layer.post_attention_layernorm(hidden))
 
         hidden=self.model.model.norm(hidden)
-        return self.model.lm_head(hidden)[0,0].float()
+        return self.model.lm_head(hidden)[:,0].float()
 
-    def _paged_attention(self,q,block_table,lengths,layer):
+    def _paged_attention(self,q,block_tables,lengths,layer):
         from .paged_attention import paged_attention
         import triton
-        width=block_table.numel(); splits=triton.cdiv(width*self.allocator.block_size,128)
-        workspace=self._attention_workspaces.get(width)
+        batch,width=block_tables.shape; splits=triton.cdiv(width*self.allocator.block_size,128)
+        key=(batch,width); workspace=self._attention_workspaces.get(key)
         if workspace is None:
             heads,dimension=q.shape[1:]
             workspace=(
                 torch.empty_like(q),
-                torch.empty((1,heads,splits,dimension),device=q.device,dtype=torch.float32),
-                torch.empty((1,heads,splits),device=q.device,dtype=torch.float32),
+                torch.empty((batch,heads,splits,dimension),device=q.device,dtype=torch.float32),
+                torch.empty((batch,heads,splits),device=q.device,dtype=torch.float32),
             )
-            self._attention_workspaces[width]=workspace
+            self._attention_workspaces[key]=workspace
         return paged_attention(
-            q,self.allocator.keys,self.allocator.values,block_table[None],lengths,
+            q,self.allocator.keys,self.allocator.values,block_tables,lengths,
             layer,self.allocator.block_size,output=workspace[0],partial=workspace[1],lse=workspace[2])
 
     def _validate_slot(self,position,slot,block_table):
