@@ -67,6 +67,7 @@ class QwenPagedExecutor:
         if attention_tile not in (64,128,256): raise ValueError('attention tile must be 64, 128, or 256')
         self.policy=policy; self.attention_tile=attention_tile; self.fused_gather=bool(fused_gather)
         self.native_gqa=bool(native_gqa)
+        self.fused_projections=False
         layer_count=len(model.model.layers)
         if direct_attention_layers is None:
             self.direct_attention_layers=(frozenset(range(layer_count)) if direct_attention else frozenset())
@@ -77,6 +78,21 @@ class QwenPagedExecutor:
             self.direct_attention_layers=selected
         self._attention_workspaces={}
         self._gather_workspaces={}
+        self._projection_weights=None
+
+    def enable_fused_projections(self):
+        """Prepack decode-only QKV and gate/up weights outside timed execution."""
+        packed=[]
+        with torch.no_grad():
+            for layer in self.model.model.layers:
+                attention,mlp=layer.self_attn,layer.mlp
+                packed.append((
+                    torch.cat((attention.q_proj.weight,attention.k_proj.weight,
+                               attention.v_proj.weight),dim=0).contiguous(),
+                    torch.cat((mlp.gate_proj.weight,mlp.up_proj.weight),dim=0).contiguous(),
+                ))
+        self._projection_weights=tuple(packed); self.fused_projections=True
+        return self
 
     async def prefill(self,work,allocator):
         self._check_allocator(allocator)
@@ -138,12 +154,18 @@ class QwenPagedExecutor:
             residual=hidden
             normalized=layer.input_layernorm(hidden)
             attention=layer.self_attn
-            q=attention.q_norm(attention.q_proj(normalized).view(
+            if self.fused_projections:
+                q_size=attention.q_proj.out_features; k_size=attention.k_proj.out_features
+                q_raw,k_raw,v_raw=F.linear(normalized,self._projection_weights[layer_index][0]).split(
+                    (q_size,k_size,attention.v_proj.out_features),dim=-1)
+            else:
+                q_raw=attention.q_proj(normalized); k_raw=attention.k_proj(normalized)
+                v_raw=attention.v_proj(normalized)
+            q=attention.q_norm(q_raw.view(
                 batch,1,attention.config.num_attention_heads,attention.head_dim)).transpose(1,2)
-            k=attention.k_norm(attention.k_proj(normalized).view(
+            k=attention.k_norm(k_raw.view(
                 batch,1,attention.config.num_key_value_heads,attention.head_dim)).transpose(1,2)
-            v=attention.v_proj(normalized).view(
-                batch,1,attention.config.num_key_value_heads,attention.head_dim).transpose(1,2)
+            v=v_raw.view(batch,1,attention.config.num_key_value_heads,attention.head_dim).transpose(1,2)
             q=q*cos+_rotate_half(q)*sin
             k=k*cos+_rotate_half(k)*sin
             for row,item in enumerate(work):
@@ -190,7 +212,13 @@ class QwenPagedExecutor:
             output=output.transpose(1,2).reshape(batch,1,-1)
             hidden=residual+attention.o_proj(output)
             residual=hidden
-            hidden=residual+layer.mlp(layer.post_attention_layernorm(hidden))
+            normalized=layer.post_attention_layernorm(hidden)
+            if self.fused_projections:
+                gate,up=F.linear(normalized,self._projection_weights[layer_index][1]).chunk(2,dim=-1)
+                mlp_output=layer.mlp.down_proj(layer.mlp.act_fn(gate)*up)
+            else:
+                mlp_output=layer.mlp(normalized)
+            hidden=residual+mlp_output
 
         hidden=self.model.model.norm(hidden)
         return self.model.lm_head(hidden)[:,0].float()

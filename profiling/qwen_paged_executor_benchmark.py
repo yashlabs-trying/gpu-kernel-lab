@@ -11,7 +11,8 @@ from serving.qwen_executor import QwenPagedExecutor
 from serving.scheduler import DecodeWork,PrefillWork
 
 
-async def benchmark_variant(model,context,steps,warmup,block_size,direct_layers,*,fused_gather=True,native_gqa=False):
+async def benchmark_variant(model,context,steps,warmup,block_size,direct_layers,*,
+                            fused_gather=True,native_gqa=False,fused_projections=False):
     config=model.config; blocks=(context+warmup+steps+block_size-1)//block_size
     allocator=PagedKVAllocator(
         num_layers=len(model.model.layers),num_blocks=blocks,block_size=block_size,
@@ -19,6 +20,7 @@ async def benchmark_variant(model,context,steps,warmup,block_size,direct_layers,
         dtype=torch.bfloat16,device='cuda')
     executor=QwenPagedExecutor(model,allocator,direct_attention_layers=direct_layers,
                                fused_gather=fused_gather,native_gqa=native_gqa)
+    if fused_projections: executor.enable_fused_projections()
     request_id='benchmark'; allocator.create(request_id)
     slots=tuple(allocator.append_slots(request_id,context))
     ids=tuple((torch.arange(context)%10000+100).tolist())
@@ -45,11 +47,16 @@ async def run(args,model):
         fused=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,(),fused_gather=True)
         native=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,(),
                                        fused_gather=True,native_gqa=True)
+        combined=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,(),
+                                         fused_gather=True,native_gqa=True,fused_projections=True)
         row={'context':context,'reference_gather':reference,'fused_gather':fused,
              'fused_speedup':reference['median_ms']/fused['median_ms'],
              'fused_latency_reduction_percent':(1-fused['median_ms']/reference['median_ms'])*100,
              'native_gqa':native,'native_gqa_speedup':reference['median_ms']/native['median_ms'],
-             'native_gqa_latency_reduction_percent':(1-native['median_ms']/reference['median_ms'])*100}
+             'native_gqa_latency_reduction_percent':(1-native['median_ms']/reference['median_ms'])*100,
+             'combined_projections':combined,
+             'combined_speedup':reference['median_ms']/combined['median_ms'],
+             'combined_latency_reduction_percent':(1-combined['median_ms']/reference['median_ms'])*100}
         if layers:
             hybrid=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,layers)
             row.update({'direct_layers':layers,'hybrid':hybrid,

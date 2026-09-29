@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--direct-layers',type=int,nargs='*',default=None,
                         help='use direct paged attention only in these decoder layers')
     parser.add_argument('--native-gqa',action='store_true',help='gather Hkv heads and use SDPA native GQA')
+    parser.add_argument('--fused-projections',action='store_true')
     parser.add_argument('--seed',type=int,default=20260930)
     parser.add_argument('--local-files-only',action='store_true')
     parser.add_argument('--no-fail',action='store_true')
@@ -70,6 +71,7 @@ def main():
         raise ValueError('choose --direct-attention or --direct-layers, not both')
     executor=QwenPagedExecutor(model,allocator,direct_attention=args.direct_attention,
                                direct_attention_layers=args.direct_layers,native_gqa=args.native_gqa)
+    if args.fused_projections: executor.enable_fused_projections()
     metrics=StreamingTensorMetrics(); prefill_matches=decode_matches=0
 
     for index,prompt in enumerate(deterministic_prompts(args.prompts,args.seed)):
@@ -113,7 +115,8 @@ def main():
         'workload':{'prompts':args.prompts,'decode_steps':args.decode_steps,
                     'max_input_tokens':args.max_input_tokens,'block_size':args.block_size,
                     'direct_attention':args.direct_attention,
-                    'direct_layers':args.direct_layers,'native_gqa':args.native_gqa,'seed':args.seed},
+                    'direct_layers':args.direct_layers,'native_gqa':args.native_gqa,
+                    'fused_projections':args.fused_projections,'seed':args.seed},
         'prefill_argmax_agreement':prefill_agreement,
         'decode_argmax_agreement':decode_agreement,
         'logits':values,'gate':{'pass':all(checks.values()),'checks':checks},
