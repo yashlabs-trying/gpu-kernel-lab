@@ -61,7 +61,7 @@ class StepPlan:
 class ContinuousBatchScheduler:
     """Control-plane scheduler; an executor supplies model-specific GPU calls."""
     def __init__(self,allocator,graph_buckets,*,max_batch_size=16,prefill_chunk_size=256,
-                 max_prefill_tokens=512,decode_prefill_chunk_size=64):
+                 max_prefill_tokens=512,decode_prefill_chunk_size=96):
         if min(max_batch_size,prefill_chunk_size,max_prefill_tokens,
                decode_prefill_chunk_size)<=0: raise ValueError('limits must be positive')
         self.allocator=allocator; self.graph_buckets=graph_buckets
