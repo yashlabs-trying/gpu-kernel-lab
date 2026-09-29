@@ -148,6 +148,18 @@ RMSNorm passes but the residual version fails at the following layer boundary,
 test residual-add rounding and the cross-layer handoff. If only the full
 composition fails, isolate static attention and quantized projections separately.
 
+To identify RMSNorm modules that differ while receiving the exact same baseline
+input, run:
+
+```bash
+python profiling/qwen_rms_sensitivity.py \
+  --prompts 64 --decode-steps 4 --local-files-only \
+  --output results/qwen_accuracy/rms_sensitivity.json
+```
+
+This distinguishes local kernel rounding from error propagated by an earlier
+layer. It reports changed-element fractions for each named norm site.
+
 ## CPU validation
 
 The GPU model cannot be certified on CPU, but the deterministic corpus, streaming
