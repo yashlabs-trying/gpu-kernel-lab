@@ -20,7 +20,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "profiling"))
 from accuracy_utils import StreamingTensorMetrics, deterministic_prompts, evaluate_gate
-from model_ablation import install
+from model_ablation import install, install_calibrated_rms
 
 
 LAYER_RE = re.compile(r"^model\.layers\.(\d+)$")
@@ -100,7 +100,9 @@ def load_model(model_id, local_only):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="Qwen/Qwen3-0.6B")
-    parser.add_argument("--candidate", choices=("exact-rms", "fast-rms", "qk-fast-rms", "precise-rms", "fast-residual-rms"), default="fast-rms")
+    parser.add_argument("--candidate", choices=("exact-rms", "fast-rms", "qk-fast-rms", "calibrated-rms", "precise-rms", "fast-residual-rms"), default="fast-rms")
+    parser.add_argument("--rms-calibration", type=Path,
+                        help="sensitivity JSON; calibrated-rms accelerates only zero-difference modules")
     parser.add_argument("--prompts", type=int, default=1000)
     parser.add_argument("--trace-prompts", type=int, default=32)
     parser.add_argument("--teacher-forced-prompts", type=int, default=64)
@@ -127,11 +129,22 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, local_files_only=args.local_files_only)
     baseline, candidate = load_model(args.model, args.local_files_only), load_model(args.model, args.local_files_only)
-    variant = {
-        "exact-rms": "qwen_rms_exact", "precise-rms": "qwen_rms_precise",
-        "qk-fast-rms": "qwen_qk_rms_fast",
-    }.get(args.candidate, "qwen_rms")
-    install(candidate, variant)
+    calibrated_modules = []
+    if args.candidate == "calibrated-rms":
+        if args.rms_calibration is None:
+            raise SystemExit("calibrated-rms requires --rms-calibration")
+        calibration = json.loads(args.rms_calibration.read_text(encoding="utf-8"))
+        if calibration.get("model") != args.model:
+            raise SystemExit("RMS calibration model does not match --model")
+        calibrated_modules = [row["name"] for row in calibration["modules"]
+                              if row["changed_elements"] == 0]
+        install_calibrated_rms(candidate, calibrated_modules)
+    else:
+        variant = {
+            "exact-rms": "qwen_rms_exact", "precise-rms": "qwen_rms_precise",
+            "qk-fast-rms": "qwen_qk_rms_fast",
+        }.get(args.candidate, "qwen_rms")
+        install(candidate, variant)
     if args.candidate == "fast-residual-rms":
         sys.path.insert(0, str(ROOT / "learning/12_decode_runtime"))
         from decode_runtime import install_decode_residual_norm
@@ -212,6 +225,7 @@ def main():
         "schema_version": 1,
         "model": args.model,
         "candidate": args.candidate,
+        "calibrated_fast_rms_modules": calibrated_modules,
         "environment": {
             "python": platform.python_version(), "torch": torch.__version__,
             "transformers": __import__("transformers").__version__,
