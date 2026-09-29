@@ -46,6 +46,8 @@ def main():
                         help='use direct paged attention only in these decoder layers')
     parser.add_argument('--native-gqa',action='store_true',help='gather Hkv heads and use SDPA native GQA')
     parser.add_argument('--fused-projections',action='store_true')
+    parser.add_argument('--fused-qkv',action='store_true')
+    parser.add_argument('--fused-mlp',action='store_true')
     parser.add_argument('--seed',type=int,default=20260930)
     parser.add_argument('--local-files-only',action='store_true')
     parser.add_argument('--no-fail',action='store_true')
@@ -71,7 +73,10 @@ def main():
         raise ValueError('choose --direct-attention or --direct-layers, not both')
     executor=QwenPagedExecutor(model,allocator,direct_attention=args.direct_attention,
                                direct_attention_layers=args.direct_layers,native_gqa=args.native_gqa)
-    if args.fused_projections: executor.enable_fused_projections()
+    if args.fused_projections or args.fused_qkv or args.fused_mlp:
+        executor.enable_fused_projections(
+            qkv=args.fused_projections or args.fused_qkv,
+            mlp=args.fused_projections or args.fused_mlp)
     metrics=StreamingTensorMetrics(); prefill_matches=decode_matches=0
 
     for index,prompt in enumerate(deterministic_prompts(args.prompts,args.seed)):
@@ -116,7 +121,8 @@ def main():
                     'max_input_tokens':args.max_input_tokens,'block_size':args.block_size,
                     'direct_attention':args.direct_attention,
                     'direct_layers':args.direct_layers,'native_gqa':args.native_gqa,
-                    'fused_projections':args.fused_projections,'seed':args.seed},
+                    'fused_qkv':args.fused_projections or args.fused_qkv,
+                    'fused_mlp':args.fused_projections or args.fused_mlp,'seed':args.seed},
         'prefill_argmax_agreement':prefill_agreement,
         'decode_argmax_agreement':decode_agreement,
         'logits':values,'gate':{'pass':all(checks.values()),'checks':checks},
