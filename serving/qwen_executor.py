@@ -43,7 +43,7 @@ class QwenPagedExecutor:
     mixed-batch kernels are enabled.
     """
     def __init__(self,model,allocator,*,direct_attention=False,direct_attention_layers=None,
-                 attention_tile=128,policy=None):
+                 attention_tile=128,policy=None,fused_gather=True):
         self.model=model.eval(); self.allocator=allocator
         self.device=next(model.parameters()).device
         self.dtype=next(model.parameters()).dtype
@@ -65,7 +65,7 @@ class QwenPagedExecutor:
             if allocator.block_size!=policy.block_size:
                 raise ValueError('allocator block size does not match selected policy')
         if attention_tile not in (64,128,256): raise ValueError('attention tile must be 64, 128, or 256')
-        self.policy=policy; self.attention_tile=attention_tile
+        self.policy=policy; self.attention_tile=attention_tile; self.fused_gather=bool(fused_gather)
         layer_count=len(model.model.layers)
         if direct_attention_layers is None:
             self.direct_attention_layers=(frozenset(range(layer_count)) if direct_attention else frozenset())
@@ -75,6 +75,7 @@ class QwenPagedExecutor:
                 raise ValueError('direct attention layer index out of range')
             self.direct_attention_layers=selected
         self._attention_workspaces={}
+        self._gather_workspaces={}
 
     async def prefill(self,work,allocator):
         self._check_allocator(allocator)
@@ -150,6 +151,17 @@ class QwenPagedExecutor:
                 self.allocator.values[layer_index,block,:,block_offset].copy_(v[row,:,0])
             if layer_index in self.direct_attention_layers:
                 output=self._paged_attention(q[:,:,0],block_tables,lengths,layer_index)[:,:,None]
+            elif self.fused_gather:
+                keys,values=self._gather_attention(block_tables,lengths,layer_index,maximum)
+                mask=None
+                if needs_mask:
+                    positions=torch.arange(maximum,device=self.device)
+                    valid=positions[None,:]<lengths[:,None]
+                    mask=torch.zeros((batch,1,1,maximum),device=self.device,dtype=self.dtype)
+                    mask.masked_fill_(~valid[:,None,None,:],torch.finfo(self.dtype).min)
+                output=F.scaled_dot_product_attention(
+                    q,keys,values,attn_mask=mask,dropout_p=0.0,is_causal=False,
+                    scale=getattr(attention,'scaling',attention.head_dim**-0.5))
             else:
                 gathered_keys=[]; gathered_values=[]
                 for row,length in enumerate(host_lengths):
@@ -180,6 +192,19 @@ class QwenPagedExecutor:
 
         hidden=self.model.model.norm(hidden)
         return self.model.lm_head(hidden)[:,0].float()
+
+    def _gather_attention(self,block_tables,lengths,layer,maximum):
+        from .paged_gather import gather_paged_gqa
+        batch,width=block_tables.shape; capacity=width*self.allocator.block_size
+        key=(batch,width); workspace=self._gather_workspaces.get(key)
+        if workspace is None:
+            shape=(batch,self.model.config.num_attention_heads,capacity,self.model.config.head_dim)
+            workspace=(torch.empty(shape,device=self.device,dtype=self.dtype),
+                       torch.empty(shape,device=self.device,dtype=self.dtype))
+            self._gather_workspaces[key]=workspace
+        gather_paged_gqa(self.allocator.keys,self.allocator.values,block_tables,lengths,
+                         layer,self.allocator.block_size,key_output=workspace[0],value_output=workspace[1])
+        return workspace[0][:,:,:maximum],workspace[1][:,:,:maximum]
 
     def _paged_attention(self,q,block_tables,lengths,layer):
         from .paged_attention import paged_attention
