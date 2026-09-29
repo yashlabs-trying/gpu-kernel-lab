@@ -33,7 +33,8 @@ def build_runtime(model,policy,args):
     scheduler=ContinuousBatchScheduler(
         allocator,CUDAGraphBuckets(batch_sizes=(1,2,4,8,16)),
         max_batch_size=args.max_batch_size,prefill_chunk_size=args.prefill_chunk,
-        max_prefill_tokens=args.prefill_budget)
+        max_prefill_tokens=args.prefill_budget,
+        decode_prefill_chunk_size=args.decode_prefill_chunk)
     return allocator,scheduler,QwenPagedExecutor(model,allocator,policy=policy)
 
 
@@ -68,11 +69,12 @@ def main():
     parser.add_argument('--max-batch-size',type=int,default=8)
     parser.add_argument('--prefill-chunk',type=int,default=128)
     parser.add_argument('--prefill-budget',type=int,default=512)
+    parser.add_argument('--decode-prefill-chunk',type=int,default=64)
     parser.add_argument('--local-files-only',action='store_true')
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
     if min(args.requests,args.output_tokens,args.max_batch_size,args.prefill_chunk,
-           args.prefill_budget,*args.prompt_lengths)<=0:
+           args.prefill_budget,args.decode_prefill_chunk,*args.prompt_lengths)<=0:
         raise SystemExit('all workload dimensions must be positive')
     model=AutoModelForCausalLM.from_pretrained(
         args.model,dtype=torch.bfloat16,attn_implementation='sdpa',
@@ -107,6 +109,7 @@ def main():
             'requests':args.requests,'prompt_lengths':args.prompt_lengths,
             'output_tokens':args.output_tokens,'max_batch_size':args.max_batch_size,
             'prefill_chunk':args.prefill_chunk,'prefill_budget':args.prefill_budget,
+            'decode_prefill_chunk':args.decode_prefill_chunk,
             'tokenization_and_http_excluded':True,
         },
         'wall_time_s':elapsed,

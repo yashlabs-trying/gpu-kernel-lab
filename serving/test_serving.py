@@ -87,6 +87,17 @@ def test_scheduler_exposes_the_complete_graph_bucket():
     assert plan.graph_batch_size==1 and plan.graph_sequence_length==128
 
 
+def test_active_decode_caps_prefill_chunk_to_protect_itl():
+    a=allocator(128); s=ContinuousBatchScheduler(
+        a,CUDAGraphBuckets(),max_batch_size=2,prefill_chunk_size=16,
+        max_prefill_tokens=32,decode_prefill_chunk_size=4)
+    s.submit(Request('decode',(1,),3)); first=s.plan()
+    assert s.complete_prefill('decode',1); s.complete_prefill_sample('decode',2)
+    s.submit(Request('long',tuple(range(20)),2)); mixed=s.plan()
+    assert len(mixed.decode)==1 and len(mixed.prefill)==1
+    assert len(mixed.prefill[0].token_ids)==4
+
+
 def test_sampling_is_deterministic_and_honors_stop():
     params=SamplingParams(temperature=.8,top_k=3,top_p=.9,repetition_penalty=1.1,stop_token_ids=frozenset({2}),seed=7,logprobs=2)
     logits=torch.tensor([0.,1.,3.,2.])
