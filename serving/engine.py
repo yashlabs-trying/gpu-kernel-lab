@@ -120,6 +120,8 @@ class ServingEngine:
             await self._finish_event(request_id,'stop' if result.stopped else 'length')
 
     async def _finish_event(self,request_id,reason,error=None):
+        release=getattr(self.executor,'release',None)
+        if release is not None: release(request_id)
         queue=self.events.get(request_id)
         if queue is not None: await queue.put(TokenEvent(request_id,finished=True,finish_reason=reason,error=error))
         self._log('finished',request_id=request_id,reason=reason,error=error)

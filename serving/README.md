@@ -59,7 +59,8 @@ memory, and leave the serving loop alive for subsequent work.
 The initial real executor is deliberately conservative:
 
 - exact eager Qwen layer math;
-- serial requests and serial prompt tokens;
+- exact tiled SDPA prefill with each new K/V range scattered once into pages;
+- serial request execution in the initial integration baseline;
 - direct writes into `[layer, block, kv_head, block_token, head_dim]`;
 - variable-length lookup through `BatchKVMetadata.block_tables`;
 - no dense growing mask and no cache concatenation;
