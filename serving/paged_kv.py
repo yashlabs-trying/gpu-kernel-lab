@@ -74,11 +74,22 @@ class PagedKVAllocator:
             for block in allocation.blocks: heapq.heappush(self._free,block)
             return True
 
-    def metadata(self,request_ids,device=None):
+    def metadata(self,request_ids,device=None,table_width=None):
         with self._lock:
             ids=tuple(request_ids)
             allocations=[self._get(i) for i in ids]
-            width=max((len(a.blocks) for a in allocations),default=0)
+            used_width=max((len(a.blocks) for a in allocations),default=0)
+            if table_width is None:
+                width=used_width
+            else:
+                if not isinstance(table_width,int) or table_width<0:
+                    raise ValueError('table_width must be a nonnegative integer')
+                if table_width<used_width:
+                    raise ValueError(
+                        f'table_width {table_width} is smaller than the required {used_width}')
+                if table_width>self.num_blocks:
+                    raise ValueError('table_width cannot exceed allocator block capacity')
+                width=table_width
             tables=torch.full((len(ids),width),-1,dtype=torch.int32)
             for row,a in enumerate(allocations):
                 if a.blocks: tables[row,:len(a.blocks)]=torch.tensor(a.blocks,dtype=torch.int32)

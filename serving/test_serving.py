@@ -24,6 +24,14 @@ def test_paged_allocation_boundary_metadata_and_reuse():
     assert a.release('a'); a.create('c'); a.append_slots('c',1); assert a.blocks('c')==(0,)
 
 
+def test_metadata_can_use_a_fixed_graph_bucket_width():
+    a=allocator(); a.create('a'); a.append_slots('a',5)
+    meta=a.metadata(('a',),device='cpu',table_width=4)
+    assert meta.block_tables.shape==(1,4)
+    assert meta.block_tables.tolist()==[[0,1,-1,-1]]
+    with pytest.raises(ValueError): a.metadata(('a',),device='cpu',table_width=1)
+
+
 def test_allocation_is_atomic_on_oom():
     a=allocator(1); a.create('a')
     with pytest.raises(MemoryError): a.append_slots('a',5)

@@ -30,7 +30,9 @@ async def benchmark_variant(model,context,steps,warmup,block_size,direct_layers,
     for index in range(warmup+steps):
         position=allocator.length(request_id); slot=allocator.append_slots(request_id,1)[0]
         work=(DecodeWork(request_id,100,position,slot),)
-        metadata=allocator.metadata((request_id,))
+        # Keep the table shape stable across block boundaries. This mirrors a
+        # CUDA Graph sequence bucket and prevents shape compilation in p99.
+        metadata=allocator.metadata((request_id,),table_width=blocks)
         start,end=torch.cuda.Event(True),torch.cuda.Event(True)
         start.record(); await executor.decode(work,metadata,None); end.record(); end.synchronize()
         if index>=warmup: samples.append(start.elapsed_time(end))
@@ -43,6 +45,7 @@ async def run(args,model):
     report={'gpu':torch.cuda.get_device_name(),'torch':torch.__version__,
             'warmup':args.warmup,'steps':args.steps,'measurements':[]}
     layers=tuple(args.direct_layers)
+    qkv_layers=tuple(args.fused_qkv_layers)
     for context in args.contexts:
         reference=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,(),fused_gather=False)
         fused=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,(),fused_gather=True)
@@ -62,6 +65,16 @@ async def run(args,model):
              'combined_latency_reduction_percent':(1-combined['median_ms']/reference['median_ms'])*100,
              'accepted_mlp_fusion':mlp,'accepted_speedup':reference['median_ms']/mlp['median_ms'],
              'accepted_latency_reduction_percent':(1-mlp['median_ms']/reference['median_ms'])*100}
+        if qkv_layers:
+            selected=await benchmark_variant(
+                model,context,args.steps,args.warmup,args.block_size,(),
+                fused_gather=True,native_gqa=True,fused_qkv=qkv_layers,fused_mlp=True)
+            row.update({
+                'selected_qkv_layers':qkv_layers,
+                'selected_qkv_mlp':selected,
+                'selected_speedup':reference['median_ms']/selected['median_ms'],
+                'selected_latency_reduction_percent':
+                    (1-selected['median_ms']/reference['median_ms'])*100})
         if layers:
             hybrid=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,layers)
             row.update({'direct_layers':layers,'hybrid':hybrid,
@@ -76,6 +89,7 @@ def main():
     parser.add_argument('--model',default='Qwen/Qwen3-0.6B')
     parser.add_argument('--contexts',type=int,nargs='+',default=[128,512,2048,4096])
     parser.add_argument('--direct-layers',type=int,nargs='*',default=[])
+    parser.add_argument('--fused-qkv-layers',type=int,nargs='*',default=[])
     parser.add_argument('--block-size',type=int,default=16)
     parser.add_argument('--warmup',type=int,default=8)
     parser.add_argument('--steps',type=int,default=50)
