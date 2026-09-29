@@ -91,6 +91,24 @@ python profiling/qwen_accuracy_gate.py \
   --output results/qwen_accuracy/fast_residual_rms.json
 ```
 
+If the fast kernel fails first at RMSNorm, test the precision-preserving Triton
+math path before falling back to eager PyTorch:
+
+```bash
+python profiling/qwen_accuracy_gate.py \
+  --candidate precise-rms \
+  --prompts 1000 \
+  --trace-prompts 32 \
+  --teacher-forced-prompts 64 \
+  --decode-steps 4 \
+  --local-files-only \
+  --output results/qwen_accuracy/precise_rms.json
+```
+
+This variant retains the Triton kernel and FP32 reduction but computes inverse
+RMS with a square root followed by division rather than approximate reciprocal
+square root. It is accepted only if both the accuracy and latency gates pass.
+
 ### 4. Run adversarial and full-composition acceptance
 
 ```bash

@@ -52,3 +52,14 @@ def test_qwen_residual_add_and_norm(dtype, shape):
         actual_y, actual_residual = triton_qwen_residual_rmsnorm(x, residual, weight)
     torch.testing.assert_close(actual_residual, expected_residual, rtol=0, atol=0)
     torch.testing.assert_close(actual_y, expected_y, rtol=2e-2, atol=2e-2)
+
+
+@pytest.mark.parametrize('precise_math', [False, True])
+def test_qwen_math_modes(precise_math):
+    torch.manual_seed(29)
+    x = torch.randn((31, 1024), device='cuda', dtype=torch.bfloat16)
+    weight = torch.randn(1024, device='cuda', dtype=torch.bfloat16)
+    expected = qwen_rmsnorm_reference(x, weight)
+    with torch.inference_mode():
+        actual = triton_qwen_rmsnorm(x, weight, precise_math=precise_math)
+    torch.testing.assert_close(actual, expected, rtol=2e-2, atol=2e-2)
