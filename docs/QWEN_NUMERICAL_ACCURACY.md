@@ -109,6 +109,24 @@ This variant retains the Triton kernel and FP32 reduction but computes inverse
 RMS with a square root followed by division rather than approximate reciprocal
 square root. It is accepted only if both the accuracy and latency gates pass.
 
+The conservative hybrid keeps the residual stream exact while retaining Triton
+for Q/K head normalization:
+
+```bash
+python profiling/qwen_accuracy_gate.py \
+  --candidate qk-fast-rms \
+  --prompts 1000 \
+  --trace-prompts 32 \
+  --teacher-forced-prompts 64 \
+  --decode-steps 4 \
+  --local-files-only \
+  --output results/qwen_accuracy/qk_fast_rms.json
+```
+
+This is the preferred accuracy-repair candidate when the fully replaced RMS path
+fails. It keeps input/post-attention/final norms on Qwen's exact eager ordering
+and accelerates only the 56 Q/K head norms.
+
 ### 4. Run adversarial and full-composition acceptance
 
 ```bash
