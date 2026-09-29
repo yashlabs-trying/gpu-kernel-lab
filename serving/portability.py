@@ -28,9 +28,10 @@ def inspect_qwen_host(config,profiles_path=DEFAULT_PROFILES):
     for index in range(torch.cuda.device_count()):
         capabilities=detect_cuda_capabilities(torch.device('cuda',index))
         policy=select_qwen_policy(capabilities,signature,profiles)
+        capability_data={**asdict(capabilities),'architecture':capabilities.architecture}
         devices.append({
             'index':index,
-            'capabilities':asdict(capabilities),
+            'capabilities':capability_data,
             'policy':{
                 **asdict(policy),
                 'direct_attention_layers':sorted(policy.direct_attention_layers),
