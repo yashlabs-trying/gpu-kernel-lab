@@ -18,6 +18,22 @@ from serving.scheduler import ContinuousBatchScheduler,Request
 async def run(args,model,tokenizer):
     prompts=deterministic_prompts(args.requests,args.seed)
     encoded=[tokenizer(x,add_special_tokens=True)['input_ids'][:args.max_input_tokens] for x in prompts]
+    expected=[]
+    with torch.inference_mode():
+        for tokens in encoded:
+            ids=torch.tensor([tokens],device='cuda',dtype=torch.long)
+            mask=torch.ones_like(ids)
+            output=model(input_ids=ids,attention_mask=mask,use_cache=True,logits_to_keep=1)
+            cache=output.past_key_values; generated=[]
+            for step in range(args.max_new_tokens):
+                token=int(output.logits[0,-1].argmax()); generated.append(token)
+                if step+1<args.max_new_tokens:
+                    next_token=torch.tensor([[token]],device='cuda',dtype=torch.long)
+                    mask=torch.cat((mask,torch.ones_like(next_token)),dim=1)
+                    output=model(input_ids=next_token,attention_mask=mask,
+                                 past_key_values=cache,use_cache=True,logits_to_keep=1)
+                    cache=output.past_key_values
+            expected.append(generated)
     blocks_per_request=math.ceil((args.max_input_tokens+args.max_new_tokens)/args.block_size)
     config=model.config
     allocator=PagedKVAllocator(
@@ -44,12 +60,16 @@ async def run(args,model,tokenizer):
                                    'finish_reason':event.finish_reason,'error':event.error})
         events.append(request_events)
     snapshot=engine.snapshot()
+    actual=[[x['token_id'] for x in rows if x['token_id'] is not None] for rows in events]
+    baseline_match=actual==expected
     passed=(snapshot['requests']['completed']==args.requests and
             snapshot['requests']['failed']==0 and allocator.free_blocks==allocator.num_blocks and
+            baseline_match and
             all(sum(x['token_id'] is not None for x in rows)==args.max_new_tokens for rows in events))
     return {'pass':passed,'requests':args.requests,'max_new_tokens':args.max_new_tokens,
             'metrics':snapshot,'all_blocks_reclaimed':allocator.free_blocks==allocator.num_blocks,
-            'events':events}
+            'baseline_token_match':baseline_match,'expected_tokens':expected,
+            'actual_tokens':actual,'events':events}
 
 
 def main():
