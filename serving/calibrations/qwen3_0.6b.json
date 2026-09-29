@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "model": "Qwen/Qwen3-0.6B",
+  "model_signature": {
+    "layers": 28,
+    "hidden_size": 1024,
+    "attention_heads": 16,
+    "kv_heads": 8,
+    "head_dim": 128
+  },
+  "architectures": {
+    "sm89": {
+      "name": "ada-sm89-exact",
+      "quality_gate_passed": true,
+      "block_size": 16,
+      "attention_tile": 128,
+      "direct_attention_layers": [],
+      "reason": "Exact gather-plus-SDPA passed 256 prefill and 1024 decode decisions with zero logit difference. Direct attention remains below 99%."
+    }
+  }
+}

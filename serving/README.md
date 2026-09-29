@@ -77,3 +77,12 @@ not advertised as a throughput winner.
 3. Capture one graph per supported batch/sequence bucket with inactive-slot masks.
 4. Run dynamic-cache versus paged-executor token/logit acceptance on the GPU.
 5. Measure concurrent p50/p90/p99 and reclaim/cancellation behavior under load.
+
+## Architecture policy
+
+`kernel_policy.py` detects the CUDA compute capability and validates the exact
+Qwen model signature before loading any calibrated kernel choices. Profiles live
+under `serving/calibrations/`. Unknown architectures, changed model shapes, and
+profiles that have not passed their quality gate select the exact gather+SDPA
+fallback automatically. A result measured on SM89 therefore cannot silently
+enable itself on SM80, SM86, SM90, or a future architecture.

@@ -42,7 +42,8 @@ class QwenPagedExecutor:
     establishes exact token/cache semantics before direct paged attention and
     mixed-batch kernels are enabled.
     """
-    def __init__(self,model,allocator,*,direct_attention=False,direct_attention_layers=None):
+    def __init__(self,model,allocator,*,direct_attention=False,direct_attention_layers=None,
+                 attention_tile=128,policy=None):
         self.model=model.eval(); self.allocator=allocator
         self.device=next(model.parameters()).device
         self.dtype=next(model.parameters()).dtype
@@ -56,6 +57,15 @@ class QwenPagedExecutor:
         if self.device.type!='cuda':
             raise ValueError('QwenPagedExecutor requires a CUDA model')
         self._prefill_caches={}
+        if policy is not None:
+            if direct_attention or direct_attention_layers is not None:
+                raise ValueError('explicit direct-attention settings conflict with policy')
+            direct_attention_layers=policy.direct_attention_layers
+            attention_tile=policy.attention_tile
+            if allocator.block_size!=policy.block_size:
+                raise ValueError('allocator block size does not match selected policy')
+        if attention_tile not in (64,128,256): raise ValueError('attention tile must be 64, 128, or 256')
+        self.policy=policy; self.attention_tile=attention_tile
         layer_count=len(model.model.layers)
         if direct_attention_layers is None:
             self.direct_attention_layers=(frozenset(range(layer_count)) if direct_attention else frozenset())
@@ -174,7 +184,7 @@ class QwenPagedExecutor:
     def _paged_attention(self,q,block_tables,lengths,layer):
         from .paged_attention import paged_attention
         import triton
-        batch,width=block_tables.shape; splits=triton.cdiv(width*self.allocator.block_size,128)
+        batch,width=block_tables.shape; splits=triton.cdiv(width*self.allocator.block_size,self.attention_tile)
         key=(batch,width); workspace=self._attention_workspaces.get(key)
         if workspace is None:
             heads,dimension=q.shape[1:]
@@ -186,7 +196,8 @@ class QwenPagedExecutor:
             self._attention_workspaces[key]=workspace
         return paged_attention(
             q,self.allocator.keys,self.allocator.values,block_tables,lengths,
-            layer,self.allocator.block_size,output=workspace[0],partial=workspace[1],lse=workspace[2])
+            layer,self.allocator.block_size,self.attention_tile,
+            output=workspace[0],partial=workspace[1],lse=workspace[2])
 
     def _validate_slot(self,position,slot,block_table):
         logical_block,offset=divmod(position,self.allocator.block_size)
