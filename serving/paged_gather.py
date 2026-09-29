@@ -29,7 +29,7 @@ def _gather(K,V,TABLE,LENGTHS,KO,VO,LAYER,
 
 
 def gather_paged_gqa(keys,values,block_tables,lengths,layer,block_size=16,*,
-                     key_output=None,value_output=None,tile=16):
+                     key_output=None,value_output=None,tile=16,expand_gqa=True):
     if keys.ndim!=5 or keys.shape!=values.shape or block_tables.ndim!=2:
         raise ValueError('paged K/V and block tables [B,width] required')
     batch=block_tables.shape[0]; capacity=block_tables.shape[1]*block_size
@@ -41,7 +41,7 @@ def gather_paged_gqa(keys,values,block_tables,lengths,layer,block_size=16,*,
         raise ValueError('matching FP16/BF16 cache required')
     if not 0<=layer<keys.shape[0] or keys.shape[3]!=block_size:
         raise ValueError('layer/block mismatch')
-    heads=keys.shape[2]*2; dimension=keys.shape[-1]
+    heads=keys.shape[2]*2 if expand_gqa else keys.shape[2]; dimension=keys.shape[-1]
     shape=(batch,heads,capacity,dimension)
     key_output=torch.empty(shape,device=keys.device,dtype=keys.dtype) if key_output is None else key_output
     value_output=torch.empty(shape,device=keys.device,dtype=keys.dtype) if value_output is None else value_output
