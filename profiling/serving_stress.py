@@ -17,7 +17,9 @@ from serving.scheduler import ContinuousBatchScheduler,Request
 
 
 class Executor:
-    async def prefill(self,work,allocator): await asyncio.sleep(0)
+    async def prefill(self,work,allocator):
+        await asyncio.sleep(0)
+        return {x.request_id:torch.arange(32,dtype=torch.float32) for x in work}
     async def decode(self,work,metadata,graph_batch_size):
         await asyncio.sleep(0)
         return {x.request_id:torch.arange(32,dtype=torch.float32) for x in work}

@@ -5,6 +5,7 @@ import time
 from serving.engine import ServingEngine
 from serving.graph_buckets import CUDAGraphBuckets
 from serving.paged_kv import PagedKVAllocator
+from serving.qwen_executor import materialize_paged_kv
 from serving.sampling import Sampler,SamplingParams
 from serving.scheduler import AdmissionError,ContinuousBatchScheduler,Request,RequestState
 from serving.api import create_app
@@ -29,6 +30,20 @@ def test_allocation_is_atomic_on_oom():
     assert a.length('a')==0 and a.free_blocks==1
 
 
+def test_paged_kv_materializes_logical_order_without_reading_unused_slots():
+    a=allocator(); a.create('first'); a.append_slots('first',4)
+    a.create('target'); a.append_slots('target',5)
+    # target owns physical blocks 1 and 2; poison every other location.
+    a.keys.fill_(-999)
+    for position in range(5):
+        block=a.blocks('target')[position//a.block_size]; offset=position%a.block_size
+        a.keys[0,block,:,offset].fill_(position)
+    table=a.metadata(('target',),device='cpu').block_tables[0]
+    logical=materialize_paged_kv(a.keys,0,table,5,a.block_size)
+    assert logical.shape==(2,5,8)
+    assert logical[:, :, 0].tolist()==[[0,1,2,3,4],[0,1,2,3,4]]
+
+
 def test_chunked_prefill_does_not_block_decode():
     a=allocator(32); buckets=CUDAGraphBuckets(batch_sizes=(1,2,4),sequence_buckets=(4,16,64))
     s=ContinuousBatchScheduler(a,buckets,max_batch_size=2,prefill_chunk_size=4,max_prefill_tokens=4)
@@ -36,18 +51,18 @@ def test_chunked_prefill_does_not_block_decode():
     first=s.plan(); assert len(first.prefill)==1 and len(first.prefill[0].token_ids)==4
     s.complete_prefill('long',4)
     second=s.plan(); assert second.prefill[0].request_id=='short'
-    s.complete_prefill('short',2)
-    for work in second.prefill[1:]: s.complete_prefill(work.request_id,len(work.token_ids))
+    assert s.complete_prefill('short',2); s.complete_prefill_sample('short',9)
+    for work in second.prefill[1:]:
+        if s.complete_prefill(work.request_id,len(work.token_ids)): s.complete_prefill_sample(work.request_id,9)
     third=s.plan()
     assert tuple(x.request_id for x in third.decode)==('short',) and third.prefill[0].request_id=='long'
 
 
 def test_finished_request_releases_blocks():
     a=allocator(); s=ContinuousBatchScheduler(a,CUDAGraphBuckets())
-    s.submit(Request('x',(1,2),1)); s.plan(); s.complete_prefill('x',2); before=a.free_blocks
-    s.plan()
-    s.complete_decode('x',3); assert s.requests['x'].state==RequestState.FINISHED
-    assert a.free_blocks>before
+    s.submit(Request('x',(1,2),1)); s.plan(); assert s.complete_prefill('x',2)
+    s.complete_prefill_sample('x',3); assert s.requests['x'].state==RequestState.FINISHED
+    assert a.free_blocks==a.num_blocks
 
 
 def test_graph_bucket_rounds_up_both_dimensions():
@@ -74,10 +89,27 @@ def test_admission_timeout_priority_and_reclamation():
 
 
 class FakeExecutor:
-    async def prefill(self,work,allocator): await asyncio.sleep(0)
+    async def prefill(self,work,allocator):
+        await asyncio.sleep(0)
+        return {x.request_id:torch.tensor([0.,1.,3.,2.]) for x in work}
     async def decode(self,work,metadata,graph_batch_size):
         await asyncio.sleep(0)
         return {x.request_id:torch.tensor([0.,1.,3.,2.]) for x in work}
+
+
+def test_prefill_logits_produce_first_token_without_extra_cache_slot():
+    async def run():
+        a=allocator(); scheduler=ContinuousBatchScheduler(a,CUDAGraphBuckets())
+        engine=ServingEngine(scheduler,FakeExecutor())
+        queue=await engine.submit(Request('x',(5,6,7),2,timeout_s=10))
+        assert await engine.step()
+        assert scheduler.requests['x'].generated==[2]
+        assert a.length('x')==3
+        plan=scheduler.plan()
+        assert plan.decode[0].token_id==2 and plan.decode[0].position==3
+        scheduler.fail('x','test cleanup')
+        assert not queue.empty()
+    asyncio.run(run())
 
 
 def test_concurrent_stress_and_metrics():

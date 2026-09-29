@@ -45,6 +45,7 @@ class PrefillWork:
 @dataclass(frozen=True)
 class DecodeWork:
     request_id:str
+    token_id:int
     position:int
     slot:tuple[int,int]
 
@@ -94,7 +95,9 @@ class ContinuousBatchScheduler:
             if request.state==RequestState.DECODE:
                 position=self.allocator.length(request_id)
                 slot=self.allocator.append_slots(request_id,1)[0]
-                decode.append(DecodeWork(request_id,position,slot)); self._inflight[request_id]=('decode',1)
+                if not request.generated:
+                    raise RuntimeError('decode request has no sampled input token')
+                decode.append(DecodeWork(request_id,request.generated[-1],position,slot)); self._inflight[request_id]=('decode',1)
                 self._decode.append(request_id)
         remaining_slots=self.max_batch_size-len(decode); token_budget=self.max_prefill_tokens; prefill=[]
         # One chunk per request per iteration prevents a long prompt monopolizing prefill.
@@ -121,6 +124,17 @@ class ContinuousBatchScheduler:
         if request.remaining_prompt==0:
             request.state=RequestState.DECODE
             self._remove(self._prefill,request_id); self._decode.append(request_id)
+            return True
+        return False
+
+    def complete_prefill_sample(self,request_id,token_id,stopped=False):
+        """Commit the first generated token sampled from final-prefill logits."""
+        request=self.requests[request_id]
+        if request.state!=RequestState.DECODE or request.generated or request_id in self._inflight:
+            raise ValueError('request is not ready for its prefill sample')
+        request.generated.append(int(token_id))
+        if stopped or len(request.generated)>=request.max_new_tokens:
+            request.state=RequestState.FINISHED; self._cleanup(request_id)
 
     def complete_decode(self,request_id,token_id,stopped=False):
         request=self.requests[request_id]
