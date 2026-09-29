@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "model": "Qwen/Qwen3-0.6B",
+  "gpu_architecture": "sm89",
+  "calibration_gpu": "NVIDIA RTX 2000 Ada Generation",
+  "torch": "2.8.0+cu128",
+  "triton": "3.4.0",
+  "calibration_prompts": 1000,
+  "decode_steps": 4,
+  "seed": 20260904,
+  "selection_rule": "changed_elements == 0",
+  "modules": [
+    {
+      "name": "model.layers.0.input_layernorm",
+      "changed_elements": 0
+    },
+    {
+      "name": "model.layers.0.self_attn.k_norm",
+      "changed_elements": 0
+    },
+    {
+      "name": "model.layers.6.input_layernorm",
+      "changed_elements": 0
+    },
+    {
+      "name": "model.layers.25.input_layernorm",
+      "changed_elements": 0
+    }
+  ]
+}

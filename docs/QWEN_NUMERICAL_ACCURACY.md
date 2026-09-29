@@ -193,6 +193,44 @@ python profiling/qwen_accuracy_gate.py \
 The calibration file is GPU/model specific. Its whitelist is not portable until
 the same module remains exact across the required architectures and full corpus.
 
+## Verified SM89 result
+
+On an NVIDIA RTX 2000 Ada Generation GPU (SM89), a 1,000-prompt sensitivity
+scan reduced the safe fast-RMSNorm whitelist from 32 modules found by the
+initial 64-prompt scan to only four modules. The checked-in calibration is:
+
+```text
+profiling/calibrations/qwen3_0.6b_sm89_rms.json
+```
+
+An independent-seed acceptance run (`seed=20260930`) produced:
+
+| Check | Result | Requirement |
+|---|---:|---:|
+| Prefill argmax agreement | 100.000% (1,000 / 1,000) | >= 99% |
+| Decode argmax agreement | 100.000% (4,000 / 4,000) | >= 99% |
+| Teacher-forced mean NLL delta | 0.000000 | abs <= 0.01 |
+| Minimum traced-layer cosine | 0.999999404 | >= 0.999 |
+| Finite outputs | yes | required |
+| Missing checkpoints | 0 | 0 |
+
+Reproduce it with:
+
+```bash
+python profiling/qwen_accuracy_gate.py \
+  --candidate calibrated-rms \
+  --rms-calibration profiling/calibrations/qwen3_0.6b_sm89_rms.json \
+  --prompts 1000 --trace-prompts 32 --teacher-forced-prompts 64 \
+  --decode-steps 4 --seed 20260930 --local-files-only \
+  --output results/qwen_accuracy/calibrated_rms_sm89.json
+```
+
+This repairs the measured RMSNorm quality failure, but it does **not** justify
+using this whitelist on another GPU architecture. Recalibrate there, take the
+intersection of safe modules across architectures, and rerun the independent
+gate. It also does not certify the quantized, static-cache, or full serving
+composition; those need their own end-to-end acceptance runs.
+
 ## CPU validation
 
 The GPU model cannot be certified on CPU, but the deterministic corpus, streaming
