@@ -36,6 +36,7 @@ def test_stable_softmax_d64(magnitude):
         split_kv_attention(q,k[:,:0],v[:,:0])
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(),reason='CUDA required')
 @pytest.mark.parametrize('position',[0,128,256])
 def test_fixed_capacity_valid_position(position):
     torch.manual_seed(19)

@@ -114,8 +114,10 @@ def main():
         'full_candidate_logits':{'max_abs':max(x['max_abs'] for x in final_logits),
             'mean_abs':sum(x['mean_abs'] for x in final_logits)/len(final_logits),
             'min_cosine':min(x['cosine'] for x in final_logits),'argmax_agreement':final_agreement},
-        'gate':{'pass':agreement>=.99 and min(x['min_cosine'] for x in layers)>=.999,
-            'requirements':'argmax >= 99%, every layer min cosine >= 0.999'},
+        'gate':{'pass':agreement>=.99 and final_agreement>=.99 and min(x['min_cosine'] for x in layers)>=.999,
+            'requirements':'RMS and full-candidate argmax >= 99%; every layer min cosine >= 0.999',
+            'rms_argmax_pass':agreement>=.99,'full_candidate_argmax_pass':final_agreement>=.99,
+            'layer_cosine_pass':min(x['min_cosine'] for x in layers)>=.999},
         'limitations':'synthetic deterministic prompts; task-quality corpus evaluation remains separate'}
     args.output.parent.mkdir(parents=True,exist_ok=True); args.output.write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps({k:v for k,v in report.items() if k not in ('adversarial','per_layer')},indent=2))
