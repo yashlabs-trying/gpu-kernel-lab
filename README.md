@@ -42,7 +42,7 @@ This repository now hosts multiple optimized model projects under
 
 | Slot | Model | Optimization focus | Status |
 |---:|---|---|---|
-| 1 | Qwen3-0.6B | Custom Triton/CUDA kernels, static decode, CUDA Graphs, serving control plane | Implemented; quality gate open |
+| 1 | Qwen3-0.6B | Custom Triton/CUDA kernels, static decode, CUDA Graphs, serving control plane | Exact production path; faster experimental paths gated |
 | 2 | [Llama-3.2-3B](models/optimized-llama/README.md) | vLLM continuous batching, throughput sweeps, profiling, deployment study | Integrated from `optimized-llama` |
 | 3 | To be selected | Architecture-specific optimization | Planned |
 | 4 | To be selected | Architecture-specific optimization | Planned |
@@ -80,6 +80,14 @@ logit difference. The direct paged-attention kernel was 1.74–5.37x faster than
 gather-plus-SDPA in isolation across contexts 128–4,096, but achieved only
 97.65625% decode agreement and is therefore not the production default. See the
 [paged-serving report](results/qwen_paged_ada_20260929/REPORT.md).
+
+Phase 3/4 was independently checked on an RTX A4000 (SM86). The accepted
+lossless paged-gather policy retained 100% of 256 prefill and 1,024 decode
+argmax decisions with zero logit difference, while reducing matched paged
+decode median latency by 12.84–15.46% across contexts 128–4,096. More aggressive
+projection fusion did not deliver a consistent 20% without either numerical or
+long-context regressions, so it remains experimental. See the
+[Ampere validation report](results/qwen_paged_a4000_20260929/REPORT.md).
 
 | Context | Dynamic ITL | Graph ITL | Dynamic token/s | Graph token/s |
 |---:|---:|---:|---:|---:|
