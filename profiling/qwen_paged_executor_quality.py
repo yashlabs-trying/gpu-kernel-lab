@@ -41,6 +41,7 @@ def main():
     parser.add_argument('--decode-steps',type=int,default=4)
     parser.add_argument('--max-input-tokens',type=int,default=128)
     parser.add_argument('--block-size',type=int,default=16)
+    parser.add_argument('--direct-attention',action='store_true')
     parser.add_argument('--seed',type=int,default=20260930)
     parser.add_argument('--local-files-only',action='store_true')
     parser.add_argument('--no-fail',action='store_true')
@@ -62,7 +63,7 @@ def main():
         num_layers=len(model.model.layers),num_blocks=capacity,
         block_size=args.block_size,num_kv_heads=config.num_key_value_heads,
         head_dim=config.head_dim,dtype=torch.bfloat16,device='cuda')
-    executor=QwenPagedExecutor(model,allocator)
+    executor=QwenPagedExecutor(model,allocator,direct_attention=args.direct_attention)
     metrics=StreamingTensorMetrics(); prefill_matches=decode_matches=0
 
     for index,prompt in enumerate(deterministic_prompts(args.prompts,args.seed)):
@@ -104,7 +105,8 @@ def main():
         'environment':{'python':platform.python_version(),'torch':torch.__version__,
                        'gpu':torch.cuda.get_device_name(),'compute_capability':torch.cuda.get_device_capability()},
         'workload':{'prompts':args.prompts,'decode_steps':args.decode_steps,
-                    'max_input_tokens':args.max_input_tokens,'block_size':args.block_size,'seed':args.seed},
+                    'max_input_tokens':args.max_input_tokens,'block_size':args.block_size,
+                    'direct_attention':args.direct_attention,'seed':args.seed},
         'prefill_argmax_agreement':prefill_agreement,
         'decode_argmax_agreement':decode_agreement,
         'logits':values,'gate':{'pass':all(checks.values()),'checks':checks},

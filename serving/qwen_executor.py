@@ -42,7 +42,7 @@ class QwenPagedExecutor:
     establishes exact token/cache semantics before direct paged attention and
     mixed-batch kernels are enabled.
     """
-    def __init__(self,model,allocator):
+    def __init__(self,model,allocator,*,direct_attention=False):
         self.model=model.eval(); self.allocator=allocator
         self.device=next(model.parameters()).device
         self.dtype=next(model.parameters()).dtype
@@ -56,6 +56,8 @@ class QwenPagedExecutor:
         if self.device.type!='cuda':
             raise ValueError('QwenPagedExecutor requires a CUDA model')
         self._prefill_caches={}
+        self.direct_attention=bool(direct_attention)
+        self._attention_workspaces={}
 
     async def prefill(self,work,allocator):
         self._check_allocator(allocator)
@@ -84,7 +86,8 @@ class QwenPagedExecutor:
                 if int(metadata.lengths[row].item())!=item.position+1:
                     raise ValueError('decode cache length must include exactly the new slot')
                 logits[item.request_id]=self._forward_token(
-                    item.token_id,item.position,item.slot,metadata.block_tables[row])
+                    item.token_id,item.position,item.slot,metadata.block_tables[row],
+                    metadata.lengths[row:row+1])
         return logits
 
     def release(self,request_id):
@@ -104,7 +107,7 @@ class QwenPagedExecutor:
         if allocator is not self.allocator:
             raise ValueError('executor received a different paged allocator')
 
-    def _forward_token(self,token_id,position,slot,block_table):
+    def _forward_token(self,token_id,position,slot,block_table,lengths):
         self._validate_slot(position,slot,block_table)
         token=torch.tensor([[token_id]],device=self.device,dtype=torch.long)
         position_ids=torch.tensor([[position]],device=self.device,dtype=torch.long)
@@ -127,19 +130,20 @@ class QwenPagedExecutor:
             block,block_offset=slot
             self.allocator.keys[layer_index,block,:,block_offset].copy_(k[0,:,0])
             self.allocator.values[layer_index,block,:,block_offset].copy_(v[0,:,0])
-            keys=materialize_paged_kv(self.allocator.keys,layer_index,block_table,
-                                      position+1,self.allocator.block_size)[None]
-            values=materialize_paged_kv(self.allocator.values,layer_index,block_table,
-                                        position+1,self.allocator.block_size)[None]
-            # Transformers' Qwen SDPA path explicitly expands K/V heads. Native
-            # ``enable_gqa`` is semantically equivalent but changes reduction
-            # ordering enough to flip close argmax decisions in BF16.
-            groups=attention.config.num_attention_heads//attention.config.num_key_value_heads
-            keys=keys.repeat_interleave(groups,dim=1)
-            values=values.repeat_interleave(groups,dim=1)
-            output=F.scaled_dot_product_attention(
-                q,keys,values,dropout_p=0.0,is_causal=False,
-                scale=getattr(attention,'scaling',attention.head_dim**-0.5))
+            if self.direct_attention:
+                output=self._paged_attention(q[:,:,0],block_table,lengths,layer_index)[:,:,None]
+            else:
+                keys=materialize_paged_kv(self.allocator.keys,layer_index,block_table,
+                                          position+1,self.allocator.block_size)[None]
+                values=materialize_paged_kv(self.allocator.values,layer_index,block_table,
+                                            position+1,self.allocator.block_size)[None]
+                # Match Transformers' explicit Qwen GQA expansion ordering.
+                groups=attention.config.num_attention_heads//attention.config.num_key_value_heads
+                keys=keys.repeat_interleave(groups,dim=1)
+                values=values.repeat_interleave(groups,dim=1)
+                output=F.scaled_dot_product_attention(
+                    q,keys,values,dropout_p=0.0,is_causal=False,
+                    scale=getattr(attention,'scaling',attention.head_dim**-0.5))
             output=output.transpose(1,2).reshape(1,1,-1)
             hidden=residual+attention.o_proj(output)
             residual=hidden
@@ -147,6 +151,23 @@ class QwenPagedExecutor:
 
         hidden=self.model.model.norm(hidden)
         return self.model.lm_head(hidden)[0,0].float()
+
+    def _paged_attention(self,q,block_table,lengths,layer):
+        from .paged_attention import paged_attention
+        import triton
+        width=block_table.numel(); splits=triton.cdiv(width*self.allocator.block_size,128)
+        workspace=self._attention_workspaces.get(width)
+        if workspace is None:
+            heads,dimension=q.shape[1:]
+            workspace=(
+                torch.empty_like(q),
+                torch.empty((1,heads,splits,dimension),device=q.device,dtype=torch.float32),
+                torch.empty((1,heads,splits),device=q.device,dtype=torch.float32),
+            )
+            self._attention_workspaces[width]=workspace
+        return paged_attention(
+            q,self.allocator.keys,self.allocator.values,block_table[None],lengths,
+            layer,self.allocator.block_size,output=workspace[0],partial=workspace[1],lse=workspace[2])
 
     def _validate_slot(self,position,slot,block_table):
         logical_block,offset=divmod(position,self.allocator.block_size)
