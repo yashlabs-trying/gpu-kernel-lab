@@ -13,7 +13,7 @@ from .scheduler import AdmissionError,ContinuousBatchScheduler,Request,RequestSt
 
 
 class Executor(Protocol):
-    async def prefill(self,work,allocator): ...
+    async def prefill(self,work,allocator): ...  # request_id -> final-token logits
     async def decode(self,work,metadata,graph_batch_size): ...  # request_id -> logits
 
 
@@ -75,9 +75,17 @@ class ServingEngine:
         if not plan.decode and not plan.prefill: return False
         try:
             if plan.prefill:
-                await self.executor.prefill(plan.prefill,self.scheduler.allocator)
+                prefill_logits=await self.executor.prefill(plan.prefill,self.scheduler.allocator)
                 async with self._lock:
-                    for work in plan.prefill: self.scheduler.complete_prefill(work.request_id,len(work.token_ids))
+                    for work in plan.prefill:
+                        if self.scheduler.complete_prefill(work.request_id,len(work.token_ids)):
+                            if prefill_logits is None or work.request_id not in prefill_logits:
+                                raise RuntimeError(f'executor omitted final-prefill logits for {work.request_id!r}')
+                            request=self.scheduler.requests[work.request_id]
+                            result=self.samplers[work.request_id].sample(
+                                prefill_logits[work.request_id],request.prompt_token_ids)
+                            self.scheduler.complete_prefill_sample(work.request_id,result.token_id,result.stopped)
+                            await self._record_token(request,result,time.monotonic())
             if plan.decode:
                 metadata=self.scheduler.allocator.metadata(tuple(x.request_id for x in plan.decode))
                 logits=await self.executor.decode(plan.decode,metadata,plan.graph_batch_size)
@@ -86,15 +94,7 @@ class ServingEngine:
                         request=self.scheduler.requests[work.request_id]; now=time.monotonic()
                         result=self.samplers[work.request_id].sample(logits[work.request_id],request.prompt_token_ids+tuple(request.generated))
                         self.scheduler.complete_decode(work.request_id,result.token_id,result.stopped)
-                        self.metrics.generated_tokens+=1
-                        if work.request_id not in self.first_token_at:
-                            self.first_token_at[work.request_id]=now
-                            self.metrics.observe(self.metrics.ttft_ms,(now-request.submitted_at)*1000)
-                        else: self.metrics.observe(self.metrics.itl_ms,(now-self.last_token_at[work.request_id])*1000)
-                        self.last_token_at[work.request_id]=now
-                        await self.events[work.request_id].put(TokenEvent(work.request_id,result.token_id,result.logprob,result.top_logprobs))
-                        if request.finished:
-                            self.metrics.completed+=1; await self._finish_event(work.request_id,'stop' if result.stopped else 'length')
+                        await self._record_token(request,result,now)
         except Exception as error:
             async with self._lock:
                 for request_id in {x.request_id for x in plan.decode}|{x.request_id for x in plan.prefill}:
@@ -103,6 +103,21 @@ class ServingEngine:
                         await self._finish_event(request_id,'error',str(error))
             self.log.exception('serving step failed')
         return True
+
+    async def _record_token(self,request,result,now):
+        request_id=request.request_id
+        self.metrics.generated_tokens+=1
+        if request_id not in self.first_token_at:
+            self.first_token_at[request_id]=now
+            self.metrics.observe(self.metrics.ttft_ms,(now-request.submitted_at)*1000)
+        else:
+            self.metrics.observe(self.metrics.itl_ms,(now-self.last_token_at[request_id])*1000)
+        self.last_token_at[request_id]=now
+        await self.events[request_id].put(TokenEvent(
+            request_id,result.token_id,result.logprob,result.top_logprobs))
+        if request.finished:
+            self.metrics.completed+=1
+            await self._finish_event(request_id,'stop' if result.stopped else 'length')
 
     async def _finish_event(self,request_id,reason,error=None):
         queue=self.events.get(request_id)

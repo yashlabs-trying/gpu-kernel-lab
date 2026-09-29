@@ -1,9 +1,10 @@
 # KernelLab serving control plane
 
-This package is the model-independent control plane for the next serving phase.
-It does not pretend that a CPU scheduler is a finished GPU server: the executor
-that connects each plan to the Qwen prefill and paged-attention kernels is the
-next integration boundary.
+This package combines a model-independent control plane with a correctness-first
+Qwen GPU executor. `QwenPagedExecutor` writes K/V directly into scheduler-owned
+physical pages and resolves attention inputs through each request's block table.
+Its current gather-plus-SDPA attention is the integration baseline, not the final
+direct paged-attention kernel.
 
 ## Components
 
@@ -32,6 +33,9 @@ only logical KV positions below `lengths[b]` are valid, and block-table entry
 - Graph buckets pad inactive batch slots only; KV lengths prevent inactive or
   invalid cache reads.
 - Random generators are per request, so batching order does not change sampling.
+- Final-prefill logits produce the first generated token without reserving or
+  writing a duplicate cache position. Every later decode item carries the prior
+  sampled token and its exact physical destination slot.
 
 ## HTTP surface
 
@@ -50,11 +54,25 @@ Admission failures return HTTP 503 with `Retry-After`; schema errors use FastAPI
 HTTP 422 response. Executor failures become terminal request events, release
 memory, and leave the serving loop alive for subsequent work.
 
-## Next GPU integration
+## Qwen executor boundary
 
-1. Change the split-KV kernel from contiguous `[B,H,C,D]` addressing to physical
-   block-table lookup.
-2. Add a mixed prefill/decode executor consuming `StepPlan`.
+The initial real executor is deliberately conservative:
+
+- exact eager Qwen layer math;
+- serial requests and serial prompt tokens;
+- direct writes into `[layer, block, kv_head, block_token, head_dim]`;
+- variable-length lookup through `BatchKVMetadata.block_tables`;
+- no dense growing mask and no cache concatenation;
+- gather-plus-SDPA as the correctness oracle.
+
+This gives the direct paged Triton/CUDA kernel a trustworthy A/B target. It is
+not advertised as a throughput winner.
+
+## Next GPU optimization
+
+1. Replace gather-plus-SDPA with GQA-aware physical block-table reads inside the
+   split-KV online-softmax kernel.
+2. Batch decode requests and implement a tiled, causal chunked-prefill path.
 3. Capture one graph per supported batch/sequence bucket with inactive-slot masks.
-4. Add streaming API and cancellation around the scheduler.
-5. Stress-test block reuse, concurrent arrivals, OOM admission, and tail latency.
+4. Run dynamic-cache versus paged-executor token/logit acceptance on the GPU.
+5. Measure concurrent p50/p90/p99 and reclaim/cancellation behavior under load.

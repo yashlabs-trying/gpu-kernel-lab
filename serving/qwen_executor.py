@@ -1,0 +1,130 @@
+"""Correctness-first Qwen executor backed by :class:`PagedKVAllocator`.
+
+This closes the serving/model contract without pretending that cache gathering is
+the final kernel. K/V are written once into physical pages and all attention
+reads are resolved through the request block table. A later Triton/CUDA kernel
+can replace ``materialize_paged_kv`` without changing the scheduler or API.
+"""
+from __future__ import annotations
+
+import math
+import torch
+import torch.nn.functional as F
+
+
+def materialize_paged_kv(storage,layer,block_table,length,block_size):
+    """Return logical ``[Hkv,S,D]`` order from physical paged storage."""
+    if length<=0:
+        raise ValueError('attention length must be positive')
+    blocks=math.ceil(length/block_size)
+    if block_table.ndim!=1 or block_table.numel()<blocks:
+        raise ValueError('block table is too short')
+    physical=block_table[:blocks].to(torch.long)
+    # CUDA metadata is allocator-produced; avoid a device synchronization in
+    # every layer. CPU reference calls still reject malformed tables eagerly.
+    if physical.device.type=='cpu' and bool((physical<0).any()):
+        raise ValueError('block table contains an unallocated entry')
+    # [blocks,Hkv,block,D] -> [Hkv,logical_tokens,D]
+    return storage[layer,physical].permute(1,0,2,3).reshape(
+        storage.shape[2],blocks*block_size,storage.shape[-1])[:,:length]
+
+
+def _rotate_half(x):
+    half=x.shape[-1]//2
+    return torch.cat((-x[...,half:],x[...,:half]),dim=-1)
+
+
+class QwenPagedExecutor:
+    """Real Qwen forward path using scheduler-owned physical K/V pages.
+
+    The first implementation deliberately executes requests and prefill tokens
+    serially. It establishes exact token/cache semantics and a measurable GPU
+    baseline before direct paged attention and mixed-batch kernels are enabled.
+    """
+    def __init__(self,model,allocator):
+        self.model=model.eval(); self.allocator=allocator
+        self.device=next(model.parameters()).device
+        self.dtype=next(model.parameters()).dtype
+        config=model.config
+        expected=(len(model.model.layers),config.num_key_value_heads,config.head_dim)
+        actual=(allocator.num_layers,allocator.num_kv_heads,allocator.head_dim)
+        if expected!=actual:
+            raise ValueError(f'model/cache shape mismatch: expected {expected}, got {actual}')
+        if allocator.keys.device!=self.device or allocator.keys.dtype!=self.dtype:
+            raise ValueError('model and paged cache must share device and dtype')
+        if self.device.type!='cuda':
+            raise ValueError('QwenPagedExecutor requires a CUDA model')
+
+    async def prefill(self,work,allocator):
+        self._check_allocator(allocator)
+        logits={}
+        with torch.inference_mode():
+            for item in work:
+                metadata=allocator.metadata((item.request_id,))
+                table=metadata.block_tables[0]
+                for offset,(token_id,slot) in enumerate(zip(item.token_ids,item.slots)):
+                    position=item.start_position+offset
+                    logits[item.request_id]=self._forward_token(token_id,position,slot,table)
+        return logits
+
+    async def decode(self,work,metadata,graph_batch_size):
+        if metadata.request_ids!=tuple(item.request_id for item in work):
+            raise ValueError('decode metadata order does not match work order')
+        logits={}
+        with torch.inference_mode():
+            for row,item in enumerate(work):
+                if int(metadata.lengths[row].item())!=item.position+1:
+                    raise ValueError('decode cache length must include exactly the new slot')
+                logits[item.request_id]=self._forward_token(
+                    item.token_id,item.position,item.slot,metadata.block_tables[row])
+        return logits
+
+    def _check_allocator(self,allocator):
+        if allocator is not self.allocator:
+            raise ValueError('executor received a different paged allocator')
+
+    def _forward_token(self,token_id,position,slot,block_table):
+        self._validate_slot(position,slot,block_table)
+        token=torch.tensor([[token_id]],device=self.device,dtype=torch.long)
+        position_ids=torch.tensor([[position]],device=self.device,dtype=torch.long)
+        hidden=self.model.model.embed_tokens(token)
+        cos,sin=self.model.model.rotary_emb(hidden,position_ids)
+        cos=cos[:,None,:,:]; sin=sin[:,None,:,:]
+
+        for layer_index,layer in enumerate(self.model.model.layers):
+            residual=hidden
+            normalized=layer.input_layernorm(hidden)
+            attention=layer.self_attn
+            q=attention.q_norm(attention.q_proj(normalized).view(
+                1,1,attention.config.num_attention_heads,attention.head_dim)).transpose(1,2)
+            k=attention.k_norm(attention.k_proj(normalized).view(
+                1,1,attention.config.num_key_value_heads,attention.head_dim)).transpose(1,2)
+            v=attention.v_proj(normalized).view(
+                1,1,attention.config.num_key_value_heads,attention.head_dim).transpose(1,2)
+            q=q*cos+_rotate_half(q)*sin
+            k=k*cos+_rotate_half(k)*sin
+            block,block_offset=slot
+            self.allocator.keys[layer_index,block,:,block_offset].copy_(k[0,:,0])
+            self.allocator.values[layer_index,block,:,block_offset].copy_(v[0,:,0])
+            keys=materialize_paged_kv(self.allocator.keys,layer_index,block_table,
+                                      position+1,self.allocator.block_size)[None]
+            values=materialize_paged_kv(self.allocator.values,layer_index,block_table,
+                                        position+1,self.allocator.block_size)[None]
+            output=F.scaled_dot_product_attention(
+                q,keys,values,dropout_p=0.0,is_causal=False,
+                scale=getattr(attention,'scaling',attention.head_dim**-0.5),enable_gqa=True)
+            output=output.transpose(1,2).reshape(1,1,-1)
+            hidden=residual+attention.o_proj(output)
+            residual=hidden
+            hidden=residual+layer.mlp(layer.post_attention_layernorm(hidden))
+
+        hidden=self.model.model.norm(hidden)
+        return self.model.lm_head(hidden)[0,0].float()
+
+    def _validate_slot(self,position,slot,block_table):
+        logical_block,offset=divmod(position,self.allocator.block_size)
+        if logical_block>=block_table.numel():
+            raise ValueError('position is outside the block table')
+        expected=(int(block_table[logical_block].item()),offset)
+        if tuple(slot)!=expected:
+            raise ValueError(f'physical slot mismatch: expected {expected}, got {slot}')
