@@ -115,6 +115,14 @@ class FakeExecutor:
         return {x.request_id:torch.tensor([0.,1.,3.,2.]) for x in work}
 
 
+class OrderedExecutor(FakeExecutor):
+    def __init__(self): self.calls=[]
+    async def prefill(self,work,allocator):
+        self.calls.append('prefill'); return await super().prefill(work,allocator)
+    async def decode(self,work,metadata,graph_batch_size):
+        self.calls.append('decode'); return await super().decode(work,metadata,graph_batch_size)
+
+
 def test_prefill_logits_produce_first_token_without_extra_cache_slot():
     async def run():
         a=allocator(); scheduler=ContinuousBatchScheduler(a,CUDAGraphBuckets())
@@ -127,6 +135,19 @@ def test_prefill_logits_produce_first_token_without_extra_cache_slot():
         assert plan.decode[0].token_id==2 and plan.decode[0].position==3
         scheduler.fail('x','test cleanup')
         assert not queue.empty()
+    asyncio.run(run())
+
+
+def test_engine_executes_decode_before_prefill_in_a_mixed_plan():
+    async def run():
+        a=allocator(64); scheduler=ContinuousBatchScheduler(
+            a,CUDAGraphBuckets(),max_batch_size=2,prefill_chunk_size=2)
+        executor=OrderedExecutor(); engine=ServingEngine(scheduler,executor)
+        await engine.submit(Request('decode',(1,),3,timeout_s=10))
+        assert await engine.step()  # complete the first request's prefill
+        await engine.submit(Request('prefill',(1,2,3,4),2,timeout_s=10))
+        executor.calls.clear(); assert await engine.step()
+        assert executor.calls==['decode','prefill']
     asyncio.run(run())
 
 

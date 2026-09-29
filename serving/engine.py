@@ -75,18 +75,9 @@ class ServingEngine:
             plan=self.scheduler.plan()
         if not plan.decode and not plan.prefill: return False
         try:
-            if plan.prefill:
-                prefill_logits=await self.executor.prefill(plan.prefill,self.scheduler.allocator)
-                async with self._lock:
-                    for work in plan.prefill:
-                        if self.scheduler.complete_prefill(work.request_id,len(work.token_ids)):
-                            if prefill_logits is None or work.request_id not in prefill_logits:
-                                raise RuntimeError(f'executor omitted final-prefill logits for {work.request_id!r}')
-                            request=self.scheduler.requests[work.request_id]
-                            result=self.samplers[work.request_id].sample(
-                                prefill_logits[work.request_id],request.prompt_token_ids)
-                            self.scheduler.complete_prefill_sample(work.request_id,result.token_id,result.stopped)
-                            await self._record_token(request,result,time.monotonic())
+            # Decode is latency-sensitive. Execute it before admitted prefill
+            # chunks when both share a plan so a long prompt cannot stall every
+            # active request's next token.
             if plan.decode:
                 table_width=None
                 if plan.graph_sequence_length is not None:
@@ -103,6 +94,18 @@ class ServingEngine:
                         result=self.samplers[work.request_id].sample(logits[work.request_id],request.prompt_token_ids+tuple(request.generated))
                         self.scheduler.complete_decode(work.request_id,result.token_id,result.stopped)
                         await self._record_token(request,result,now)
+            if plan.prefill:
+                prefill_logits=await self.executor.prefill(plan.prefill,self.scheduler.allocator)
+                async with self._lock:
+                    for work in plan.prefill:
+                        if self.scheduler.complete_prefill(work.request_id,len(work.token_ids)):
+                            if prefill_logits is None or work.request_id not in prefill_logits:
+                                raise RuntimeError(f'executor omitted final-prefill logits for {work.request_id!r}')
+                            request=self.scheduler.requests[work.request_id]
+                            result=self.samplers[work.request_id].sample(
+                                prefill_logits[work.request_id],request.prompt_token_ids)
+                            self.scheduler.complete_prefill_sample(work.request_id,result.token_id,result.stopped)
+                            await self._record_token(request,result,time.monotonic())
         except Exception as error:
             async with self._lock:
                 for request_id in {x.request_id for x in plan.decode}|{x.request_id for x in plan.prefill}:
