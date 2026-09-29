@@ -60,10 +60,13 @@ class StepPlan:
 
 class ContinuousBatchScheduler:
     """Control-plane scheduler; an executor supplies model-specific GPU calls."""
-    def __init__(self,allocator,graph_buckets,*,max_batch_size=16,prefill_chunk_size=256,max_prefill_tokens=512):
-        if min(max_batch_size,prefill_chunk_size,max_prefill_tokens)<=0: raise ValueError('limits must be positive')
+    def __init__(self,allocator,graph_buckets,*,max_batch_size=16,prefill_chunk_size=256,
+                 max_prefill_tokens=512,decode_prefill_chunk_size=64):
+        if min(max_batch_size,prefill_chunk_size,max_prefill_tokens,
+               decode_prefill_chunk_size)<=0: raise ValueError('limits must be positive')
         self.allocator=allocator; self.graph_buckets=graph_buckets
         self.max_batch_size=max_batch_size; self.prefill_chunk_size=prefill_chunk_size; self.max_prefill_tokens=max_prefill_tokens
+        self.decode_prefill_chunk_size=decode_prefill_chunk_size
         self.requests:dict[str,Request]={}; self._prefill=deque(); self._decode=deque()
         self._inflight:dict[str,tuple[str,int]]={}
         self._reserved_blocks:dict[str,int]={}
@@ -106,7 +109,9 @@ class ContinuousBatchScheduler:
         for _ in range(visits):
             request_id=self._prefill.popleft(); request=self.requests[request_id]
             if request.state!=RequestState.PREFILL: continue
-            count=min(request.remaining_prompt,self.prefill_chunk_size,token_budget)
+            chunk_limit=(min(self.prefill_chunk_size,self.decode_prefill_chunk_size)
+                         if decode else self.prefill_chunk_size)
+            count=min(request.remaining_prompt,chunk_limit,token_budget)
             if count<=0:
                 self._prefill.appendleft(request_id); break
             start=request.prefill_cursor
