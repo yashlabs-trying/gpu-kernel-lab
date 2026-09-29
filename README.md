@@ -29,9 +29,11 @@ Two outcomes are intentionally kept separate:
   faster, but remains opt-in because full-path argmax agreement is 96.48%, below
   the project's 99% release requirement.
 
-The serving control plane passes functional and stress tests. Its acceptance
-tests currently use an executor interface; connecting that interface to the real
-paged GPU Qwen runtime is the main remaining production-integration task.
+The serving control plane now has a correctness-first GPU Qwen executor. It
+preserves tiled SDPA prefill, writes K/V into fixed physical pages, batches
+variable-length decode requests, and passed an exact token/logit gate. A faster
+direct Triton paged-attention candidate remains opt-in because it misses the 99%
+decode-argmax release threshold.
 
 ## Four-model portfolio
 
@@ -71,6 +73,13 @@ The decode result is the **experimental CUDA-Graph path**. Its throughput is
 `1000 / ITL` for a serial GPU-only loop and excludes tokenization, networking,
 scheduling, EOS handling, and general sampling. It is not a production-server
 throughput claim.
+
+The real paged-serving integration was also validated on an RTX 2000 Ada (SM89):
+256/256 prefill decisions and 1,024/1,024 decode decisions matched with zero
+logit difference. The direct paged-attention kernel was 1.74–5.37x faster than
+gather-plus-SDPA in isolation across contexts 128–4,096, but achieved only
+97.65625% decode agreement and is therefore not the production default. See the
+[paged-serving report](results/qwen_paged_ada_20260929/REPORT.md).
 
 | Context | Dynamic ITL | Graph ITL | Dynamic token/s | Graph token/s |
 |---:|---:|---:|---:|---:|
@@ -167,7 +176,10 @@ The 5,000-request control-plane stress test recorded 4,864 completions and 136
 intentional cancellations, with zero failures, timeouts, rejections, or leaked
 KV blocks. All 60,000 blocks were reclaimed. Its 197.81 requests/s rate measures
 the control plane with a fake executor—not GPU model throughput. Full details are
-in the [serving report](results/final_serving_20260904/REPORT.md).
+in the [serving report](results/final_serving_20260904/REPORT.md). Separately, a
+real four-request GPU smoke matched all 16 greedy Qwen baseline tokens and
+reclaimed every physical KV block; larger production traffic measurements are
+still required.
 
 ## Correctness and profiling
 
@@ -240,7 +252,7 @@ weights and large profiler artifacts on the persistent volume.
 ## Remaining completion targets
 
 1. Raise RMS-only and complete-path argmax agreement above **99%**.
-2. Connect serving paged blocks to the real GPU Qwen paged-attention executor.
+2. Make direct paged attention pass the quality gate and replace gather+SDPA.
 3. Gain another accepted 20% in prefill/decode without relaxing correctness.
 4. Replace RTX-3090-specific winners with capability-based tuning and fallbacks.
 5. Validate on two GPU architectures and implement topology-aware multi-GPU
