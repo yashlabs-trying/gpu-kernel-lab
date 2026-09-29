@@ -6,6 +6,7 @@ import json
 import logging
 import time
 from typing import Protocol
+import math
 
 from .metrics import ServingMetrics
 from .sampling import Sampler
@@ -87,7 +88,14 @@ class ServingEngine:
                             self.scheduler.complete_prefill_sample(work.request_id,result.token_id,result.stopped)
                             await self._record_token(request,result,time.monotonic())
             if plan.decode:
-                metadata=self.scheduler.allocator.metadata(tuple(x.request_id for x in plan.decode))
+                table_width=None
+                if plan.graph_sequence_length is not None:
+                    table_width=min(
+                        self.scheduler.allocator.num_blocks,
+                        math.ceil(plan.graph_sequence_length/
+                                  self.scheduler.allocator.block_size))
+                metadata=self.scheduler.allocator.metadata(
+                    tuple(x.request_id for x in plan.decode),table_width=table_width)
                 logits=await self.executor.decode(plan.decode,metadata,plan.graph_batch_size)
                 async with self._lock:
                     for work in plan.decode:
