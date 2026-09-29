@@ -37,9 +37,10 @@ def _rotate_half(x):
 class QwenPagedExecutor:
     """Real Qwen forward path using scheduler-owned physical K/V pages.
 
-    The first implementation deliberately executes requests and prefill tokens
-    serially. It establishes exact token/cache semantics and a measurable GPU
-    baseline before direct paged attention and mixed-batch kernels are enabled.
+    The first implementation deliberately executes requests serially. Prefill
+    keeps Qwen's tiled SDPA math and scatters new cache ranges into pages. This
+    establishes exact token/cache semantics before direct paged attention and
+    mixed-batch kernels are enabled.
     """
     def __init__(self,model,allocator):
         self.model=model.eval(); self.allocator=allocator
@@ -54,17 +55,23 @@ class QwenPagedExecutor:
             raise ValueError('model and paged cache must share device and dtype')
         if self.device.type!='cuda':
             raise ValueError('QwenPagedExecutor requires a CUDA model')
+        self._prefill_caches={}
 
     async def prefill(self,work,allocator):
         self._check_allocator(allocator)
         logits={}
         with torch.inference_mode():
             for item in work:
-                metadata=allocator.metadata((item.request_id,))
-                table=metadata.block_tables[0]
-                for offset,(token_id,slot) in enumerate(zip(item.token_ids,item.slots)):
-                    position=item.start_position+offset
-                    logits[item.request_id]=self._forward_token(token_id,position,slot,table)
+                token=torch.tensor([item.token_ids],device=self.device,dtype=torch.long)
+                mask=torch.ones((1,item.start_position+len(item.token_ids)),
+                                device=self.device,dtype=torch.long)
+                output=self.model(
+                    input_ids=token,attention_mask=mask,
+                    past_key_values=self._prefill_caches.get(item.request_id),
+                    use_cache=True,logits_to_keep=1)
+                self._prefill_caches[item.request_id]=output.past_key_values
+                self._scatter_prefill(item,output.past_key_values)
+                logits[item.request_id]=output.logits[0,-1].float()
         return logits
 
     async def decode(self,work,metadata,graph_batch_size):
@@ -73,11 +80,25 @@ class QwenPagedExecutor:
         logits={}
         with torch.inference_mode():
             for row,item in enumerate(work):
+                self._prefill_caches.pop(item.request_id,None)
                 if int(metadata.lengths[row].item())!=item.position+1:
                     raise ValueError('decode cache length must include exactly the new slot')
                 logits[item.request_id]=self._forward_token(
                     item.token_id,item.position,item.slot,metadata.block_tables[row])
         return logits
+
+    def release(self,request_id):
+        """Release executor-private temporary state after any terminal event."""
+        self._prefill_caches.pop(request_id,None)
+
+    def _scatter_prefill(self,item,cache):
+        start=item.start_position; end=start+len(item.token_ids)
+        for layer_index,layer_cache in enumerate(cache.layers):
+            keys=layer_cache.keys[0,:,start:end]
+            values=layer_cache.values[0,:,start:end]
+            for source,(block,offset) in enumerate(item.slots):
+                self.allocator.keys[layer_index,block,:,offset].copy_(keys[:,source])
+                self.allocator.values[layer_index,block,:,offset].copy_(values[:,source])
 
     def _check_allocator(self,allocator):
         if allocator is not self.allocator:
