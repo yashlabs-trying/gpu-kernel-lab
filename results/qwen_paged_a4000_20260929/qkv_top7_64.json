@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "model": "Qwen/Qwen3-0.6B",
+  "environment": {"python": "3.12.3", "torch": "2.8.0+cu128", "gpu": "NVIDIA RTX A4000", "compute_capability": [8, 6]},
+  "workload": {"prompts": 64, "decode_steps": 4, "max_input_tokens": 128, "block_size": 16, "direct_attention": false, "direct_layers": null, "native_gqa": true, "fused_qkv_layers": [20, 21, 22, 23, 24, 26, 27], "fused_mlp": true, "seed": 20260930},
+  "prefill_argmax_agreement": 1.0,
+  "decode_argmax_agreement": 0.98828125,
+  "logits": {"count": 320, "max_abs": 0.25, "mean_abs": 0.0201295424680211, "min_cosine": 0.9995583295822144, "finite": true},
+  "gate": {"pass": false, "checks": {"prefill_argmax": true, "decode_argmax": false, "logit_cosine": true, "finite": true, "cache_reclaimed": true}}
+}
