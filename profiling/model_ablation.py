@@ -61,6 +61,33 @@ def install(model, variant):
     return count
 
 
+def install_calibrated_rms(model, fast_module_names):
+    """Use Triton only at explicitly calibrated RMSNorm module names."""
+    root=Path(__file__).resolve().parents[1]
+    sys.path.insert(0,str(root/'learning/03_rmsnorm'))
+    from qwen_rmsnorm import qwen_rmsnorm_reference,triton_qwen_rmsnorm
+    allowed=set(fast_module_names)
+    found=set()
+    count=0
+    total=0
+    for name,module in model.named_modules():
+        if type(module).__name__!='Qwen3RMSNorm':
+            continue
+        total+=1
+        use_fast=name in allowed
+        if use_fast: found.add(name)
+        def forward(self,hidden_states,use_fast=use_fast):
+            kernel=triton_qwen_rmsnorm if use_fast else qwen_rmsnorm_reference
+            return kernel(hidden_states,self.weight,self.variance_epsilon)
+        module.forward=types.MethodType(forward,module)
+        count+=use_fast
+    missing=allowed-found
+    if missing:
+        raise ValueError(f'calibrated RMSNorm modules not found: {sorted(missing)}')
+    model._kernellab_calibrated_rms={'fast_modules':sorted(found),'exact_modules':total-count}
+    return count
+
+
 def validate_and_install(model,variant,lengths):
     def logits(length):
         ids=(torch.arange(length,device='cuda')[None,:]%10000+100).long()

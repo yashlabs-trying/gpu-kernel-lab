@@ -178,6 +178,21 @@ python profiling/qwen_rms_sensitivity.py \
 This distinguishes local kernel rounding from error propagated by an earlier
 layer. It reports changed-element fractions for each named norm site.
 
+The conservative calibrated candidate keeps every RMSNorm exact except modules
+that produced zero changed BF16 elements during the sensitivity scan:
+
+```bash
+python profiling/qwen_accuracy_gate.py \
+  --candidate calibrated-rms \
+  --rms-calibration results/qwen_accuracy/rms_sensitivity.json \
+  --prompts 1000 --trace-prompts 32 --teacher-forced-prompts 64 \
+  --decode-steps 4 --local-files-only \
+  --output results/qwen_accuracy/calibrated_rms.json
+```
+
+The calibration file is GPU/model specific. Its whitelist is not portable until
+the same module remains exact across the required architectures and full corpus.
+
 ## CPU validation
 
 The GPU model cannot be certified on CPU, but the deterministic corpus, streaming
