@@ -15,7 +15,23 @@
       "block_size": 16,
       "attention_tile": 128,
       "direct_attention_layers": [],
+      "fused_gather": true,
+      "native_gqa": false,
+      "fused_qkv_layers": [],
+      "fused_mlp_layers": [],
       "reason": "Exact gather-plus-SDPA passed 256 prefill and 1024 decode decisions with zero logit difference. Direct attention remains below 99%."
+    },
+    "sm86": {
+      "name": "ampere-sm86-lossless-paged-gather",
+      "quality_gate_passed": true,
+      "block_size": 16,
+      "attention_tile": 128,
+      "direct_attention_layers": [],
+      "fused_gather": true,
+      "native_gqa": false,
+      "fused_qkv_layers": [],
+      "fused_mlp_layers": [],
+      "reason": "Lossless fused paged gather is the fastest quality-safe path across 128-4096 token decode contexts on RTX A4000."
     }
   }
 }
