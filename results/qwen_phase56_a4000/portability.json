@@ -1,0 +1,15 @@
+{
+  "model_signature": {"layers": 28, "hidden_size": 1024, "attention_heads": 16, "kv_heads": 8, "head_dim": 128},
+  "cuda_available": true,
+  "device_count": 1,
+  "devices": [{
+    "index": 0,
+    "capabilities": {"name": "NVIDIA RTX A4000", "major": 8, "minor": 6, "multiprocessors": 48, "warp_size": 32, "total_memory": 16750149632, "architecture": "sm86"},
+    "policy": {"profile": "ampere-sm86-lossless-paged-gather", "architecture": "sm86", "block_size": 16, "attention_tile": 128, "direct_attention_layers": [], "fused_gather": true, "native_gqa": false, "fused_qkv_layers": [], "fused_mlp_layers": [], "calibrated": true, "reason": "matched accepted architecture profile"}
+  }],
+  "peer_access": [[true]],
+  "homogeneous_architectures": true,
+  "topology_recommendation": "single_gpu",
+  "safe_to_start": true,
+  "note": "Uncalibrated devices use exact kernels. Tensor parallel execution requires a separately validated distributed launcher."
+}

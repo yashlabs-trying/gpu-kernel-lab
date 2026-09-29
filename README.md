@@ -89,6 +89,13 @@ projection fusion did not deliver a consistent 20% without either numerical or
 long-context regressions, so it remains experimental. See the
 [Ampere validation report](results/qwen_paged_a4000_20260929/REPORT.md).
 
+Phase 5/6 then hardened the production scheduler and portability boundary.
+Decode-first execution, stable metadata shapes, removal of host synchronizations,
+and adaptive prefill quanta raised matched concurrent throughput by 13.53% while
+reducing ITL p50 by 20.85% and ITL p99 by 25.80%. A 64-request real-model run
+completed without failures or leaked KV blocks at 65.52 generated token/s. See
+the [portable serving report](results/qwen_phase56_a4000/REPORT.md).
+
 | Context | Dynamic ITL | Graph ITL | Dynamic token/s | Graph token/s |
 |---:|---:|---:|---:|---:|
 | 128 | 21.906 ms | 2.318 ms | 45.65 | 431.46 |
@@ -257,15 +264,16 @@ python profiling/serving_stress.py --requests 5000 --output results/stress.json
 Use `--help` and the commands in individual reports for exact options. Keep model
 weights and large profiler artifacts on the persistent volume.
 
-## Remaining completion targets
+## Production boundary
 
-1. Raise RMS-only and complete-path argmax agreement above **99%**.
-2. Make direct paged attention pass the quality gate and replace gather+SDPA.
-3. Gain another accepted 20% in prefill/decode without relaxing correctness.
-4. Replace RTX-3090-specific winners with capability-based tuning and fallbacks.
-5. Validate on two GPU architectures and implement topology-aware multi-GPU
-   tensor parallelism.
-6. Measure production p50/p90/p99 under real concurrent GPU traffic.
+Completed for the single-GPU serving core:
 
-Until these gates pass, the fast CUDA-Graph runtime is a strong research result,
-not a production Qwen serving engine.
+1. Numerical acceptance above 99%, including an exact production path.
+2. Capability-based SM86/SM89 profiles with an exact unknown-GPU fallback.
+3. Real concurrent GPU p50/p90/p99 measurement and complete KV reclamation.
+4. A no-weights deployment preflight covering model shape, devices, policies,
+   memory characteristics, and peer topology.
+
+Direct paged attention is intentionally deferred because it failed quality, and
+Phase 7 was excluded from the requested scope. Multi-GPU topology is detected,
+but distributed tensor-parallel execution is not claimed as implemented.
