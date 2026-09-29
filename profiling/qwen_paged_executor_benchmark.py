@@ -11,13 +11,14 @@ from serving.qwen_executor import QwenPagedExecutor
 from serving.scheduler import DecodeWork,PrefillWork
 
 
-async def benchmark_variant(model,context,steps,warmup,block_size,direct_layers):
+async def benchmark_variant(model,context,steps,warmup,block_size,direct_layers,*,fused_gather=True):
     config=model.config; blocks=(context+warmup+steps+block_size-1)//block_size
     allocator=PagedKVAllocator(
         num_layers=len(model.model.layers),num_blocks=blocks,block_size=block_size,
         num_kv_heads=config.num_key_value_heads,head_dim=config.head_dim,
         dtype=torch.bfloat16,device='cuda')
-    executor=QwenPagedExecutor(model,allocator,direct_attention_layers=direct_layers)
+    executor=QwenPagedExecutor(model,allocator,direct_attention_layers=direct_layers,
+                               fused_gather=fused_gather)
     request_id='benchmark'; allocator.create(request_id)
     slots=tuple(allocator.append_slots(request_id,context))
     ids=tuple((torch.arange(context)%10000+100).tolist())
@@ -40,11 +41,16 @@ async def run(args,model):
             'warmup':args.warmup,'steps':args.steps,'measurements':[]}
     layers=tuple(args.direct_layers)
     for context in args.contexts:
-        exact=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,())
-        hybrid=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,layers)
-        row={'context':context,'direct_layers':layers,'exact':exact,'hybrid':hybrid,
-             'speedup':exact['median_ms']/hybrid['median_ms'],
-             'latency_reduction_percent':(1-hybrid['median_ms']/exact['median_ms'])*100}
+        reference=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,(),fused_gather=False)
+        fused=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,(),fused_gather=True)
+        row={'context':context,'reference_gather':reference,'fused_gather':fused,
+             'fused_speedup':reference['median_ms']/fused['median_ms'],
+             'fused_latency_reduction_percent':(1-fused['median_ms']/reference['median_ms'])*100}
+        if layers:
+            hybrid=await benchmark_variant(model,context,args.steps,args.warmup,args.block_size,layers)
+            row.update({'direct_layers':layers,'hybrid':hybrid,
+                        'hybrid_speedup':reference['median_ms']/hybrid['median_ms'],
+                        'hybrid_latency_reduction_percent':(1-hybrid['median_ms']/reference['median_ms'])*100})
         report['measurements'].append(row); print(json.dumps(row),flush=True)
     return report
 
