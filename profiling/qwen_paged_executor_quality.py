@@ -47,6 +47,7 @@ def main():
     parser.add_argument('--native-gqa',action='store_true',help='gather Hkv heads and use SDPA native GQA')
     parser.add_argument('--fused-projections',action='store_true')
     parser.add_argument('--fused-qkv',action='store_true')
+    parser.add_argument('--fused-qkv-layers',type=int,nargs='*',default=None)
     parser.add_argument('--fused-mlp',action='store_true')
     parser.add_argument('--seed',type=int,default=20260930)
     parser.add_argument('--local-files-only',action='store_true')
@@ -73,9 +74,12 @@ def main():
         raise ValueError('choose --direct-attention or --direct-layers, not both')
     executor=QwenPagedExecutor(model,allocator,direct_attention=args.direct_attention,
                                direct_attention_layers=args.direct_layers,native_gqa=args.native_gqa)
-    if args.fused_projections or args.fused_qkv or args.fused_mlp:
+    if args.fused_qkv and args.fused_qkv_layers is not None:
+        raise ValueError('choose --fused-qkv or --fused-qkv-layers')
+    if args.fused_projections or args.fused_qkv or args.fused_mlp or args.fused_qkv_layers is not None:
         executor.enable_fused_projections(
-            qkv=args.fused_projections or args.fused_qkv,
+            qkv=(True if args.fused_projections or args.fused_qkv else
+                 (() if args.fused_qkv_layers is None else args.fused_qkv_layers)),
             mlp=args.fused_projections or args.fused_mlp)
     metrics=StreamingTensorMetrics(); prefill_matches=decode_matches=0
 
@@ -121,7 +125,8 @@ def main():
                     'max_input_tokens':args.max_input_tokens,'block_size':args.block_size,
                     'direct_attention':args.direct_attention,
                     'direct_layers':args.direct_layers,'native_gqa':args.native_gqa,
-                    'fused_qkv':args.fused_projections or args.fused_qkv,
+                    'fused_qkv_layers':('all' if args.fused_projections or args.fused_qkv
+                                        else args.fused_qkv_layers),
                     'fused_mlp':args.fused_projections or args.fused_mlp,'seed':args.seed},
         'prefill_argmax_agreement':prefill_agreement,
         'decode_argmax_agreement':decode_agreement,

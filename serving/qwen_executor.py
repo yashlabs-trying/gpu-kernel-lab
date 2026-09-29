@@ -67,7 +67,7 @@ class QwenPagedExecutor:
         if attention_tile not in (64,128,256): raise ValueError('attention tile must be 64, 128, or 256')
         self.policy=policy; self.attention_tile=attention_tile; self.fused_gather=bool(fused_gather)
         self.native_gqa=bool(native_gqa)
-        self.fused_qkv=False; self.fused_mlp=False
+        self.fused_qkv_layers=frozenset(); self.fused_mlp_layers=frozenset()
         layer_count=len(model.model.layers)
         if direct_attention_layers is None:
             self.direct_attention_layers=(frozenset(range(layer_count)) if direct_attention else frozenset())
@@ -91,8 +91,13 @@ class QwenPagedExecutor:
                                attention.v_proj.weight),dim=0).contiguous(),
                     torch.cat((mlp.gate_proj.weight,mlp.up_proj.weight),dim=0).contiguous(),
                 ))
-        self._projection_weights=tuple(packed)
-        self.fused_qkv=bool(qkv); self.fused_mlp=bool(mlp)
+        self._projection_weights=tuple(packed); count=len(packed)
+        def layers(value):
+            if isinstance(value,bool): return frozenset(range(count)) if value else frozenset()
+            result=frozenset(int(x) for x in value)
+            if any(x<0 or x>=count for x in result): raise ValueError('projection layer out of range')
+            return result
+        self.fused_qkv_layers=layers(qkv); self.fused_mlp_layers=layers(mlp)
         return self
 
     async def prefill(self,work,allocator):
@@ -155,7 +160,7 @@ class QwenPagedExecutor:
             residual=hidden
             normalized=layer.input_layernorm(hidden)
             attention=layer.self_attn
-            if self.fused_qkv:
+            if layer_index in self.fused_qkv_layers:
                 q_size=attention.q_proj.out_features; k_size=attention.k_proj.out_features
                 q_raw,k_raw,v_raw=F.linear(normalized,self._projection_weights[layer_index][0]).split(
                     (q_size,k_size,attention.v_proj.out_features),dim=-1)
@@ -214,7 +219,7 @@ class QwenPagedExecutor:
             hidden=residual+attention.o_proj(output)
             residual=hidden
             normalized=layer.post_attention_layernorm(hidden)
-            if self.fused_mlp:
+            if layer_index in self.fused_mlp_layers:
                 gate,up=F.linear(normalized,self._projection_weights[layer_index][1]).chunk(2,dim=-1)
                 mlp_output=layer.mlp.down_proj(layer.mlp.act_fn(gate)*up)
             else:
