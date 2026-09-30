@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""vLLM offline throughput benchmark (batched inference).
+"""Focused vLLM offline throughput benchmark.
 
-Measures total throughput (tok/s) and requests/s using the synchronous LLM
-class, which runs continuous batching over the prompt list internally.
-
-Usage:
-  python benchmarks/bench_vllm.py --model /workspace/models/llama-3.2-3b-hf \
-      --quantization none --num-prompts 128 --max-tokens 128
+No TTFT/ITL is reported because the synchronous offline API has no streamed
+token timestamps. Use bench_serving.py for latency metrics.
 """
+
+from __future__ import annotations
+
 import argparse
-import json
 import random
 import time
+
+from methodology import environment_metadata, write_json
 
 POOL = [
     "What is the capital of France?",
@@ -27,41 +27,89 @@ POOL = [
 ]
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True)
-    ap.add_argument("--quantization", default="none")
-    ap.add_argument("--num-prompts", type=int, default=128)
-    ap.add_argument("--max-tokens", type=int, default=128)
-    ap.add_argument("--output", default="")
-    args = ap.parse_args()
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--quantization", default="none")
+    parser.add_argument("--num-prompts", type=int, default=128)
+    parser.add_argument("--max-tokens", type=int, default=128)
+    parser.add_argument("--warmups", type=int, default=2)
+    parser.add_argument("--repetitions", type=int, default=5)
+    parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--enforce-eager", action="store_true")
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args()
 
     from vllm import LLM, SamplingParams
 
-    quant = None if args.quantization in ("none", "", "None") else args.quantization
-    llm = LLM(model=args.model, quantization=quant, dtype="auto")
-    sp = SamplingParams(max_tokens=args.max_tokens, temperature=0.0)
+    rng = random.Random(args.seed)
+    prompts = [rng.choice(POOL) for _ in range(args.num_prompts)]
+    quantization = None if args.quantization.lower() == "none" else args.quantization
+    llm = LLM(
+        model=args.model,
+        quantization=quantization,
+        dtype="float16",
+        enforce_eager=args.enforce_eager,
+    )
+    params = SamplingParams(
+        max_tokens=args.max_tokens,
+        min_tokens=args.max_tokens,
+        temperature=0.0,
+        seed=args.seed,
+        ignore_eos=True,
+    )
 
-    prompts = [random.choice(POOL) for _ in range(args.num_prompts)]
+    for _ in range(args.warmups):
+        llm.generate(prompts, params, use_tqdm=False)
 
-    t0 = time.perf_counter()
-    outputs = llm.generate(prompts, sp, use_tqdm=False)
-    wall = time.perf_counter() - t0
+    samples = []
+    for repetition in range(args.repetitions):
+        start_ns = time.perf_counter_ns()
+        outputs = llm.generate(prompts, params, use_tqdm=False)
+        end_ns = time.perf_counter_ns()
+        wall_s = (end_ns - start_ns) / 1_000_000_000
+        input_tokens = sum(len(output.prompt_token_ids) for output in outputs)
+        output_tokens = sum(len(output.outputs[0].token_ids) for output in outputs)
+        samples.append(
+            {
+                "repetition": repetition,
+                "start_ns": start_ns,
+                "end_ns": end_ns,
+                "wall_seconds": wall_s,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "input_tokens_per_second": input_tokens / wall_s,
+                "output_tokens_per_second": output_tokens / wall_s,
+                "requests_per_second": args.num_prompts / wall_s,
+            }
+        )
 
-    total_tokens = sum(len(o.outputs[0].token_ids) for o in outputs)
     result = {
-        "engine": "vllm",
+        "schema_version": 2,
+        "benchmark": "llama_vllm_offline_throughput",
+        "engine": "vllm-offline",
+        "model": args.model,
         "quantization": args.quantization,
-        "num_prompts": args.num_prompts,
-        "total_tokens": total_tokens,
-        "wall_s": wall,
-        "throughput_tok_s": total_tokens / wall if wall else 0,
-        "requests_per_s": args.num_prompts / wall if wall else 0,
+        "dtype": "float16",
+        "concurrency": args.num_prompts,
+        "cuda_graphs": not args.enforce_eager,
+        "seed": args.seed,
+        "sampling": {
+            "temperature": 0.0,
+            "ignore_eos": True,
+            "output_tokens": args.max_tokens,
+        },
+        "methodology": {
+            "warmups": args.warmups,
+            "repetitions": args.repetitions,
+            "latency_metrics_available": False,
+            "latency_reason": "synchronous offline API has no token arrival timestamps",
+        },
+        "environment": environment_metadata(),
+        "raw_samples": samples,
     }
-    out = args.output if args.output else "/workspace/vllm_result.json"
-    with open(out, "w") as f:
-        json.dump(result, f, indent=2)
-    print("RESULT_FILE=" + out)
+    write_json(args.output, result)
+    print(f"Wrote {args.output}")
 
 
 if __name__ == "__main__":

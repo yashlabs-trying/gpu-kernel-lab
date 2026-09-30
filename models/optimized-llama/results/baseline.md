@@ -1,5 +1,10 @@
 # Baseline Profiling Results
 
+> **Historical schema-v1 result.** CUDA synchronization, raw repetitions, and
+> full environment telemetry were not recorded, so these values are not valid
+> for a new production comparison. Use `bench_torch_baseline.py` and the rules
+> in [`../BENCHMARK_METHODOLOGY.md`](../BENCHMARK_METHODOLOGY.md).
+
 Hardware: NVIDIA A40 (Ampere, 45 GB, ~696 GB/s), 96 cores / 503 GB RAM.
 Model: Llama-3.2-3B (fp16, ~6.4 GB), loaded via Ollama GGUF -> PyTorch.
 Date: 2026-09-04

@@ -1,5 +1,10 @@
 # Optimization Results
 
+> **Invalidated for production comparison.** These historical configurations
+> compare different batch sizes/concurrency and predate raw schema-v2 samples.
+> The speedup ratios are not matched latency or per-request speedups. Use the
+> process in [`../BENCHMARK_METHODOLOGY.md`](../BENCHMARK_METHODOLOGY.md).
+
 Hardware: NVIDIA A40 (Ampere, 45 GB, ~696 GB/s), 96 cores / 503 GB RAM.
 Model: Llama-3.2-3B (fp16, ~6.4 GB), converted GGUF -> HF safetensors.
 Engine: vLLM 0.28.0, torch 2.13.0+cu130.

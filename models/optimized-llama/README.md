@@ -4,11 +4,23 @@ Optimizing Llama for GPU inference speed and throughput — and documenting ever
 layer of *how* GPU optimization works, from bits to billing.
 
 **Target:** Llama-3.2-3B · **Hardware:** NVIDIA A40 (Ampere, 45 GB) ·
-**Stack:** vLLM + PyTorch · **Result:** up to **81x throughput** over naive PyTorch.
+**Stack:** vLLM + PyTorch · **Status:** benchmark methodology repaired; fresh
+matched production measurements are pending.
 
 ---
 
-## What we measured (real numbers, this repo)
+## Production-readiness status
+
+The original benchmark mixed prompt and output tokens in throughput, derived
+an approximate per-request ITL from aggregate wall time, compared high-batch
+throughput with batch-1 latency, and emitted zero-valued vLLM latency fields.
+Those claims are invalid for production comparison. Schema-v2 runners now use
+streamed token timestamps, distinct input/output throughput, synchronized CUDA
+events, deterministic token IDs, warmups, raw samples, environment telemetry,
+and a 100-request minimum for p99. See
+[`BENCHMARK_METHODOLOGY.md`](BENCHMARK_METHODOLOGY.md).
+
+## Historical measurements (invalidated; do not cite as production results)
 
 ### Baseline — naive PyTorch fp16, single stream
 | Metric | Value |
@@ -31,7 +43,11 @@ Full matrix: [`results/sweep.md`](results/sweep.md) · Baseline analysis:
 
 ---
 
-## Key finding
+The tables below are retained only for provenance while fresh schema-v2 runs
+are collected. In particular, the **81x** figure compares batch-64 aggregate
+throughput with a batch-1 baseline and is not a matched speedup.
+
+## Historical hypothesis to revalidate
 
 LLM **decode** is memory-bound (1 FLOP/byte — it reads all weights to emit one
 token). The single biggest lever is **continuous batching**, not quantization:
@@ -46,10 +62,15 @@ batching + kernels + CUDA graphs.
 ```
 optimized-llama/
 ├── ULTIMATE_GPU_OPTIMIZATION.md   # The full guide: bits → billing (8 parts)
+├── BENCHMARK_METHODOLOGY.md       # Schema-v2 metric and comparison contract
+├── PRODUCTION_READINESS.md        # Implemented versus GPU-validated status
+├── KERNEL_PROVENANCE.md           # Local work versus framework kernels
 ├── benchmarks/                    # TTFT / ITL / throughput harness
 │   ├── bench_baseline.py          #   naive PyTorch fp16 baseline
 │   ├── bench_vllm.py              #   vLLM throughput benchmark
-│   └── bench_sweep.py             #   batch × input-len × output-len sweep
+│   ├── bench_sweep.py             #   batch × input-len × output-len sweep
+│   ├── bench_mixed_fairness.py    #   simultaneous short/long scheduler load
+│   └── bench_server_startup.py    #   process/model cold-start timing
 ├── profiling/                     # Nsight Compute / Systems + kernel profiling
 │   ├── profile_decode.py          #   minimal decode target for nsys
 │   └── profile_kernels.py         #   torch.profiler fallback (ncu is blocked on RunPod)
@@ -57,7 +78,11 @@ optimized-llama/
 │   ├── setup_env.sh               #   venv: torch, vLLM, transformers, gguf
 │   ├── download_model.sh          #   gated HF download (or use Ollama → GGUF)
 │   ├── convert_gguf_to_hf.py      #   GGUF → safetensors (no HF token needed)
+│   ├── model_integrity.py         #   checksums and tokenizer parity
 │   └── verify_hf.py               #   parity check after conversion
+├── quality/                       # deterministic captures and quality gates
+├── Dockerfile.cu128               # primary recorded container stack
+├── Dockerfile.cu130               # alternate recorded container stack
 └── results/                       # measured baseline + sweep + optimization reports
 ```
 
@@ -93,26 +118,45 @@ ollama pull llama3.2:3b-text-fp16
 
 ### 2. Set up environment
 ```bash
-bash scripts/setup_env.sh          # venv at /opt/venv (or adjust for your driver)
-ln -sf /opt/venv/bin/ninja /usr/local/bin/ninja   # vLLM needs ninja on PATH
+KERNELLAB_VENV=/opt/venv KERNELLAB_CUDA_VARIANT=cu128 bash scripts/setup_env.sh
+source /opt/venv/bin/activate
+kernellab doctor
 ```
 
-### 3. Baseline (naive PyTorch)
+### 3. Matched batch-1 PyTorch baseline
 ```bash
 /opt/venv/bin/python benchmarks/bench_baseline.py \
-    --model-dir /workspace/models/llama-3.2-3b --num-decode 128
+    --model-dir /workspace/models/llama-3.2-3b-hf \
+    --input-tokens 128 --output-tokens 128 \
+    --warmups 5 --repetitions 100 \
+    --output results/pytorch-b1.json
 ```
 
-### 4. Optimized (vLLM)
-```bash
-FLASHINFER_DISABLE_VERSION_CHECK=1 /opt/venv/bin/python benchmarks/bench_vllm.py \
-    --model /workspace/models/llama-3.2-3b-hf --quantization none \
-    --num-prompts 64 --max-tokens 128
+### 4. Matched vLLM streaming benchmark
 
-# full sweep:
+`kernellab serve` supplies a bundled Llama 3 message-format template so the
+OpenAI chat route is operational. The registry still uses the base checkpoint;
+formatting does not make it instruction-tuned, so use instruct weights when
+conversational quality is required.
+
+```bash
+vllm serve /workspace/models/llama-3.2-3b-hf \
+    --served-model-name llama-3.2-3b --dtype float16 \
+    --no-enable-prefix-caching
+
+/opt/venv/bin/python benchmarks/bench_serving.py \
+    --model llama-3.2-3b \
+    --tokenizer /workspace/models/llama-3.2-3b-hf \
+    --input-tokens 128 --output-tokens 128 --concurrency 1 \
+    --warmups 5 --repetitions 100 \
+    --output results/vllm-c1.json
+
+# Throughput-only offline sweep (does not report TTFT/ITL):
 FLASHINFER_DISABLE_VERSION_CHECK=1 /opt/venv/bin/python benchmarks/bench_sweep.py \
     --model /workspace/models/llama-3.2-3b-hf \
-    --batches 1,8,32,64 --input-lens 8,128,1024 --output-lens 64,256
+    --concurrencies 1,2,4,8,16,32,64 \
+    --input-lens 8,128,512,2048,8192 --output-lens 32,128,256 \
+    --output results/vllm-throughput-sweep.json
 ```
 
 ## Profiling
@@ -126,6 +170,36 @@ FLASHINFER_DISABLE_VERSION_CHECK=1 /opt/venv/bin/python benchmarks/bench_sweep.p
 
 > On containerized cloud GPUs, `ncu` needs perf-counter access the container
 > lacks. Use `nsys` + `torch.profiler` as the practical fallback.
+
+## Standard language-model evaluation
+
+The external evaluation environment is isolated so its dataset dependencies do
+not perturb the serving lockfile. A limited run is only a download/integration
+smoke test and is never release evidence.
+
+```bash
+/opt/venv/bin/pip install -r requirements-eval.lock
+/opt/venv/bin/python quality/run_lm_eval.py \
+    --model /workspace/models/llama-3.2-3b-hf \
+    --output-dir results/lm-eval-fp16 \
+    --tasks hellaswag arc_easy piqa winogrande wikitext
+```
+
+The deterministic kernel/quantization gate uses the checked-in multi-domain
+corpus and compares every generated token, logit row, and hidden-state layer:
+
+```bash
+/opt/venv/bin/python quality/capture_corpus.py \
+    --model /workspace/models/llama-3.2-3b-hf \
+    --prompts quality/prompts.json --output results/quality-fp16.npz
+/opt/venv/bin/python quality/capture_corpus.py \
+    --model /workspace/models/llama-3.2-3b-hf \
+    --prompts quality/prompts.json --quantization bitsandbytes-int8 \
+    --output results/quality-int8.npz
+/opt/venv/bin/python quality/evaluate.py \
+    --reference results/quality-fp16.npz --candidate results/quality-int8.npz \
+    --output results/quality-int8-vs-fp16.json
+```
 
 ## Models are never committed
 

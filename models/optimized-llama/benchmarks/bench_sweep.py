@@ -1,92 +1,134 @@
 #!/usr/bin/env python3
-"""vLLM sweep benchmark: varies batch size, input (prefill) length, and
-output (decode) length to measure TTFT, ITL, and throughput.
+"""Offline vLLM throughput sweep with honest input/output accounting.
 
-For each (batch, input_len, output_len) it reports:
-  - TTFT (mean time-to-first-token across requests)
-  - ITL (mean inter-token latency during decode)
-  - throughput (total tokens / wall time)
-
-Usage:
-  python benchmarks/bench_sweep.py --model /workspace/models/llama-3.2-3b-hf
+This synchronous API does not expose token arrival timestamps, so this script
+does not report TTFT or ITL. Use ``bench_serving.py`` for streaming latency.
 """
+
+from __future__ import annotations
+
 import argparse
 import json
 import time
 
-from vllm import LLM, SamplingParams
+from methodology import environment_metadata, write_json
+
+PROMPT_SEED = "the quick brown fox jumps over the lazy dog while"
 
 
-def make_prompt(tokens: int) -> str:
-    # A repeatable filler that tokenizes to roughly `tokens` tokens.
-    words = ("the quick brown fox jumps over the lazy dog while " *
-             100).split()
-    out = []
-    n = 0
-    i = 0
-    while n < tokens:
-        w = words[i % len(words)]
-        out.append(w)
-        n += 1
-        i += 1
-    return " ".join(out)
+def exact_prompt_ids(tokenizer, tokens: int) -> list[int]:
+    seed = tokenizer(PROMPT_SEED, add_special_tokens=False).input_ids
+    if not seed:
+        raise ValueError("prompt seed tokenized to zero tokens")
+    return (seed * ((tokens + len(seed) - 1) // len(seed)))[:tokens]
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True)
-    ap.add_argument("--quantization", default="none")
-    ap.add_argument("--batches", default="1,8,32,64")
-    ap.add_argument("--input-lens", default="8,128,1024")
-    ap.add_argument("--output-lens", default="64,256")
-    ap.add_argument("--output", default="/workspace/sweep.json")
-    args = ap.parse_args()
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--quantization", default="none")
+    parser.add_argument("--concurrencies", default="1,2,4,8,16,32,64")
+    parser.add_argument("--input-lens", default="8,128,512,2048,8192")
+    parser.add_argument("--output-lens", default="32,128,256")
+    parser.add_argument("--warmups", type=int, default=2)
+    parser.add_argument("--repetitions", type=int, default=5)
+    parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--enforce-eager", action="store_true")
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args()
 
-    batches = [int(x) for x in args.batches.split(",")]
-    input_lens = [int(x) for x in args.input_lens.split(",")]
-    output_lens = [int(x) for x in args.output_lens.split(",")]
+    from vllm import LLM, SamplingParams
 
-    quant = None if args.quantization in ("none", "", "None") else args.quantization
-    llm = LLM(model=args.model, quantization=quant, dtype="auto")
+    concurrencies = [int(value) for value in args.concurrencies.split(",")]
+    input_lens = [int(value) for value in args.input_lens.split(",")]
+    output_lens = [int(value) for value in args.output_lens.split(",")]
+    if min(concurrencies + input_lens + output_lens) < 1:
+        parser.error("all concurrency and token lengths must be positive")
 
-    results = []
-    for b in batches:
-        for il in input_lens:
-            for ol in output_lens:
-                prompt = make_prompt(il)
-                prompts = [prompt] * b
-                sp = SamplingParams(max_tokens=ol, temperature=0.0,
-                                    ignore_eos=True)
+    quantization = None if args.quantization.lower() == "none" else args.quantization
+    llm = LLM(
+        model=args.model,
+        quantization=quantization,
+        dtype="float16",
+        enforce_eager=args.enforce_eager,
+    )
+    tokenizer = llm.get_tokenizer()
+    params_by_length = {
+        length: SamplingParams(
+            max_tokens=length,
+            min_tokens=length,
+            temperature=0.0,
+            seed=args.seed,
+            ignore_eos=True,
+        )
+        for length in output_lens
+    }
 
-                # Time the full run; vLLM streams internally, so we get
-                # aggregate wall time and per-request token counts.
-                t0 = time.perf_counter()
-                outputs = llm.generate(prompts, sp, use_tqdm=False)
-                wall = time.perf_counter() - t0
+    rows = []
+    for concurrency in concurrencies:
+        for input_len in input_lens:
+            prompt_token_ids = exact_prompt_ids(tokenizer, input_len)
+            prompts = [{"prompt_token_ids": prompt_token_ids}] * concurrency
+            for output_len in output_lens:
+                params = params_by_length[output_len]
+                for _ in range(args.warmups):
+                    llm.generate(prompts, params, use_tqdm=False)
 
-                total_out = sum(len(o.outputs[0].token_ids) for o in outputs)
-                total_tokens = total_out + b * il
-                throughput = total_tokens / wall if wall else 0.0
+                samples = []
+                for repetition in range(args.repetitions):
+                    start_ns = time.perf_counter_ns()
+                    outputs = llm.generate(prompts, params, use_tqdm=False)
+                    end_ns = time.perf_counter_ns()
+                    wall_s = (end_ns - start_ns) / 1_000_000_000
+                    actual_input = sum(len(output.prompt_token_ids) for output in outputs)
+                    actual_output = sum(
+                        len(output.outputs[0].token_ids) for output in outputs
+                    )
+                    samples.append(
+                        {
+                            "repetition": repetition,
+                            "start_ns": start_ns,
+                            "end_ns": end_ns,
+                            "wall_seconds": wall_s,
+                            "input_tokens": actual_input,
+                            "output_tokens": actual_output,
+                            "input_tokens_per_second": actual_input / wall_s,
+                            "output_tokens_per_second": actual_output / wall_s,
+                            "requests_per_second": concurrency / wall_s,
+                        }
+                    )
+                row = {
+                    "concurrency": concurrency,
+                    "input_tokens_per_request": input_len,
+                    "output_tokens_per_request": output_len,
+                    "warmups": args.warmups,
+                    "repetitions": args.repetitions,
+                    "raw_samples": samples,
+                }
+                rows.append(row)
+                print(json.dumps(row))
 
-                # Per-request ITL approximation (decode only):
-                #   decode_time ~ wall - prefill_time; prefill is small.
-                itl = wall / total_out if total_out else 0.0
-
-                results.append({
-                    "batch": b,
-                    "input_len": il,
-                    "output_len": ol,
-                    "wall_s": round(wall, 4),
-                    "total_tokens": total_tokens,
-                    "throughput_tok_s": round(throughput, 2),
-                    "requests_per_s": round(b / wall, 2) if wall else 0,
-                    "approx_itl_ms": round(itl * 1000, 2),
-                })
-                print(json.dumps(results[-1]))
-
-    with open(args.output, "w") as f:
-        json.dump(results, f, indent=2)
-    print("WROTE", args.output)
+    result = {
+        "schema_version": 2,
+        "benchmark": "llama_vllm_offline_throughput_sweep",
+        "model": args.model,
+        "dtype": "float16",
+        "quantization": args.quantization,
+        "cuda_graphs": not args.enforce_eager,
+        "seed": args.seed,
+        "sampling": {"temperature": 0.0, "ignore_eos": True},
+        "methodology": {
+            "warmups": args.warmups,
+            "repetitions": args.repetitions,
+            "latency_metrics_available": False,
+            "latency_reason": "synchronous offline API has no token arrival timestamps",
+            "input_and_output_throughput_reported_separately": True,
+        },
+        "environment": environment_metadata(),
+        "measurements": rows,
+    }
+    write_json(args.output, result)
+    print(f"Wrote {args.output}")
 
 
 if __name__ == "__main__":

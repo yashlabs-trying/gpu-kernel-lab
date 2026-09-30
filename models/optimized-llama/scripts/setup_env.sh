@@ -1,19 +1,34 @@
 #!/usr/bin/env bash
-# Rebuild environment on fresh RunPod A40 pod (venv lives on overlay, lost on restart)
 set -euo pipefail
 
-echo "==> venv"
-python3 -m venv /opt/venv
-source /opt/venv/bin/activate
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+LLAMA_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+REPO_DIR="$(cd -- "${LLAMA_DIR}/../.." && pwd)"
+VENV_DIR="${KERNELLAB_VENV:-${REPO_DIR}/.venv-llama}"
+CUDA_VARIANT="${KERNELLAB_CUDA_VARIANT:-cu128}"
 
-echo "==> pip upgrade"
-pip install --upgrade pip wheel setuptools -q
+case "${CUDA_VARIANT}" in
+  cu128)
+    TORCH_VERSION="2.9.0"
+    LOCK_FILE="${LLAMA_DIR}/requirements-cu128.lock"
+    ;;
+  cu130)
+    TORCH_VERSION="2.13.0"
+    LOCK_FILE="${LLAMA_DIR}/requirements-cu130.lock"
+    ;;
+  *)
+    echo "Unsupported KERNELLAB_CUDA_VARIANT=${CUDA_VARIANT}; choose cu128 or cu130" >&2
+    exit 2
+    ;;
+esac
 
-echo "==> torch (cu128)"
-pip install torch --index-url https://download.pytorch.org/whl/cu128 -q
+python3 -m venv "${VENV_DIR}"
+"${VENV_DIR}/bin/python" -m pip install --upgrade pip wheel setuptools
+"${VENV_DIR}/bin/python" -m pip install \
+  "torch==${TORCH_VERSION}" --index-url "https://download.pytorch.org/whl/${CUDA_VARIANT}"
+"${VENV_DIR}/bin/python" -m pip install -r "${LOCK_FILE}"
+"${VENV_DIR}/bin/python" -m pip install --no-deps -e "${REPO_DIR}"
+"${VENV_DIR}/bin/kernellab" doctor
 
-echo "==> vllm + transformers + quant + gguf"
-pip install vllm transformers accelerate sentencepiece datasets bitsandbytes gguf -q
-
-echo "==> done"
-/opt/venv/bin/python -c "import torch, vllm, transformers, gguf; print('torch', torch.__version__, 'vllm', vllm.__version__, 'transformers', transformers.__version__)"
+echo "Environment ready: ${VENV_DIR}"
+echo "Activate with: source ${VENV_DIR}/bin/activate"

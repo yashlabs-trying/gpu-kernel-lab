@@ -1,0 +1,24 @@
+services:
+  llama:
+    build:
+      context: .
+      dockerfile: models/optimized-llama/Dockerfile.cu128
+    command:
+      - serve
+      - llama-3.2-3b
+      - --model-path
+      - /models/llama-3.2-3b-hf
+      - --gpu-memory-utilization
+      - "0.9"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ${KERNELLAB_MODEL_ROOT:-./models-cache}:/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    stop_grace_period: 2m

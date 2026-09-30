@@ -1,0 +1,11 @@
+.git
+.github
+.venv*
+__pycache__
+*.pyc
+.pytest_cache
+results
+models-cache
+*.nsys-rep
+*.ncu-rep
+.env*

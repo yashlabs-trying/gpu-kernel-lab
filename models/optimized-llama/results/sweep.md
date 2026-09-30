@@ -1,5 +1,11 @@
 # Sweep Results — vLLM vs PyTorch baseline
 
+> **Invalidated for production comparison.** This schema-v1 run mixed prompt
+> and generated tokens in throughput, approximated ITL as wall/output tokens,
+> and compared batch-64 throughput with a batch-1 baseline. It is retained only
+> as historical evidence. Re-run with the schema-v2 tools described in
+> [`../BENCHMARK_METHODOLOGY.md`](../BENCHMARK_METHODOLOGY.md).
+
 Hardware: NVIDIA A40 (Ampere, 45 GB, ~696 GB/s), 96 cores.
 Model: Llama-3.2-3B (fp16). Driver 570.195.03 (CUDA 12.8).
 Stack: vLLM 0.13.0, torch 2.9.0+cu128, transformers 4.57.6.

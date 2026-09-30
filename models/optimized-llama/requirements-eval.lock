@@ -1,0 +1,3 @@
+# Standard task evaluation is intentionally isolated from the serving lockfile.
+# Release: https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.13
+lm-eval==0.4.13

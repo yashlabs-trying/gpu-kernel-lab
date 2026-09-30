@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gpu-kernel-lab"
+version = "0.2.0"
+description = "Reproducible GPU-kernel and LLM inference benchmark laboratory"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+dependencies = []
+
+[project.optional-dependencies]
+cpu = [
+  "numpy>=1.26,<3",
+  "pytest>=8,<10",
+  "jsonschema>=4.23,<5",
+]
+llama = [
+  "transformers>=4.57,<5",
+  "accelerate>=1.10,<2",
+  "huggingface-hub>=0.34,<2",
+  "safetensors>=0.6,<1",
+]
+eval = [
+  "lm-eval==0.4.13",
+]
+
+[project.scripts]
+kernellab = "kernellab.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["kernellab*", "serving*"]
+
+[tool.pytest.ini_options]
+testpaths = ["baseline", "learning", "profiling", "serving", "tests", "models/optimized-llama/tests"]
+addopts = "--strict-markers"
+pythonpath = ["."]
+markers = [
+  "gpu: requires an NVIDIA GPU and model weights",
+  "integration: requires an external service or heavyweight model",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
