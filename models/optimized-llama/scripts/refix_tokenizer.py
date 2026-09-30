@@ -2,7 +2,6 @@
 """Re-save tokenizer config using the installed (older) transformers so
 vLLM can load it. Reads the existing tokenizer.json + config and rewrites
 tokenizer_config.json with a class the current transformers recognizes."""
-import json
 import sys
 
 from transformers import AutoTokenizer

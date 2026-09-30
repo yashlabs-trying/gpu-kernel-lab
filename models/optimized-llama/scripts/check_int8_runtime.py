@@ -3,7 +3,6 @@ import traceback
 
 from vllm import LLM, SamplingParams
 
-
 try:
     llm = LLM(
         model="/workspace/models/llama-3.2-3b-hf",

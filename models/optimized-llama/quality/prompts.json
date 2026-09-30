@@ -1,0 +1,14 @@
+[
+  {"id": "factual-short", "category": "factual", "length": "short", "text": "The capital of France is"},
+  {"id": "reasoning-short", "category": "reasoning", "length": "short", "text": "If Alice has three apples and buys two more, she has"},
+  {"id": "code-short", "category": "code", "length": "short", "text": "Write a Python function that reverses a list:"},
+  {"id": "multilingual-short", "category": "multilingual", "length": "short", "text": "हिंदी में जल चक्र समझाइए:"},
+  {"id": "factual-medium", "category": "factual", "length": "medium", "text": "Explain how photosynthesis converts light energy into chemical energy, including the roles of chlorophyll, carbon dioxide, and water."},
+  {"id": "reasoning-medium", "category": "reasoning", "length": "medium", "text": "A train travels 120 kilometers in two hours, stops for thirty minutes, then travels 90 kilometers in ninety minutes. Compute its average speed over the complete trip."},
+  {"id": "code-medium", "category": "code", "length": "medium", "text": "Implement a Python least-recently-used cache with get and put operations in constant amortized time. Explain the data structures."},
+  {"id": "multilingual-medium", "category": "multilingual", "length": "medium", "text": "Explica en español las diferencias entre memoria RAM y almacenamiento persistente, con un ejemplo cotidiano."},
+  {"id": "factual-long", "category": "factual", "length": "long", "text": "Describe the water cycle from ocean evaporation through atmospheric transport, condensation, precipitation, groundwater recharge, surface runoff, and return flow. Discuss how temperature, vegetation, land use, and seasonal variation affect each stage."},
+  {"id": "reasoning-long", "category": "reasoning", "length": "long", "text": "A warehouse has four loading bays. Jobs A through F require different durations and some jobs depend on earlier jobs. Explain a systematic scheduling strategy that respects dependencies, minimizes idle time, and identifies how you would verify whether the resulting schedule is optimal."},
+  {"id": "code-long", "category": "code", "length": "long", "text": "Design a bounded asynchronous work queue in Python. It must support producer backpressure, multiple consumers, graceful shutdown, cancellation, exception propagation, and metrics. Provide the interface, implementation outline, invariants, and tests for race conditions."},
+  {"id": "multilingual-long", "category": "multilingual", "length": "long", "text": "日本語で、機械学習モデルを本番環境へ導入するときに必要な品質評価、監視、障害対応、データ保護について、具体的な例を含めて説明してください。"}
+]

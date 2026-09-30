@@ -15,6 +15,25 @@ No external optimized kernel repository was copied into this project. PyTorch,
 Triton, Transformers, cuBLAS/CUTLASS dispatch, and PyTorch SDPA/FlashAttention are
 dependencies and reference implementations.
 
+## Install and CLI
+
+The repository is now an installable package with a unified model registry and
+commands for setup, serving, benchmarking, and result validation:
+
+```bash
+python -m pip install -e ".[cpu,llama]"
+kernellab models
+kernellab doctor
+kernellab download llama-3.2-3b
+kernellab serve llama-3.2-3b
+kernellab benchmark llama-3.2-3b --engine pytorch --output results/llama-pytorch.json
+kernellab validate-result results/llama-pytorch.json
+```
+
+See the [architecture](docs/ARCHITECTURE.md), [Llama deployment guide](docs/LLAMA_DEPLOYMENT.md),
+and [reproducibility matrix](docs/REPRODUCIBILITY_MATRIX.md). GPU-dependent
+claims remain pending until their schema-v2 artifacts exist.
+
 ## Final status
 
 The learning kernels, model integrations, static decode runtime, CUDA Graph
@@ -43,7 +62,7 @@ This repository now hosts multiple optimized model projects under
 | Slot | Model | Optimization focus | Status |
 |---:|---|---|---|
 | 1 | [Qwen3-0.6B](models/qwen3-0.6b/README.md) | Custom Triton/CUDA kernels, static decode, CUDA Graphs, serving control plane | Exact production path; faster experimental paths gated |
-| 2 | [Llama-3.2-3B](models/optimized-llama/README.md) | vLLM continuous batching, throughput sweeps, profiling, deployment study | Integrated from `optimized-llama` |
+| 2 | [Llama-3.2-3B](models/optimized-llama/README.md) | vLLM serving, matched benchmarks, profiling, kernel work | Phase 1 methodology implemented; fresh GPU validation pending |
 | 3 | To be selected | Architecture-specific optimization | Planned |
 | 4 | To be selected | Architecture-specific optimization | Planned |
 

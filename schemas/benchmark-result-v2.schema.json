@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kernellab.local/schemas/benchmark-result-v2.schema.json",
+  "title": "KernelLab benchmark result v2",
+  "type": "object",
+  "required": ["schema_version", "benchmark", "model", "methodology"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "benchmark": {"type": "string", "minLength": 1},
+    "engine": {"type": "string"},
+    "model": {"type": "string", "minLength": 1},
+    "dtype": {"type": "string"},
+    "concurrency": {"type": ["integer", "null"], "minimum": 1},
+    "methodology": {
+      "type": "object",
+      "required": ["warmups", "repetitions"],
+      "properties": {
+        "warmups": {"type": "integer", "minimum": 0},
+        "repetitions": {"type": "integer", "minimum": 1}
+      }
+    },
+    "environment": {"type": "object"},
+    "environment_before": {"type": "object"},
+    "environment_after": {"type": "object"},
+    "raw_samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["request_id", "input_tokens", "output_tokens", "arrival_ns", "completed_ns"],
+        "properties": {
+          "request_id": {"type": "string"},
+          "start_type": {"enum": ["cold", "warmup", "warm"]},
+          "input_tokens": {"type": "integer", "minimum": 0},
+          "output_tokens": {"type": "integer", "minimum": 0},
+          "arrival_ns": {"type": "integer", "minimum": 0},
+          "first_token_ns": {"type": ["integer", "null"], "minimum": 0},
+          "token_timestamps_ns": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+          "completed_ns": {"type": "integer", "minimum": 0},
+          "error": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "aggregate": {"type": "object"},
+    "measurements": {"type": "array"}
+  },
+  "anyOf": [
+    {"required": ["raw_samples", "aggregate"]},
+    {"required": ["measurements"]}
+  ],
+  "additionalProperties": true
+}

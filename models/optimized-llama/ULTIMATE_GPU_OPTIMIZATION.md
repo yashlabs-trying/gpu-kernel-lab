@@ -1,5 +1,10 @@
 # The Ultimate GPU & Model Optimization Report
 
+> **Methodology notice (2026-09-30):** performance numbers in this guide are
+> historical schema-v1 observations, not production-grade matched comparisons.
+> Batch/concurrency speedups and approximate latency values must be regenerated
+> with [`BENCHMARK_METHODOLOGY.md`](BENCHMARK_METHODOLOGY.md) before citation.
+
 > From bits to billing: how GPUs work, why inference is slow, how to make it
 > absurdly fast, how to ship it, and how to get paid for it.
 

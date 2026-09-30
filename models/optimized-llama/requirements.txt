@@ -1,11 +1,3 @@
-torch>=2.8
-vllm>=0.9
-transformers>=4.45
-accelerate
-sentencepiece
-datasets
-bitsandbytes
-llm-compressor
-numpy
-pandas
-matplotlib
+# Default Llama users target the recorded CUDA 12.8 stack.
+# Install the matching PyTorch CUDA wheel first; setup_env.sh automates both.
+-r requirements-cu128.lock
