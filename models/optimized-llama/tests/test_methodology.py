@@ -3,11 +3,15 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 BENCHMARKS = Path(__file__).resolve().parents[1] / "benchmarks"
 sys.path.insert(0, str(BENCHMARKS))
 
-from methodology import RequestSample, aggregate_requests, latency_summary, percentile
+from methodology import (  # noqa: E402
+    RequestSample,
+    aggregate_requests,
+    latency_summary,
+    percentile,
+)
 
 
 def sample(index: int, *, error: str | None = None) -> RequestSample:

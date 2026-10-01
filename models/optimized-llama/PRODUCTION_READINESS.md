@@ -1,6 +1,6 @@
 # Llama production-readiness tracker
 
-Last updated: 2026-09-30
+Last updated: 2026-10-01
 
 Legend: **implemented** means the repository enforces the method; **validated**
 requires a fresh GPU result produced by schema version 2.
@@ -36,7 +36,7 @@ Still requiring GPU execution:
   (INT8 performance passed, but its quality release gate failed).
 - [ ] Validate schema-v2 output on both supported CUDA environments.
 - [x] Add process/model cold-start benchmark separate from first-request warmup.
-- [ ] Execute and publish the process/model cold-start artifact.
+- [x] Execute and publish the process/model cold-start artifact.
 
 No historical schema-v1 number passes Phase 1. Phase 2 acceptance execution
 begins only after one fresh matched schema-v2 pair is recorded and reviewed.
@@ -51,9 +51,10 @@ begins only after one fresh matched schema-v2 pair is recorded and reviewed.
 - [x] Release gates encode ≥99% argmax and ≥0.999 minimum cosine.
 - [x] Execute converted-HF FP16 and INT8 capture gates (INT8 was correctly rejected).
 - [x] Complete an 8,192-token serving gate and a 1,000-request stability run.
-- [ ] Execute and publish the full multi-domain quality prompt corpus.
+- [x] Execute and publish the full multi-domain quality prompt corpus (FP16
+  passed as reference; BitsAndBytes INT8 was correctly rejected).
 - [x] Add a pinned, deterministic LM Evaluation Harness runner with raw sample logging.
-- [ ] Execute the full standard task suite and publish its result artifact.
+- [x] Execute the full standard task suite and publish its result artifact.
 
 ## Phase 3 — original Llama kernels
 
@@ -61,8 +62,9 @@ begins only after one fresh matched schema-v2 pair is recorded and reviewed.
 - [x] Kernel provenance explicitly separates local work from vLLM/framework kernels.
 - [x] Implement standalone and fused-residual Llama RMSNorm candidates plus a
   direct active-vLLM CUDA-operation acceptance benchmark.
-- [ ] Capture runtime hot shapes and active vLLM kernels on GPU.
-- [ ] Implement, validate, and benchmark Llama-specific kernel candidates on GPU.
+- [x] Capture runtime hot shapes and active framework/vLLM kernels on GPU.
+- [x] Implement, validate, and benchmark Llama RMSNorm candidates on GPU (both
+  candidates were slower than vLLM and were correctly rejected).
 - [ ] Accept only candidates that beat the active vLLM path end to end.
 
 ## Phase 4 — serving and load harness
@@ -75,8 +77,7 @@ begins only after one fresh matched schema-v2 pair is recorded and reviewed.
 - [x] Mixed short/long scheduler-fairness benchmark is implemented.
 - [x] Frontier, saturation, fairness, and scaling analysis is implemented.
 - [x] Execute concurrency, saturation, cancellation, and overload runs.
-- [ ] Execute mixed-load length fairness and the formal one-hour soak (a five-minute
-  c32 soak passed as an accelerated stability check).
+- [x] Execute mixed-load length fairness and the formal one-hour soak.
 
 ## Phase 5 — local usability
 

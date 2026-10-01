@@ -3,9 +3,10 @@
 Optimizing Llama for GPU inference speed and throughput — and documenting every
 layer of *how* GPU optimization works, from bits to billing.
 
-**Target:** Llama-3.2-3B · **Hardware:** NVIDIA A40 (Ampere, 45 GB) ·
-**Stack:** vLLM + PyTorch · **Status:** benchmark methodology repaired; fresh
-matched production measurements are pending.
+**Target:** Llama-3.2-3B · **Hardware:** NVIDIA Ampere ·
+**Stack:** vLLM + PyTorch · **Status:** methodology repaired; RTX A5000 and
+RTX A4000 acceptance runs published, with remaining portability and multi-GPU
+gates tracked below.
 
 ---
 
@@ -19,6 +20,11 @@ streamed token timestamps, distinct input/output throughput, synchronized CUDA
 events, deterministic token IDs, warmups, raw samples, environment telemetry,
 and a 100-request minimum for p99. See
 [`BENCHMARK_METHODOLOGY.md`](BENCHMARK_METHODOLOGY.md).
+
+Fresh acceptance summaries:
+[`RTX A5000`](results/gpu-a5000-2026-09-30.md) ·
+[`RTX A4000`](results/gpu-a4000-2026-10-01.md) ·
+[`PRODUCTION_READINESS.md`](PRODUCTION_READINESS.md).
 
 ## Historical measurements (invalidated; do not cite as production results)
 
