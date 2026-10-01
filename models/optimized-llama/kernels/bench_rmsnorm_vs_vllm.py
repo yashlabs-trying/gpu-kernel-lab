@@ -41,9 +41,9 @@ def timed_samples(operation, prepare, warmups: int, repetitions: int) -> list[fl
 def latency_summary(values: list[float]) -> dict[str, float]:
     return {
         "median_ms": statistics.median(values),
-        "p90_ms": percentile(values, 90),
-        "p95_ms": percentile(values, 95),
-        "p99_ms": percentile(values, 99),
+        "p90_ms": percentile(values, 0.90),
+        "p95_ms": percentile(values, 0.95),
+        "p99_ms": percentile(values, 0.99),
     }
 
 
