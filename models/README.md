@@ -1,6 +1,5 @@
 # Optimized model portfolio
 
-GPU Kernel Lab is growing into a four-model inference optimization portfolio.
 Each model project keeps its own environment, baselines, profilers, measurements,
 and architecture-specific notes while sharing the laboratory's acceptance rules:
 
@@ -12,12 +11,10 @@ and architecture-specific notes while sharing the laboratory's acceptance rules:
 
 ## Portfolio
 
-| Slot | Model project | Architecture | Status |
+| # | Model project | Architecture | Status |
 |---:|---|---|---|
 | 1 | [Qwen3-0.6B](qwen3-0.6b/README.md) | Qwen3 | Exact single-GPU serving path accepted on SM86/SM89; portable fallback and real concurrent load tested |
 | 2 | [Llama-3.2-3B](optimized-llama/README.md) | Llama | Production harness complete; fresh GPU acceptance pending |
-| 3 | To be selected | — | Planned |
-| 4 | To be selected | — | Planned |
 
 The Llama project is a pinned in-tree snapshot, not a Git submodule. A normal
 clone therefore contains all benchmark and profiling code. Its upstream source

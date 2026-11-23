@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
           python -m pip install -e ".[cpu,llama]"
-          python -m pip install fastapi "uvicorn[standard]" httpx psutil ninja ruff
+          python -m pip install fastapi "uvicorn[standard]" httpx psutil ninja ruff triton
       - name: Validate schemas and compile Python
         run: |
           python -m compileall -q kernellab models/optimized-llama

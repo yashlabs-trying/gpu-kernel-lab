@@ -1,19 +1,61 @@
 # GPU Kernel Lab
 
-An end-to-end GPU-kernel and inference-engine study for
-[`Qwen/Qwen3-0.6B`](https://huggingface.co/Qwen/Qwen3-0.6B). The repository moves
-from individual Triton/CUDA kernels to real prefill and decode integration,
-profiling, numerical acceptance gates, and a production-style serving control
-plane.
+Custom Triton/CUDA kernels, a static CUDA-Graph decode runtime and a paged-KV
+serving engine for [`Qwen/Qwen3-0.6B`](https://huggingface.co/Qwen/Qwen3-0.6B),
+measured end to end on RTX 3090, A4000 and RTX 2000 Ada GPUs.
 
-The engineering rule is simple:
+> **Rule of the lab:** a kernel ships only if it passes the numerical gate
+> (≥99% argmax agreement with the BF16 reference) **and** improves the complete
+> workload. A faster microbenchmark alone is not a model speedup.
 
-> Keep a custom kernel only when it passes correctness checks and improves the
-> complete workload. A faster microbenchmark alone is not a model speedup.
-
-No external optimized kernel repository was copied into this project. PyTorch,
-Triton, Transformers, cuBLAS/CUTLASS dispatch, and PyTorch SDPA/FlashAttention are
+No external optimized-kernel repository was copied. PyTorch, Triton,
+Transformers, cuBLAS/CUTLASS dispatch and PyTorch SDPA/FlashAttention are
 dependencies and reference implementations.
+
+## Results at a glance
+
+**Accepted** — passes the numerical gate, enabled by default:
+
+| Change | Result | GPU | Report |
+|---|---|---|---|
+| Decode-first scheduler, stable metadata shapes, no host syncs, adaptive prefill quanta | **+13.53%** concurrent throughput, ITL p50 **−20.85%**, ITL p99 **−25.80%**; 64-request run with zero failures and zero leaked KV blocks | A4000 (SM86) | [report](results/qwen_phase56_a4000/REPORT.md) |
+| Lossless paged-gather decode policy | Median paged-decode latency **−12.84% to −15.46%** across contexts 128–4,096, 100% argmax agreement, zero logit difference | A4000 (SM86) | [report](results/qwen_paged_a4000_20260929/REPORT.md) |
+| Paged-KV serving executor | 256/256 prefill and 1,024/1,024 decode decisions identical to the baseline | RTX 2000 Ada (SM89) | [report](results/qwen_paged_ada_20260929/REPORT.md) |
+| Exact-shape prefill dispatcher | TTFT p50 −1.02%, p99 −3.43% (only the `q_proj` winner survived end-to-end testing) | RTX 3090 | [report](results/final_newpod_20260904/REPORT.md) |
+
+**Experimental** — much faster, opt-in because it misses the 99% gate:
+
+| Path | Result | Argmax agreement |
+|---|---|---:|
+| Static CUDA-Graph decode (fused RMSNorm/RoPE/KV-write, split-KV attention, W8A16 gate/up + SwiGLU, fixed-address graph replay) | Decode ITL **22.07 → 2.25 ms (9.8×)**, kernels/token **693 → 258**, RTX 3090, context 2,048 | 96.48% |
+| Direct Triton paged attention | **1.74–5.37×** faster than gather + SDPA in isolation, contexts 128–4,096 | 97.66% |
+
+The 9.8× figure is `1000 / ITL` for a serial GPU-only decode loop; it excludes
+tokenization, networking, scheduling and sampling and is not a server
+throughput claim. Static decode by context (RTX 3090, BF16, batch 1):
+
+| Context | Dynamic ITL | Graph ITL | Dynamic token/s | Graph token/s |
+|---:|---:|---:|---:|---:|
+| 128 | 21.906 ms | 2.318 ms | 45.65 | 431.46 |
+| 512 | 21.958 ms | 2.321 ms | 45.54 | 430.92 |
+| 2,048 | 22.073 ms | **2.253 ms** | 45.30 | **443.90** |
+| 4,096 | 22.021 ms | 2.599 ms | 45.41 | 384.70 |
+
+
+### Is the 99% gate measuring the kernels or BF16 noise?
+
+Even the RMSNorm-fusion-only path, which changes nothing but reduction order,
+reaches 98.05% agreement. That suggests part of the gap is BF16 rounding at
+near-tied logits rather than kernel error. [`profiling/argmax_noise_floor.py`](profiling/argmax_noise_floor.py)
+measures the floor directly: it scores the stock BF16 model against an FP32
+reference on the same teacher-forced tokens, and reports how many disagreements
+are near-ties. If stock BF16 itself lands near 96–98% against FP32, the fair gate
+for a BF16 kernel is "no worse than stock BF16 against FP32", and the
+experimental decode path should be re-evaluated against that bar.
+
+```bash
+python profiling/argmax_noise_floor.py --output results/noise_floor.json
+```
 
 ## Install and CLI
 
@@ -34,96 +76,17 @@ See the [architecture](docs/ARCHITECTURE.md), [Llama deployment guide](docs/LLAM
 and [reproducibility matrix](docs/REPRODUCIBILITY_MATRIX.md). GPU-dependent
 claims remain pending until their schema-v2 artifacts exist.
 
-## Final status
+## Models
 
-The learning kernels, model integrations, static decode runtime, CUDA Graph
-experiment, profiling tools, paged-KV allocator, continuous scheduler, sampling,
-metrics, and OpenAI-compatible API are implemented.
-
-Two outcomes are intentionally kept separate:
-
-- **Accepted:** an exact-shape prefill dispatcher that enables only replacements
-  that pass accuracy and end-to-end latency gates.
-- **Experimental:** a highly optimized static CUDA-Graph decode path. It is much
-  faster, but remains opt-in because full-path argmax agreement is 96.48%, below
-  the project's 99% release requirement.
-
-The serving control plane now has a correctness-first GPU Qwen executor. It
-preserves tiled SDPA prefill, writes K/V into fixed physical pages, batches
-variable-length decode requests, and passed an exact token/logit gate. A faster
-direct Triton paged-attention candidate remains opt-in because it misses the 99%
-decode-argmax release threshold.
-
-## Four-model portfolio
-
-This repository now hosts multiple optimized model projects under
-[`models/`](models/):
-
-| Slot | Model | Optimization focus | Status |
-|---:|---|---|---|
-| 1 | [Qwen3-0.6B](models/qwen3-0.6b/README.md) | Custom Triton/CUDA kernels, static decode, CUDA Graphs, serving control plane | Exact production path; faster experimental paths gated |
-| 2 | [Llama-3.2-3B](models/optimized-llama/README.md) | vLLM serving, matched benchmarks, profiling, kernel work | Phase 1 methodology implemented; fresh GPU validation pending |
-| 3 | To be selected | Architecture-specific optimization | Planned |
-| 4 | To be selected | Architecture-specific optimization | Planned |
+| Model | Optimization focus | Status |
+|---|---|---|
+| [Qwen3-0.6B](models/qwen3-0.6b/README.md) | Custom Triton/CUDA kernels, static decode, CUDA Graphs, serving control plane | Exact production path; faster experimental paths gated |
+| [Llama-3.2-3B](models/optimized-llama/README.md) | vLLM serving, matched benchmarks, profiling, kernel work | A40 baseline and vLLM sweep measured; fresh validation pending |
 
 The Llama source is pinned at upstream commit `80087ed` and included directly,
 so a normal clone receives it without submodule commands. See its
 [provenance record](models/optimized-llama/UPSTREAM.md) and the
 [portfolio roadmap](models/README.md).
-
-## Measured final results
-
-RTX 3090 24 GiB, PyTorch 2.8.0+cu128, Triton 3.4.0, Transformers 5.16.1,
-BF16, batch 1, SDPA prefill, greedy one-token decode, context 2,048:
-
-| Metric | PyTorch/dynamic baseline | Best implementation | Change |
-|---|---:|---:|---:|
-| TTFT p50 | 66.007 ms | **65.332 ms** | **1.02% lower** |
-| TTFT p99* | 70.577 ms | **68.160 ms** | **3.43% lower** |
-| Decode ITL p50 | 22.073 ms | **2.253 ms** | **89.79% lower** |
-| Decode ITL p99* | 22.851 ms | **2.258 ms** | **90.12% lower** |
-| Serial throughput from p50 ITL | 45.30 token/s | **443.90 token/s** | **9.80x** |
-| Decode kernels/token | 693 | **258** | **62.8% fewer** |
-
-`*` p99 is interpolated from five GPU-event repetitions and is preliminary, not
-a statistically strong production tail-latency result.
-
-The decode result is the **experimental CUDA-Graph path**. Its throughput is
-`1000 / ITL` for a serial GPU-only loop and excludes tokenization, networking,
-scheduling, EOS handling, and general sampling. It is not a production-server
-throughput claim.
-
-The real paged-serving integration was also validated on an RTX 2000 Ada (SM89):
-256/256 prefill decisions and 1,024/1,024 decode decisions matched with zero
-logit difference. The direct paged-attention kernel was 1.74–5.37x faster than
-gather-plus-SDPA in isolation across contexts 128–4,096, but achieved only
-97.65625% decode agreement and is therefore not the production default. See the
-[paged-serving report](results/qwen_paged_ada_20260929/REPORT.md).
-
-Phase 3/4 was independently checked on an RTX A4000 (SM86). The accepted
-lossless paged-gather policy retained 100% of 256 prefill and 1,024 decode
-argmax decisions with zero logit difference, while reducing matched paged
-decode median latency by 12.84–15.46% across contexts 128–4,096. More aggressive
-projection fusion did not deliver a consistent 20% without either numerical or
-long-context regressions, so it remains experimental. See the
-[Ampere validation report](results/qwen_paged_a4000_20260929/REPORT.md).
-
-Phase 5/6 then hardened the production scheduler and portability boundary.
-Decode-first execution, stable metadata shapes, removal of host synchronizations,
-and adaptive prefill quanta raised matched concurrent throughput by 13.53% while
-reducing ITL p50 by 20.85% and ITL p99 by 25.80%. A 64-request real-model run
-completed without failures or leaked KV blocks at 65.52 generated token/s. See
-the [portable serving report](results/qwen_phase56_a4000/REPORT.md).
-
-| Context | Dynamic ITL | Graph ITL | Dynamic token/s | Graph token/s |
-|---:|---:|---:|---:|---:|
-| 128 | 21.906 ms | 2.318 ms | 45.65 | 431.46 |
-| 512 | 21.958 ms | 2.321 ms | 45.54 | 430.92 |
-| 2,048 | 22.073 ms | **2.253 ms** | 45.30 | **443.90** |
-| 4,096 | 22.021 ms | 2.599 ms | 45.41 | 384.70 |
-
-See the [final GPU report](results/final_newpod_20260904/REPORT.md) for methodology,
-Nsight evidence, numerical results, and limitations.
 
 ## What we built
 
@@ -217,7 +180,7 @@ still required.
 
 ## Correctness and profiling
 
-- **476** repository tests passed in the final environment.
+- **476** repository tests passed in the final GPU environment (80 run on CPU in CI).
 - **10** serving/API tests passed.
 - 60 adversarial RMSNorm configurations covered batches, contexts, and scales.
 - 256 deterministic prompts were checked with per-layer drift localization.
@@ -236,7 +199,7 @@ rooflines are therefore not invented.
 ```text
 baseline/     reference implementations
 learning/     kernels, tests, benchmarks, and teaching notes
-models/       self-contained optimized LLM projects and four-model roadmap
+models/       self-contained optimized LLM projects (Qwen3-0.6B, Llama-3.2-3B)
 profiling/    workloads, ablations, quality gates, and Nsight helpers
 serving/      paged KV, scheduler, sampling, metrics, engine, and API
 scripts/      RunPod setup, model download, activation, and smoke tests
