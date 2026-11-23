@@ -11,7 +11,7 @@ import subprocess
 import time
 import urllib.error
 import urllib.request
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from methodology import environment_metadata
@@ -68,7 +68,7 @@ def main() -> None:
     args.server_log.parent.mkdir(parents=True, exist_ok=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     environment_before = environment_metadata()
-    started_at = datetime.now(UTC).isoformat()
+    started_at = datetime.now(timezone.utc).isoformat()
     start_ns = time.perf_counter_ns()
     health_ns = None
     models_ns = None
@@ -125,7 +125,7 @@ def main() -> None:
         "error": error,
         "environment_before": environment_before,
         "environment_after": environment_metadata(),
-        "completed_at": datetime.now(UTC).isoformat(),
+        "completed_at": datetime.now(timezone.utc).isoformat(),
     }
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(args.output)

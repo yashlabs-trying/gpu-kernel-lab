@@ -8,7 +8,7 @@ import json
 import shlex
 import shutil
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 DEFAULT_TASKS = ("hellaswag", "arc_easy", "piqa", "winogrande", "wikitext")
@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     manifest = {
         "schema_version": 1,
         "lm_eval_requirement": "lm-eval==0.4.13",
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "model": str(args.model.resolve()),
         "tasks": args.tasks,
         "seed": args.seed,
@@ -93,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     completed = subprocess.run(command, check=False)
     manifest["exit_code"] = completed.returncode
-    manifest["completed_at"] = datetime.now(UTC).isoformat()
+    manifest["completed_at"] = datetime.now(timezone.utc).isoformat()
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return completed.returncode
 
