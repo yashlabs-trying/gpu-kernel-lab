@@ -1,5 +1,11 @@
 # GPU Kernel Lab
 
+[![CPU tests](https://github.com/yashlabs-trying/gpu-kernel-lab/actions/workflows/cpu-tests.yml/badge.svg)](https://github.com/yashlabs-trying/gpu-kernel-lab/actions/workflows/cpu-tests.yml)
+![Triton](https://img.shields.io/badge/Triton-kernels-orange)
+![CUDA](https://img.shields.io/badge/CUDA-Graphs-76B900)
+![GPUs](https://img.shields.io/badge/measured%20on-RTX%203090%20%7C%20A4000%20%7C%20RTX%202000%20Ada-555)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 Custom Triton/CUDA kernels, a static CUDA-Graph decode runtime and a paged-KV
 serving engine for [`Qwen/Qwen3-0.6B`](https://huggingface.co/Qwen/Qwen3-0.6B),
 measured end to end on RTX 3090, A4000 and RTX 2000 Ada GPUs.
